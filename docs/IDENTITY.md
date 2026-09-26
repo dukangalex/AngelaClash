@@ -29,8 +29,8 @@
 | 项 | 值 |
 |---|---|
 | 仓库 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo) 分支 `chain-dev` |
-| 当前 tag | `v1.19.30-chain.1`（`3900234e71cfb6c2173a190d8baebe9f189e7781`） |
-| 基线 | 官方 v1.19.30 `ac017cdd246ce8bd547653d927e7bf77d7ee73d5` |
+| 当前 tag | `v1.19.31-chain.1`（`4e6f2eefbb2ae4e130f15f36c13fa6af7ce6545e`） |
+| 基线 | 官方 Alpha `f103639c808d93a2c34cae56757b458862871b22`（含 v1.19.31） |
 | 上游 | `MetaCubeX/mihomo` 的 **`Alpha`** |
 | 禁止 | 把 `main` merge 进 `chain-dev`（`main` 不是内核） |
 | Go module | 保持 `github.com/metacubex/mihomo`，否则 Android JNI 对不上 |

@@ -43,11 +43,11 @@ AngelaBox Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + �
 
 官方上游：`https://github.com/MetaCubeX/mihomo`
 
-CMFA 上游文档指定内核来自 `Alpha`（主线）与 `android-open` 合并后的 `android-real`。本项目当前钉死的是客户端子模块里已经在用的 **v1.19.30**（`ac017cd`），上面只有身份提交 `v1.19.30-chain.1`。官方 `Alpha` 比这新，未验证前不合入。
+CMFA 上游文档指定内核来自 `Alpha`（主线）与 `android-open` 合并后的 `android-real`。本项目当前对齐官方 **Alpha** `f103639`（含 **v1.19.31**），客户端子模块指向 `v1.19.31-chain.1`（`4e6f2eef`）。
 
 1. 只把官方 `Alpha` merge 进 `dukangalex/mihomo` 的 `chain-dev`。
 2. 只解决与链式出站覆盖层、`ANGELABOX.md`、`Makefile` 的 `chain-dev` 版本行相关的冲突。
-3. 子模块 `core/src/foss/golang/clash` 指向 `https://github.com/dukangalex/mihomo.git` 的 `chain-dev`。
+3. 子模块 `core/src/foss/golang/clash` 指向 `https://github.com/dukangalex/mihomo.git` 的 `chain-dev`。合入内核后同步 `core/src/foss/golang` 与 `core/src/main/golang` 的 `go.mod` / `go.sum`。
 4. 发版记录 `version.properties` 里的内核 commit SHA。
 5. 禁止 merge 上游或本 fork 的 `main`。那条分支不是内核。
 
