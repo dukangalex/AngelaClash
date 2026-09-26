@@ -1,4 +1,4 @@
-rootProject.name = "AngelaBoxClash"
+rootProject.name = "AngelaClash"
 
 include(":app")
 include(":core")

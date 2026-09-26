@@ -1,12 +1,12 @@
-# AngelaBox Clash 使用说明
+# Angela Clash 使用说明
 
-AngelaBox Clash 是面向社区用户的 Android 代理客户端，内核基于开源的 MetaCubeX/mihomo（Clash Meta）。界面与设置只描述功能本身，不绑定任何机场或订阅商。
+Angela Clash 是面向社区用户的 Android 代理客户端，内核基于开源的 MetaCubeX/mihomo（Clash Meta）。界面与设置只描述功能本身，不绑定任何机场或订阅商。
 
 本应用与 MetaCubeX、Clash Meta for Android 官方无从属或授权关系。
 
 ## 安装
 
-1. 从 [Releases](https://github.com/dukangalex/ClashMetaForAndroid/releases) 下载 `AngelaBox-Clash-android.apk`（或构建产物 `AngelaBox-Clash-*.apk`）。
+1. 从 [Releases](https://github.com/dukangalex/ClashMetaForAndroid/releases) 下载 `Angela-Clash-android.apk`（或构建产物 `Angela-Clash-*.apk`）。
 2. 允许安装未知来源应用后安装。
 3. 同一签名且 versionCode 更大的新版可直接覆盖。
 
@@ -42,4 +42,4 @@ Clash / Mihomo 原生支持用 `dialer-proxy` 把一个出站接到另一个出�
 
 ## 许可与免责
 
-本仓库继承上游 GPL-3.0。上游代码版权归属原作者。AngelaBox Clash 为独立衍生工作，不代表 MetaCubeX 或官方 Clash Meta。
+本仓库继承上游 GPL-3.0。上游代码版权归属原作者。Angela Clash 为独立衍生工作，不代表 MetaCubeX 或官方 Clash Meta。

@@ -82,7 +82,7 @@ subprojects {
             if (!isApp) {
                 consumerProguardFiles("consumer-rules.pro")
             } else {
-                setProperty("archivesBaseName", "AngelaBox-Clash-$versionName")
+                setProperty("archivesBaseName", "Angela-Clash-$versionName")
             }
         }
 
@@ -116,7 +116,7 @@ subprojects {
                 resValue("string", "application_name", "@string/application_name_alpha")
 
                 if (isApp && !removeSuffix) {
-                    // AngelaBox Clash uses a single package: io.chainbox.clash
+                    // Angela Clash uses a single package: io.chainbox.clash
                 }
             }
 
@@ -132,7 +132,7 @@ subprojects {
                 resValue("string", "application_name", "@string/application_name_meta")
 
                 if (isApp && !removeSuffix) {
-                    // AngelaBox Clash uses a single package: io.chainbox.clash
+                    // Angela Clash uses a single package: io.chainbox.clash
                 }
             }
         }

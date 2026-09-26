@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="clash_meta_for_android">AngelaBox Clash</string>
-    <string name="clash_meta_core">AngelaBox Clash 内核</string>
+    <string name="clash_meta_for_android">Angela Clash</string>
+    <string name="clash_meta_core">Angela Clash 内核</string>
     <string name="clash_meta_wiki">使用说明</string>
-    <string name="tips_help"><![CDATA[AngelaBox Clash 是独立客户端，<strong>不是</strong> MetaCubeX 官方产品，也<strong>不</strong>提供任何代理服务]]></string>
+    <string name="tips_help"><![CDATA[Angela Clash 是独立客户端，<strong>不是</strong> MetaCubeX 官方产品，也<strong>不</strong>提供任何代理服务]]></string>
 </resources>

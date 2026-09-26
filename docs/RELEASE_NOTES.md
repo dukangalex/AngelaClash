@@ -1,4 +1,4 @@
-# AngelaBox Clash 更新说明
+# Angela Clash 更新说明
 
 本文件供发版工作流读取。发布说明应同时写明：
 

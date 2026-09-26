@@ -221,7 +221,7 @@
     <string name="name_server_policy">Name Server 政策</string>
     <string name="block_loopback">攔截本地回送</string>
     <string name="block_loopback_summary">攔截本地回送連結</string>
-    <string name="clash_meta_for_android">Clash Meta for Android</string>
+    <string name="clash_meta_for_android">Angela Clash</string>
     <string name="clash_meta_wiki">Clash Meta Wiki</string>
     <string name="meta_features">Meta Features</string>
     <string name="unified_delay">Unified Delay</string>
