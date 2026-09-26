@@ -20,7 +20,7 @@ Angela Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + 面�
 | 仓库 | 分支 | 职责 |
 |------|------|------|
 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo) | `chain-dev` | Clash 内核。`main` 保持上游默认分支，不要在上面开发，也不要把它 merge 进来 |
-| [dukangalex/ClashMetaForAndroid](https://github.com/dukangalex/ClashMetaForAndroid) | `dev` | Angela Clash Android 客户端。`main` 只保留官方 |
+| [dukangalex/AngelaClash](https://github.com/dukangalex/AngelaClash) | `dev` | Angela Clash Android 客户端。`main` 只保留官方 |
 | [dukangalex/mihomo-core](https://github.com/dukangalex/mihomo-core) | `main` | 旧的空说明仓，已停用。内核以 `dukangalex/mihomo` 的 `chain-dev` 为准 |
 
 | 项目 | 值 |
@@ -34,7 +34,7 @@ Angela Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + 面�
 ## 对外身份
 
 - 对外产品名、README、About、Release、APK 文件名都是 Angela Clash。
-- App 帮助与损坏页的 GitHub 链接指向 `dukangalex/ClashMetaForAndroid`。
+- App 帮助与损坏页的 GitHub 链接指向 `dukangalex/AngelaClash`。
 - 不走 F-Droid / 官方 MetaCubeX 更新源。
 - 不得用官方名称或标志上架应用商店。
 - 不整包重命名 `com.github.kr328.clash`，以免失去与上游合并的能力。

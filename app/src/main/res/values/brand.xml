@@ -6,9 +6,9 @@
     <string name="application_name_alpha">Angela Clash</string>
     <string name="clash_meta_for_android">Angela Clash</string>
     <string name="clash_meta_core">Angela Clash Kernel</string>
-    <string name="meta_github_url" translatable="false">https://github.com/dukangalex/ClashMetaForAndroid</string>
+    <string name="meta_github_url" translatable="false">https://github.com/dukangalex/AngelaClash</string>
     <string name="clash_meta_core_url" translatable="false">https://github.com/dukangalex/mihomo</string>
     <string name="clash_meta_wiki">User Guide</string>
-    <string name="clash_meta_wiki_url" translatable="false">https://github.com/dukangalex/ClashMetaForAndroid/blob/dev/docs/USER_GUIDE.md</string>
+    <string name="clash_meta_wiki_url" translatable="false">https://github.com/dukangalex/AngelaClash/blob/dev/docs/USER_GUIDE.md</string>
     <string name="tips_help"><![CDATA[Angela Clash is an independent client. It is <strong>not</strong> an official MetaCubeX product and does <strong>NOT</strong> provide any proxy service]]></string>
 </resources>

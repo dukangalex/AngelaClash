@@ -4,8 +4,8 @@
 
 本项目与 MetaCubeX 及官方 Clash Meta for Android 无从属或授权关系，不得使用官方名称及标志进行商业发布或应用商店上架。
 
-- 发行版：[Releases](https://github.com/dukangalex/ClashMetaForAndroid/releases)
-- 构建：[Actions](https://github.com/dukangalex/ClashMetaForAndroid/actions)
+- 发行版：[Releases](https://github.com/dukangalex/AngelaClash/releases)
+- 构建：[Actions](https://github.com/dukangalex/AngelaClash/actions)
 - 使用说明：[docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 - 身份表：[docs/IDENTITY.md](docs/IDENTITY.md)
 - 维护说明：[docs/MAINTENANCE.md](docs/MAINTENANCE.md)
@@ -17,7 +17,7 @@
 |------|-----|
 | 应用名称 | Angela Clash |
 | 应用包名 | `io.chainbox.clash` |
-| 客户端仓库 | [dukangalex/ClashMetaForAndroid](https://github.com/dukangalex/ClashMetaForAndroid)（分支 `dev`） |
+| 客户端仓库 | [dukangalex/AngelaClash](https://github.com/dukangalex/AngelaClash)（分支 `dev`） |
 | 内核仓库 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo)（分支 `chain-dev`，不是 `main`） |
 | 更新检查 | 仅本仓库 GitHub Releases |
 | 安装包 | `Angela-Clash-*.apk` |

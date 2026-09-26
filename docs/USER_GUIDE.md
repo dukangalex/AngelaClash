@@ -6,7 +6,7 @@ Angela Clash 是面向社区用户的 Android 代理客户端，内核基于开�
 
 ## 安装
 
-1. 从 [Releases](https://github.com/dukangalex/ClashMetaForAndroid/releases) 下载 `Angela-Clash-android.apk`（或构建产物 `Angela-Clash-*.apk`）。
+1. 从 [Releases](https://github.com/dukangalex/AngelaClash/releases) 下载 `Angela-Clash-android.apk`（或构建产物 `Angela-Clash-*.apk`）。
 2. 允许安装未知来源应用后安装。
 3. 同一签名且 versionCode 更大的新版可直接覆盖。
 
