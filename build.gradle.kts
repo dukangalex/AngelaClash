@@ -58,8 +58,13 @@ subprojects {
             minSdk = 21
             targetSdk = 35
 
-            versionName = "2.11.33"
-            versionCode = 211033
+            val versionProps = Properties()
+            val versionPropsFile = rootProject.file("version.properties")
+            if (versionPropsFile.exists()) {
+                versionProps.load(versionPropsFile.inputStream())
+            }
+            versionName = versionProps.getProperty("VERSION_NAME") ?: "1.0.1"
+            versionCode = versionProps.getProperty("VERSION_CODE")?.toIntOrNull() ?: 10001
 
             resValue("string", "release_name", "v$versionName")
             resValue("integer", "release_code", "$versionCode")

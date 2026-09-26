@@ -19,10 +19,9 @@ AngelaBox Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + �
 
 | 仓库 | 分支 | 职责 |
 |------|------|------|
-| [dukangalex/mihomo-core](https://github.com/dukangalex/mihomo-core) | `chain-dev` | Clash 内核跟踪仓（从 MetaCubeX/mihomo 的 Alpha / android-real 同步） |
-| [dukangalex/ClashMetaForAndroid](https://github.com/dukangalex/ClashMetaForAndroid) | `dev` | AngelaBox Clash Android 客户端 |
-
-注意：`dukangalex/mihomo` 当前是崩坏：星穹铁道 Mihomo API 的 Python 仓库，**不是** Clash 内核，不要把它当作本项目子模块。
+| [dukangalex/mihomo](https://github.com/dukangalex/mihomo) | `chain-dev` | Clash 内核。`main` 保持上游默认分支，不要在上面开发，也不要把它 merge 进来 |
+| [dukangalex/ClashMetaForAndroid](https://github.com/dukangalex/ClashMetaForAndroid) | `dev` | AngelaBox Clash Android 客户端。`main` 只保留官方 |
+| [dukangalex/mihomo-core](https://github.com/dukangalex/mihomo-core) | `main` | 旧的空说明仓，已停用。内核以 `dukangalex/mihomo` 的 `chain-dev` 为准 |
 
 | 项目 | 值 |
 |------|-----|
@@ -44,20 +43,20 @@ AngelaBox Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + �
 
 官方上游：`https://github.com/MetaCubeX/mihomo`
 
-CMFA 上游文档指定内核来自 `Alpha`（主线）与 `android-open` 合并后的 `android-real`。本项目跟踪策略：
+CMFA 上游文档指定内核来自 `Alpha`（主线）与 `android-open` 合并后的 `android-real`。本项目当前钉死的是客户端子模块里已经在用的 **v1.19.30**（`ac017cd`），上面只有身份提交 `v1.19.30-chain.1`。官方 `Alpha` 比这新，未验证前不合入。
 
-1. 把官方 `Alpha`（及 Android 所需的 `android-real`）merge 进 `dukangalex/mihomo-core` 的 `chain-dev`。
-2. 只解决与链式出站覆盖层相关的冲突。
-3. 子模块 `core/src/foss/golang/clash` 在内核仓就绪后改为指向 `dukangalex/mihomo-core` 的 `chain-dev`。在此之前可暂时继续指向官方 `MetaCubeX/mihomo` 的 `Alpha`，以免无法构建。
-4. 发版记录内核 commit SHA。
+1. 只把官方 `Alpha` merge 进 `dukangalex/mihomo` 的 `chain-dev`。
+2. 只解决与链式出站覆盖层、`ANGELABOX.md`、`Makefile` 的 `chain-dev` 版本行相关的冲突。
+3. 子模块 `core/src/foss/golang/clash` 指向 `https://github.com/dukangalex/mihomo.git` 的 `chain-dev`。
+4. 发版记录 `version.properties` 里的内核 commit SHA。
+5. 禁止 merge 上游或本 fork 的 `main`。那条分支不是内核。
 
 ```bash
-git clone https://github.com/MetaCubeX/mihomo.git mihomo-core-src
-cd mihomo-core-src
-git checkout Alpha
-git remote add angelabox https://github.com/dukangalex/mihomo-core.git
-git checkout -B chain-dev
-git push -u angelabox chain-dev
+git clone -b chain-dev https://github.com/dukangalex/mihomo.git
+cd mihomo
+git remote add upstream https://github.com/MetaCubeX/mihomo.git
+git fetch upstream Alpha
+git merge upstream/Alpha
 ```
 
 ## App 同步
