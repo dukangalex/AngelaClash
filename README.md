@@ -58,7 +58,7 @@
 
 1. `git submodule update --init --recursive`
 2. 安装 OpenJDK 21、Android SDK、CMake、Golang
-3. 在项目根目录创建 `local.properties`（`sdk.dir=...`）与 `signing.properties`
+3. 在项目根目录创建 `local.properties`（`sdk.dir=...`）与 `signing.properties`。正式签名见 [docs/SIGNING.md](docs/SIGNING.md)。没有正式钥匙时，Release 构建会失败，不会用调试证书顶替。
 4. `./gradlew app:assembleMetaRelease`
 
 产物文件名以 `Angela-Clash-` 开头。

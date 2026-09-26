@@ -22,6 +22,7 @@
 | 仓库 | [dukangalex/AngelaClash](https://github.com/dukangalex/AngelaClash) 分支 `dev` |
 | 上游 | `MetaCubeX/ClashMetaForAndroid`，单向 merge 进 `dev` |
 | 版本 | `version.properties` 的 `VERSION_NAME` / `VERSION_CODE` |
+| 正式签名 | 别名 `angelaclash`。证书 SHA-256 见 [SIGNING.md](SIGNING.md)。不是调试证书，也不是上游钥匙 |
 | 姐妹应用 | AngelaBox `io.chainbox.app`，可并存 |
 
 ## 内核

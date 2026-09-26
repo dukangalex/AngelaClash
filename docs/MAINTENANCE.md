@@ -75,10 +75,10 @@ git merge upstream/main
 ## 发版
 
 1. 改 `version.properties`（`VERSION_NAME` 与 tag 一致，`VERSION_CODE` 必须递增）。
-2. 使用现有 Actions 构建 meta/alpha Release，产物按 `Angela-Clash-*` 命名。
-3. 发版说明必须包含：内核 commit SHA、官方基线分支、是否启用链式覆盖层。
+2. 使用现有 Actions 构建 meta/alpha Release，产物按 `Angela-Clash-*` 命名。正式包必须用 `docs/SIGNING.md` 里的那把钥匙，禁止退回调试证书。
+3. 发版说明必须包含：内核 commit SHA、官方基线分支、是否启用链式覆盖层、以及 APK 证书 SHA-256 是否仍是签名文档里的那一串。
 
-Secrets 与上游相同：签名仓库的 `signing.properties` / keystore。
+GitHub secrets：`SIGNING_KEYSTORE_BASE64`、`SIGNING_STORE_PASSWORD`、`SIGNING_KEY_ALIAS`、`SIGNING_KEY_PASSWORD`。钥匙和 `signing.properties` 不进仓库。
 
 ## 能力边界
 

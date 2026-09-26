@@ -155,9 +155,15 @@ subprojects {
                     }
 
                     storeFile = rootProject.file("release.keystore")
-                    storePassword = prop.getProperty("keystore.password")!!
-                    keyAlias = prop.getProperty("key.alias")!!
-                    keyPassword = prop.getProperty("key.password")!!
+                    storePassword = prop.getProperty("keystore.password")
+                    keyAlias = prop.getProperty("key.alias")
+                    keyPassword = prop.getProperty("key.password")
+                    if (storePassword.isNullOrBlank() || keyAlias.isNullOrBlank() || keyPassword.isNullOrBlank()) {
+                        throw GradleException("signing.properties must set keystore.password, key.alias, and key.password")
+                    }
+                    if (storeFile?.isFile != true) {
+                        throw GradleException("release.keystore is missing. Release builds do not use the debug key.")
+                    }
                 }
             }
         }
@@ -166,7 +172,14 @@ subprojects {
             named("release") {
                 isMinifyEnabled = isApp
                 isShrinkResources = isApp
-                signingConfig = signingConfigs.findByName("release") ?: signingConfigs["debug"]
+                val releaseSigning = signingConfigs.findByName("release")
+                val wantsRelease = gradle.startParameter.taskNames.any {
+                    it.contains("Release", ignoreCase = true)
+                }
+                if (isApp && wantsRelease && releaseSigning == null) {
+                    throw GradleException("Release builds require signing.properties and release.keystore. Refusing to sign Angela Clash with the debug certificate.")
+                }
+                signingConfig = releaseSigning ?: signingConfigs.getByName("debug")
                 proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
                     "proguard-rules.pro"
