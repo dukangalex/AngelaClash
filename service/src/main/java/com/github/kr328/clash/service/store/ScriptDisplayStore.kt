@@ -304,7 +304,11 @@ class ScriptDisplayStore(private val context: Context) {
                     continue
                 }
                 if (c == '"' || c == '\'' || c == '`') {
-                    val key = readString(body, i) ?: run { i++; continue }
+                    val key = readString(body, i)
+                    if (key == null) {
+                        i++
+                        continue
+                    }
                     i = skipWs(body, key.second)
                     if (i < body.length && body[i] == ':') {
                         val bool = readBool(body, skipWs(body, i + 1))
