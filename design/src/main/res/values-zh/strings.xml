@@ -315,8 +315,8 @@
     <string name="script_display_enable">启用脚本显示选项</string>
     <string name="script_display_enable_summary">打开后，下面的开关在下次启动时写入运行配置</string>
     <string name="script_display_running">服务正在运行。改动在下次启动后生效</string>
-    <string name="script_display_hint">和 Bettbox 一样，在覆写脚本里声明 ruleOptionsEnable 就会出现分流开关。这里另外固定加上防泄漏、中国直连、严格路由。</string>
-    <string name="script_display_bettbox">这份脚本声明了 Compatible_With_Bettbox。分流开关按策略组名称生效：关闭后移除该组，规则回到主组。</string>
+    <string name="script_display_hint">在覆写脚本里声明 ruleOptionsEnable 就会出现分流开关。另外固定有防泄漏、中国直连、严格路由。</string>
+    <string name="script_display_bettbox">分流开关按策略组名称生效：关闭后移除该组，规则回到主组。</string>
     <string name="script_display_angela">已识别 Angela Clash 的脚本声明。</string>
     <string name="script_display_edit">编辑覆写脚本</string>
     <string name="script_display_edit_summary">只读取里面的 true/false，不会执行 main()</string>

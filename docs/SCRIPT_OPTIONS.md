@@ -2,10 +2,10 @@
 
 设置 → **脚本显示选项**。默认关闭。打开后，下次启动服务时生效。
 
-和 [Bettbox](https://github.com/appshubcc/Bettbox) 一样，覆写脚本里声明：
+覆写脚本里声明：
 
 ```javascript
-const Compatible_With_Bettbox = { ruleOptionsEnable: true };
+const Compatible_With_AngelaClash = { ruleOptionsEnable: true };
 const ruleOptionsEnable = {
   "Google": true,
   "AI": false,

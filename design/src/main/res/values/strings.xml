@@ -406,8 +406,8 @@
     <string name="script_display_enable">Enable script options</string>
     <string name="script_display_enable_summary">Switches below are applied the next time the service starts</string>
     <string name="script_display_running">The service is running. Changes apply on the next start</string>
-    <string name="script_display_hint">Declare ruleOptionsEnable in an override script, same as Bettbox. Angela Clash also shows leak, China-direct, and strict-route switches.</string>
-    <string name="script_display_bettbox">This script declares Compatible_With_Bettbox. Rule switches follow policy group names.</string>
+    <string name="script_display_hint">Declare ruleOptionsEnable in the override script to show rule switches. Leak protection, China direct, and strict routing are always listed as well.</string>
+    <string name="script_display_bettbox">Rule switches follow policy group names. Turning one off removes that group and sends its rules back to the main group.</string>
     <string name="script_display_angela">Angela Clash script declaration detected.</string>
     <string name="script_display_edit">Edit override script</string>
     <string name="script_display_edit_summary">Only the true/false maps are read. main() is not executed</string>

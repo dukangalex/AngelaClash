@@ -5,11 +5,9 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Bettbox-compatible script display options, plus Angela Clash groups for
- * leak protection, China direct, and strict routing.
- *
- * The script text only declares the switches. Applied behavior lives in the
- * core patcher and the VPN builder, keyed by the option name.
+ * Script display options. The script only declares switches.
+ * Leak protection, China direct, and strict routing are applied by the
+ * core patcher and the VPN builder, keyed by option name.
  */
 class ScriptDisplayStore(private val context: Context) {
     data class Row(val name: String, val on: Boolean, val summary: String?)

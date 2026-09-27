@@ -1,6 +1,6 @@
 // Angela Clash 脚本显示选项
-// 与 Bettbox（v1.18.8+）相同：声明下面这行后，分流开关会出现在「脚本显示选项」。
-// 另外三组是 Angela Clash 自己的：防泄漏、中国直连、严格路由。
+// 声明 Compatible_With_AngelaClash 后，分流开关会出现在「脚本显示选项」。
+// 另外三组是防泄漏、中国直连、严格路由。
 // 客户端只读取这些对象里的 true/false，不会执行 main()。
 const Compatible_With_AngelaClash = {
   ruleOptionsEnable: true,
@@ -8,7 +8,6 @@ const Compatible_With_AngelaClash = {
   cnDirectOptionsEnable: true,
   strictRouteOptionsEnable: true,
 };
-const Compatible_With_Bettbox = { ruleOptionsEnable: true };
 
 // 分流。键名等于策略组名。关闭后移除该组，原来指向它的规则回到主组。
 const ruleOptionsEnable = {
