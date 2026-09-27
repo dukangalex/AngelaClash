@@ -402,7 +402,14 @@
     <string name="shortcut_stop_short">Stop Clash</string>
     <string name="shortcut_stop_long">Stop Clash service</string>
 
-    <string name="script_display_options">Script options</string>
+    <string name="script_display_options">Override script</string>
+    <string name="script_enable">Enable override script</string>
+    <string name="script_enable_summary">main() rewrites the profile except nodes. Turn this off and the shortcut leaves the dashboard</string>
+    <string name="script_page_hint">System options on the dashboard win when they disagree with the script or the subscription.</string>
+    <string name="script_credit">Built-in script from HiClash. Original author: AIsouler.</string>
+    <string name="system_options">System options</string>
+    <string name="system_options_summary">These switches outrank the script and the profile. Tap a group, pull down on a sub page to go back.</string>
+    <string name="log_filter_all">All</string>
     <string name="script_display_enable">Enable script options</string>
     <string name="script_display_enable_summary">Switches below are applied the next time the service starts</string>
     <string name="script_display_running">The service is running. Saving the script reloads it now</string>
@@ -410,7 +417,7 @@
     <string name="script_display_bettbox">Rule switches follow policy group names. Turning one off removes that group and sends its rules back to the main group.</string>
     <string name="script_display_angela">Angela Clash script declaration detected.</string>
     <string name="script_display_edit">Edit override script</string>
-    <string name="script_display_edit_summary">main() overwrites the profile except nodes, then reloads if the service is running</string>
+    <string name="script_display_edit_summary">main() overwrites everything except nodes. Saving reloads a running service</string>
     <string name="script_display_restore">Restore built-in script</string>
     <string name="script_display_restore_summary">Reset switches to the built-in Angela Clash script</string>
     <string name="script_display_restore_message">The current script and switch overrides will be replaced by the built-in script.</string>

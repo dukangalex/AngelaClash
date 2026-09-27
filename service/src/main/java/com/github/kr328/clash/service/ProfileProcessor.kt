@@ -12,6 +12,7 @@ import com.github.kr328.clash.service.data.PendingDao
 import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.service.remote.IFetchObserver
 import com.github.kr328.clash.service.store.ChainStore
+import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.service.store.ServiceStore
 import com.github.kr328.clash.service.util.importedDir
 import com.github.kr328.clash.service.util.pendingDir
@@ -141,6 +142,7 @@ object ProfileProcessor {
         force: Boolean,
         callback: IFetchObserver?,
     ): FetchStatus? {
+        ScriptDisplayStore(context).ensureScript()
         var subscriptionInfo: FetchStatus? = null
         var cb = callback
 

@@ -311,7 +311,14 @@
     <string name="shortcut_stop_short">停止 Clash</string>
     <string name="shortcut_stop_long">停止 Clash 服务</string>
 
-    <string name="script_display_options">脚本显示选项</string>
+    <string name="script_display_options">覆写脚本</string>
+    <string name="script_enable">启用覆写脚本</string>
+    <string name="script_enable_summary">main() 覆写除节点外的配置。关闭后，仪表盘不再显示这个入口</string>
+    <string name="script_page_hint">和脚本或订阅冲突时，以仪表盘上的系统显式选项为准。</string>
+    <string name="script_credit">内置脚本来自 HiClash，原作者 AIsouler。</string>
+    <string name="system_options">系统显式选项</string>
+    <string name="system_options_summary">这些开关优先于脚本和订阅。点开一组查看，在子页面下拉可返回上一级。</string>
+    <string name="log_filter_all">全部</string>
     <string name="script_display_enable">启用脚本显示选项</string>
     <string name="script_display_enable_summary">打开后，下面的开关在下次启动时写入运行配置</string>
     <string name="script_display_running">服务正在运行。保存脚本后会立刻重载</string>
@@ -319,7 +326,7 @@
     <string name="script_display_bettbox">分流开关按策略组名称生效：关闭后移除该组，规则回到主组。</string>
     <string name="script_display_angela">已识别 Angela Clash 的脚本声明。</string>
     <string name="script_display_edit">编辑覆写脚本</string>
-    <string name="script_display_edit_summary">main() 会覆写除节点外的配置。正在运行时，保存后立刻重载</string>
+    <string name="script_display_edit_summary">main() 覆写除节点外的配置。服务运行时保存会立刻重载</string>
     <string name="script_display_restore">恢复内置脚本</string>
     <string name="script_display_restore_summary">用内置 Angela Clash 脚本重置开关</string>
     <string name="script_display_restore_message">当前脚本和已改过的开关会被内置脚本替换。</string>

@@ -4,7 +4,9 @@ import android.app.ActivityManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
@@ -60,6 +62,46 @@ abstract class BaseActivity<D : Design<*>> : AppCompatActivity(),
 
     fun defer(operation: suspend () -> Unit) {
         this.defer = operation
+    }
+
+    private var pullX = 0f
+    private var pullY = 0f
+    private var pullArmed = false
+
+    protected open fun allowPullBack(): Boolean = true
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (allowPullBack()) {
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    pullX = ev.rawX
+                    pullY = ev.rawY
+                    pullArmed = !canScrollUp(design?.root)
+                }
+                MotionEvent.ACTION_MOVE -> if (pullArmed) {
+                    val dy = ev.rawY - pullY
+                    val dx = ev.rawX - pullX
+                    val threshold = 72f * resources.displayMetrics.density
+                    if (dy > threshold && dy > kotlin.math.abs(dx) * 1.4f) {
+                        finish()
+                        return true
+                    }
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> pullArmed = false
+            }
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun canScrollUp(view: View?): Boolean {
+        if (view == null || view.visibility != View.VISIBLE) return false
+        if (view.canScrollVertically(-1)) return true
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                if (canScrollUp(view.getChildAt(i))) return true
+            }
+        }
+        return false
     }
 
     suspend fun <I, O> startActivityForResult(

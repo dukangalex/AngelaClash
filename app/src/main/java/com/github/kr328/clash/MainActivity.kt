@@ -26,6 +26,8 @@ import com.github.kr328.clash.core.bridge.Bridge
 import com.github.kr328.clash.core.model.TunnelState
 import com.github.kr328.clash.design.R as DesignR
 import com.github.kr328.clash.service.store.ChainStore
+import com.github.kr328.clash.service.store.ScriptDisplayStore
+import com.github.kr328.clash.service.util.sendProfileChanged
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.selects.select
@@ -33,8 +35,12 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 class MainActivity : BaseActivity<MainDesign>() {
+    override fun allowPullBack(): Boolean = false
+
     override suspend fun main() {
         val design = MainDesign(this)
+        val options = ScriptDisplayStore(this)
+        design.mountSystem(options)
 
         setContentDesign(design)
 
@@ -69,13 +75,8 @@ class MainActivity : BaseActivity<MainDesign>() {
                             startActivity(ChainActivity::class.intent)
                         MainDesign.Request.OpenProviders ->
                             startActivity(ProvidersActivity::class.intent)
-                        MainDesign.Request.OpenLogs -> {
-                            if (LogcatService.running) {
-                                startActivity(LogcatActivity::class.intent)
-                            } else {
-                                startActivity(LogsActivity::class.intent)
-                            }
-                        }
+                        MainDesign.Request.OpenLogs ->
+                            startActivity(LogcatActivity::class.intent)
                         MainDesign.Request.OpenSettings ->
                             startActivity(SettingsActivity::class.intent)
                         MainDesign.Request.OpenHelp ->
@@ -94,6 +95,7 @@ class MainActivity : BaseActivity<MainDesign>() {
                             patchMode(TunnelState.Mode.Global)
                         MainDesign.Request.SetDirectMode ->
                             patchMode(TunnelState.Mode.Direct)
+                        MainDesign.Request.ReloadConfig -> reloadActive()
                     }
                 }
                 if (clashRunning) {
@@ -118,11 +120,17 @@ class MainActivity : BaseActivity<MainDesign>() {
         setMode(state.mode)
         setHasProviders(providers.isNotEmpty())
 
-        withProfile {
-            val active = queryActive()
-            setProfileName(active?.name)
-            setChainSummary(active?.let { ChainStore(this@MainActivity).summary(it.uuid) })
-        }
+        val active = withProfile { queryActive() }
+        setProfileName(active?.name)
+        val summary = active?.let { ChainStore(this@MainActivity).summary(it.uuid) }
+        setChainSummary(summary)
+        setFeatureVisibility(ScriptDisplayStore(this@MainActivity).scriptEnabled(), !summary.isNullOrBlank())
+    }
+
+    private suspend fun reloadActive() {
+        if (!clashRunning) return
+        val active = withProfile { queryActive() } ?: return
+        sendProfileChanged(active.uuid)
     }
 
     private suspend fun MainDesign.fetchTraffic() {

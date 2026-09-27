@@ -3,6 +3,8 @@ package com.github.kr328.clash.design
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.graphics.Color
+import android.graphics.Typeface
 import android.view.View
 import androidx.core.content.getSystemService
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,7 +22,7 @@ class LogcatDesign(
     private val streaming: Boolean,
 ) : Design<LogcatDesign.Request>(context) {
     enum class Request {
-        Close, Delete, Export
+        Close, Delete, Export, History
     }
 
     private val binding = DesignLogcatBinding
@@ -34,17 +36,25 @@ class LogcatDesign(
             showToast(R.string.copied, ToastDuration.Short)
         }
     }
+    private var source: List<LogMessage> = emptyList()
+    private var floor: LogMessage.Level? = null
 
     suspend fun patchMessages(messages: List<LogMessage>, removed: Int, appended: Int) {
         withContext(Dispatchers.Main) {
-            adapter.messages = messages
+            source = messages
+            showFiltered(scroll = streaming && binding.recyclerList.isTop)
+        }
+    }
 
-            adapter.notifyItemRangeInserted(adapter.messages.size, appended)
-            adapter.notifyItemRangeRemoved(0, removed)
-
-            if (streaming && binding.recyclerList.isTop) {
-                binding.recyclerList.scrollToPosition(messages.size - 1)
-            }
+    private fun showFiltered(scroll: Boolean) {
+        val shown = source.filter { message ->
+            val floor = floor ?: return@filter true
+            message.level.ordinal >= floor.ordinal && message.level != LogMessage.Level.Silent
+        }
+        adapter.messages = shown
+        adapter.notifyDataSetChanged()
+        if (scroll && shown.isNotEmpty()) {
+            binding.recyclerList.scrollToPosition(shown.lastIndex)
         }
     }
 
@@ -56,7 +66,6 @@ class LogcatDesign(
         binding.streaming = streaming
 
         binding.activityBarLayout.applyFrom(context)
-
         binding.recyclerList.bindAppBarElevation(binding.activityBarLayout)
 
         binding.recyclerList.layoutManager = LinearLayoutManager(context).apply {
@@ -66,5 +75,29 @@ class LogcatDesign(
             }
         }
         binding.recyclerList.adapter = adapter
+
+        val chips = listOf(
+            binding.filterAll to null,
+            binding.filterDebug to LogMessage.Level.Debug,
+            binding.filterInfo to LogMessage.Level.Info,
+            binding.filterWarning to LogMessage.Level.Warning,
+            binding.filterError to LogMessage.Level.Error,
+        )
+        fun paint() {
+            for ((view, level) in chips) {
+                val selected = floor == level
+                view.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
+                view.setTextColor(if (selected) Color.WHITE else 0xFF5C6570.toInt())
+                view.setBackgroundColor(if (selected) 0xFF1F4B99.toInt() else Color.TRANSPARENT)
+            }
+        }
+        for ((view, level) in chips) {
+            view.setOnClickListener {
+                floor = level
+                paint()
+                showFiltered(scroll = false)
+            }
+        }
+        paint()
     }
 }

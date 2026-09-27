@@ -12,30 +12,26 @@ import (
 	"github.com/metacubex/mihomo/log"
 )
 
-// Script display options. The UI writes files/clash/script-options.json.
-// Keys are "<group>\x1f<label>". Missing file or enabled=false is a no-op.
+// System explicit options. Written to files/clash/script-options.json.
+// They are applied after the profile, the override script, and chain, so a
+// conflict is resolved in favor of these switches.
 func patchScriptDisplay(cfg *config.RawConfig, _ string) error {
-	opts, ok := readScriptOptions()
-	if !ok || !opts.Enabled {
-		return nil
-	}
+	opts, _ := readScriptOptions()
 	groups := splitScriptOptions(opts.Values)
+	applyRouting(cfg, groups)
 	applyLeak(cfg, groups.leak)
 	applyChina(cfg, groups.cn)
 	applyStrict(cfg, groups.strict)
-	applyRouting(cfg, groups)
 	if cfg.DNS.Enable && len(cfg.DNS.NameServer) == 0 {
 		cfg.DNS.NameServer = []string{"https://223.5.5.5/dns-query", "https://1.1.1.1/dns-query"}
-	}
-	if cfg.DNS.RespectRules && len(cfg.DNS.ProxyServerNameserver) == 0 {
-		cfg.DNS.ProxyServerNameserver = []string{"https://223.5.5.5/dns-query"}
 	}
 	return nil
 }
 
 type scriptOptionFile struct {
-	Enabled bool            `json:"enabled"`
-	Values  map[string]bool `json:"values"`
+	Enabled       bool            `json:"enabled"`
+	ScriptEnabled *bool           `json:"scriptEnabled"`
+	Values        map[string]bool `json:"values"`
 }
 
 type scriptGroups struct {
@@ -82,60 +78,95 @@ func splitScriptOptions(values map[string]bool) scriptGroups {
 	return g
 }
 
-func flag(m map[string]bool, keys ...string) bool {
+func on(m map[string]bool, fallback bool, keys ...string) bool {
 	for _, key := range keys {
-		if on, ok := m[key]; ok {
-			return on
+		if value, ok := m[key]; ok {
+			return value
 		}
 	}
-	return false
+	return fallback
 }
 
 func applyLeak(cfg *config.RawConfig, leak map[string]bool) {
-	if flag(leak, "DNS 走代理", "dns-via-proxy") {
+	if on(leak, true, "DNS 走代理", "dns-via-proxy") {
 		cfg.DNS.Enable = true
-		cfg.DNS.RespectRules = true
 		cfg.DNS.NameServer = []string{"https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"}
 		cfg.DNS.Fallback = nil
 		cfg.DNS.ProxyServerNameserver = []string{"https://223.5.5.5/dns-query"}
+	} else {
+		cfg.DNS.Enable = true
+		cfg.DNS.NameServer = []string{"https://223.5.5.5/dns-query", "https://119.29.29.29/dns-query"}
+		cfg.DNS.Fallback = nil
 	}
-	if flag(leak, "禁止系统 DNS", "no-system-dns") {
+	if on(leak, true, "禁止系统 DNS", "no-system-dns") {
 		cfg.ClashForAndroid.AppendSystemDNS = false
 		cfg.DNS.NameServer = stripSystemDNS(cfg.DNS.NameServer)
 		cfg.DNS.Fallback = stripSystemDNS(cfg.DNS.Fallback)
 		cfg.DNS.DefaultNameserver = stripSystemDNS(cfg.DNS.DefaultNameserver)
+	} else {
+		cfg.ClashForAndroid.AppendSystemDNS = true
+		cfg.DNS.NameServer = appendUnique(cfg.DNS.NameServer, "system://")
 	}
-	if flag(leak, "关闭 IPv6", "disable-ipv6") {
+	if on(leak, true, "关闭 IPv6", "disable-ipv6") {
 		cfg.IPv6 = false
 		cfg.DNS.IPv6 = false
+	} else {
+		cfg.IPv6 = true
+		cfg.DNS.IPv6 = true
 	}
-	if flag(leak, "嗅探防泄漏", "sniff-leak") {
+	cfg.Rule = dropMatching(cfg.Rule, isQuicReject)
+	if on(leak, false, "阻断 QUIC", "block-quic") {
+		cfg.Rule = append([]string{"AND,((NETWORK,UDP),(DST-PORT,443)),REJECT"}, cfg.Rule...)
+	}
+	if on(leak, true, "嗅探防泄漏", "sniff-leak") {
 		cfg.Sniffer.Enable = true
 		cfg.Sniffer.OverrideDest = true
 		cfg.Sniffer.ForceDnsMapping = true
 		cfg.Sniffer.ParsePureIp = true
+	} else {
+		cfg.Sniffer.Enable = false
 	}
 }
 
 func applyChina(cfg *config.RawConfig, cn map[string]bool) {
-	if flag(cn, "国内 DNS", "domestic-dns") {
+	cfg.Rule = dropMatching(cfg.Rule, func(rule string) bool {
+		return strings.HasPrefix(rule, "GEOIP,CN,DIRECT") ||
+			strings.HasPrefix(rule, "GEOSITE,cn,DIRECT") ||
+			strings.HasPrefix(rule, "GEOIP,private,DIRECT")
+	})
+	var front []string
+	if on(cn, true, "局域网直连", "lan-direct") {
+		front = append(front, "GEOIP,private,DIRECT,no-resolve")
+	}
+	if on(cn, true, "中国大陆域名直连", "geosite-cn-direct") {
+		front = append(front, "GEOSITE,cn,DIRECT")
+	}
+	if on(cn, true, "中国大陆 IP 直连", "geoip-cn-direct") {
+		front = append(front, "GEOIP,CN,DIRECT")
+	}
+	cfg.Rule = prependMissing(cfg.Rule, front)
+	if on(cn, true, "国内 DNS", "domestic-dns") {
 		if cfg.DNS.NameServerPolicy == nil {
 			cfg.DNS.NameServerPolicy = orderedmap.New[string, any]()
 		}
 		cfg.DNS.NameServerPolicy.Set("geosite:cn", "https://223.5.5.5/dns-query")
 		cfg.DNS.DirectNameServer = appendUnique(cfg.DNS.DirectNameServer, "https://223.5.5.5/dns-query")
+	} else if cfg.DNS.NameServerPolicy != nil {
+		cfg.DNS.NameServerPolicy.Delete("geosite:cn")
 	}
 }
 
 func applyStrict(cfg *config.RawConfig, strict map[string]bool) {
-	if flag(strict, "严格路由", "strict-route") {
-		cfg.Tun.StrictRoute = true
-	}
-	if flag(strict, "DNS 遵循规则", "dns-respect-rules") || flag(strict, "严格路由", "strict-route") {
+	cfg.Tun.StrictRoute = on(strict, false, "严格路由", "strict-route")
+	if on(strict, true, "DNS 遵循规则", "dns-respect-rules") || cfg.Tun.StrictRoute {
 		cfg.DNS.RespectRules = true
+	} else {
+		cfg.DNS.RespectRules = false
 	}
-	if flag(strict, "进程严格匹配", "find-process-strict") {
+	if on(strict, false, "进程严格匹配", "find-process-strict") {
 		cfg.FindProcessMode = procmode.FindProcessStrict
+	} else {
+		cfg.FindProcessMode = procmode.FindProcessOff
 	}
 }
 
@@ -200,21 +231,27 @@ func applyRouting(cfg *config.RawConfig, groups scriptGroups) {
 		cfg.ProxyGroup = dropGroup(cfg.ProxyGroup, name)
 	}
 
-	if flag(groups.leak, "阻断 QUIC", "block-quic") {
-		front = append([]string{"AND,((NETWORK,UDP),(DST-PORT,443)),REJECT"}, front...)
-	}
-	if flag(groups.cn, "局域网直连", "lan-direct") {
-		front = append([]string{"GEOIP,private,DIRECT,no-resolve"}, front...)
-	}
-	if flag(groups.cn, "中国大陆域名直连", "geosite-cn-direct") {
-		front = append(front, "GEOSITE,cn,DIRECT")
-	}
-	if flag(groups.cn, "中国大陆 IP 直连", "geoip-cn-direct") {
-		front = append(front, "GEOIP,CN,DIRECT")
-	}
-
 	cfg.Rule = retargetRules(cfg.Rule, disabled, fallback)
 	cfg.Rule = prependMissing(cfg.Rule, front)
+}
+
+func dropMatching(rules []string, drop func(string) bool) []string {
+	if len(rules) == 0 {
+		return rules
+	}
+	out := make([]string, 0, len(rules))
+	for _, rule := range rules {
+		if drop(rule) {
+			continue
+		}
+		out = append(out, rule)
+	}
+	return out
+}
+
+func isQuicReject(rule string) bool {
+	upper := strings.ToUpper(rule)
+	return strings.Contains(upper, "DST-PORT,443") && strings.Contains(upper, "UDP")
 }
 
 func firstPresent(m map[string]bool, keys []string) (string, bool) {

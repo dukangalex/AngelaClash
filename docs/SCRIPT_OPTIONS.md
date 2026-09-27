@@ -1,41 +1,26 @@
-# 脚本
+# 脚本与系统显式选项
 
-工具 → **脚本显示选项**，或仪表盘上的脚本入口。
+仪表盘中间是**系统显式选项**（防泄漏、中国直连、严格路由）。它们在覆写脚本和订阅之后应用，冲突时以这里为准，开和关都会写进运行配置。
 
-如果脚本里有 `function main(config)`，保存后会用它的返回值覆写当前配置，但 **proxies 和 proxy-providers（节点和节点订阅）保持原配置**。服务正在运行时会立刻重载。`main` 必须 `return config`。
+脚本页在仪表盘下方，只有启用覆写脚本时才出现。脚本页里是 `main()` 开关、编辑器和分流策略组开关。
 
-```javascript
-function main(config) {
-  config["proxy-groups"] = [
-    { name: "PROXY", type: "select", proxies: ["节点名"] },
-  ];
-  config.rules = ["MATCH,PROXY"];
-  return config;
-}
-```
+内置脚本来自 [HiClash](https://github.com/dukangalex/HiClash) 的 `mihomoScript.js`，原作者 AIsouler。旧的空脚本会在导入或启动时换成这份。
 
-显示开关默认关闭。打开后，下次启动（或这次重载）还会按开关改分流、防泄漏、中国直连、严格路由。
+`function main(config)` 的返回值覆写当前配置，但空的 `proxies` / `proxy-providers` 会保留原节点。服务正在运行时保存会重载。`main` 必须返回配置对象。没有 `main` 的脚本会跳过，不再把导入打成失败。
 
-覆写脚本里可以声明：
+策略组里引用了不存在的节点时，导入会丢掉这些成员；一组被清空又没有订阅时，改为 `include-all` 并保留 `DIRECT`，避免「proxy group not found」。
 
-```javascript
-const Compatible_With_AngelaClash = { ruleOptionsEnable: true };
-const ruleOptionsEnable = {
-  "Google": true,
-  "AI": false,
-};
-```
+分流开关的键来自脚本里的 `ruleOptionsEnable`。关掉之后，这个组会从本次运行配置里拿掉，原来指向它的规则改到主组。
 
-`ruleOptionsEnable` 的键是策略组名。关掉之后，这个组会从本次运行配置里拿掉，原来指向它的规则改到主组（`主代理` / `PROXY` / `节点选择`，否则用剩下的第一个组）。
+| 系统显式选项 | 默认 | 作用 |
+|---|---|---|
+| DNS 走代理 | 开 | 境外 DNS 用 1.1.1.1 / 8.8.8.8 |
+| 禁止系统 DNS | 开 | 去掉 `system://` |
+| 关闭 IPv6 | 开 | 内核和 VPN 都不分配 IPv6 |
+| 阻断 QUIC | 关 | 拒绝 UDP 443 |
+| 嗅探防泄漏 | 开 | 嗅探并覆盖目标地址 |
+| 中国大陆域名 / IP 直连、国内 DNS、局域网直连 | 开 | 对应规则和国内 DoH |
+| 严格路由、禁止绕过 VPN | 关 | 打开后 VPN 接管全部地址并不允许绕过 |
+| DNS 遵循规则 | 开 | DNS 出口跟分流走 |
 
-在这之上，Angela Clash 固定多三组。内置脚本里的键会真正改配置：
-
-| 组 | 打开后 |
-|---|---|
-| 防泄漏 | DNS 走 1.1.1.1 / 8.8.8.8 并按规则出站；去掉 `system://`；可关 IPv6、阻断 UDP 443、开启嗅探 |
-| 中国直连 | `GEOSITE,cn,DIRECT`、`GEOIP,CN,DIRECT`、国内 DoH `223.5.5.5`、私有地址直连 |
-| 严格路由 | VPN 接管全部地址并不允许绕过；DNS 遵循规则；`find-process-mode: strict` |
-
-脚本只用来声明开关。客户端不执行 `main()`。自定义键如果不是上面这些名字，分流组仍按组名隐藏或补一个 `include-all` 策略组；防泄漏 / 中国直连 / 严格路由只认内置名字。
-
-内置脚本：`service/src/main/assets/angela/default-script.js`。界面里可以编辑，也可以恢复内置脚本。
+子页面可以从顶部下拉返回上一级。日志在内核启动时一并打开。

@@ -35,6 +35,10 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
                     when (it) {
                         ScriptOptionsDesign.Request.EditScript -> showEditor(store)
                         ScriptOptionsDesign.Request.RestoreScript -> confirmRestore(store)
+                        ScriptOptionsDesign.Request.Reload -> {
+                            val active = withProfile { queryActive() }
+                            if (active != null && clashRunning) sendProfileChanged(active.uuid)
+                        }
                     }
                 }
             }

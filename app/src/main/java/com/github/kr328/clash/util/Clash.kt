@@ -7,6 +7,7 @@ import com.github.kr328.clash.common.compat.startForegroundServiceCompat
 import com.github.kr328.clash.common.constants.Intents
 import com.github.kr328.clash.common.util.intent
 import com.github.kr328.clash.design.store.UiStore
+import com.github.kr328.clash.LogcatService
 import com.github.kr328.clash.service.ClashService
 import com.github.kr328.clash.service.TunService
 import com.github.kr328.clash.service.util.sendBroadcastSelf
@@ -23,10 +24,12 @@ fun Context.startClashService(): Intent? {
     } else {
         startForegroundServiceCompat(ClashService::class.intent)
     }
+    startForegroundServiceCompat(LogcatService::class.intent)
 
     return null
 }
 
 fun Context.stopClashService() {
     sendBroadcastSelf(Intent(Intents.ACTION_CLASH_REQUEST_STOP))
+    stopService(LogcatService::class.intent)
 }

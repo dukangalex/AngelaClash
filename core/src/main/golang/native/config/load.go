@@ -38,6 +38,14 @@ func UnmarshalAndPatch(profilePath string) (*config.RawConfig, error) {
 	}
 
 	rawConfig, err := config.UnmarshalRawConfig(configData)
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		if fixed, ferr := repairConfigYAML(configData); ferr == nil {
+			if next, nerr := config.UnmarshalRawConfig(fixed); nerr == nil {
+				log.Warnln("repaired dangling proxy group members: %s", err.Error())
+				rawConfig, err = next, nil
+			}
+		}
+	}
 	if err != nil {
 		return nil, err
 	}

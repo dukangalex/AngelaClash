@@ -13,6 +13,7 @@
 
     <!--  Toolbar  -->
     <dimen name="toolbar_height">56dp</dimen>
+    <dimen name="log_filter_height">44dp</dimen>
     <dimen name="toolbar_elevation">5dp</dimen>
     <dimen name="toolbar_image_action_padding">5dp</dimen>
 

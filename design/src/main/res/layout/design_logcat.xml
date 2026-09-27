@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingTop="@{(float) self.surface.insets.top + @dimen/toolbar_height}"
+            android:paddingTop="@{(float) self.surface.insets.top + @dimen/toolbar_height + @dimen/log_filter_height}"
             android:paddingBottom="@{self.surface.insets.bottom}" />
 
         <com.github.kr328.clash.design.view.ActivityBarLayout
@@ -81,22 +81,105 @@
                             android:src="@drawable/ic_baseline_publish" />
                     </LinearLayout>
 
-                    <ImageView
-                        android:layout_width="@dimen/item_tailing_component_size"
-                        android:layout_height="@dimen/item_tailing_component_size"
-                        android:layout_gravity="end"
-                        android:layout_marginStart="@dimen/item_tailing_margin"
-                        android:background="?selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:contentDescription="@string/close"
-                        android:focusable="true"
-                        android:onClick="@{() -> self.requests.offer(Request.Close)}"
-                        android:padding="@dimen/toolbar_image_action_padding"
-                        android:src="@drawable/ic_baseline_stop"
-                        android:visibility="@{streaming ? View.VISIBLE : View.GONE}" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="@{streaming ? View.VISIBLE : View.GONE}">
+
+                        <ImageView
+                            android:layout_width="@dimen/item_tailing_component_size"
+                            android:layout_height="@dimen/item_tailing_component_size"
+                            android:layout_marginStart="@dimen/item_tailing_margin"
+                            android:background="?selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:contentDescription="@string/history"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.requests.offer(Request.History)}"
+                            android:padding="@dimen/toolbar_image_action_padding"
+                            android:src="@drawable/ic_baseline_assignment" />
+
+                        <ImageView
+                            android:layout_width="@dimen/item_tailing_component_size"
+                            android:layout_height="@dimen/item_tailing_component_size"
+                            android:layout_marginStart="@dimen/item_tailing_margin"
+                            android:background="?selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:contentDescription="@string/close"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.requests.offer(Request.Close)}"
+                            android:padding="@dimen/toolbar_image_action_padding"
+                            android:src="@drawable/ic_baseline_stop" />
+                    </LinearLayout>
                 </FrameLayout>
 
             </RelativeLayout>
         </com.github.kr328.clash.design.view.ActivityBarLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="@{self.surface.insets.top}">
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/toolbar_height" />
+
+            <HorizontalScrollView
+                android:id="@+id/filter_bar"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/log_filter_height"
+                android:paddingHorizontal="12dp"
+                android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/filter_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/log_filter_all" />
+
+                <TextView
+                    android:id="@+id/filter_debug"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/debug" />
+
+                <TextView
+                    android:id="@+id/filter_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/info" />
+
+                <TextView
+                    android:id="@+id/filter_warning"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/warning" />
+
+                <TextView
+                    android:id="@+id/filter_error"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/error" />
+            </LinearLayout>
+        </HorizontalScrollView>
+        </LinearLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

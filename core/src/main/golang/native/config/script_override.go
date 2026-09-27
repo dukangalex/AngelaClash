@@ -9,32 +9,94 @@ import (
 	"github.com/metacubex/mihomo/common/yaml"
 	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/log"
 )
 
 func patchScriptOverride(cfg *config.RawConfig, _ string) error {
+	if !scriptOverrideEnabled() {
+		return nil
+	}
 	path := C.Path.Resolve("script.js")
 	text, err := os.ReadFile(path)
 	if err != nil || strings.TrimSpace(string(text)) == "" {
 		return nil
 	}
-	return applyScriptText(cfg, string(text))
-}
-
-func applyScriptText(cfg *config.RawConfig, src string) error {
-	src = strings.TrimSpace(src)
-	if src == "" {
-		return nil
-	}
-	if hasScriptMain(src) {
-		return runScriptMain(cfg, src)
+	if err = applyScriptText(cfg, string(text)); err != nil {
+		return err
 	}
 	return nil
 }
 
+func scriptOverrideEnabled() bool {
+	opts, ok := readScriptOptions()
+	if !ok || opts.ScriptEnabled == nil {
+		return true
+	}
+	return *opts.ScriptEnabled
+}
+
+func applyScriptText(cfg *config.RawConfig, src string) error {
+	src = strings.TrimSpace(src)
+	if src == "" || !hasScriptMain(src) {
+		return nil
+	}
+	return runScriptMain(cfg, src)
+}
+
 func hasScriptMain(src string) bool {
-	return strings.Contains(src, "function main") ||
-		strings.Contains(src, "main =") ||
-		strings.Contains(src, "main=")
+	stripped := stripJSComments(src)
+	return strings.Contains(stripped, "function main") ||
+		strings.Contains(stripped, "main=function") ||
+		strings.Contains(stripped, "main = function") ||
+		strings.Contains(stripped, "main=async") ||
+		strings.Contains(stripped, "main = async")
+}
+
+func stripJSComments(src string) string {
+	var b strings.Builder
+	b.Grow(len(src))
+	i := 0
+	for i < len(src) {
+		if src[i] == '"' || src[i] == '\'' || src[i] == '`' {
+			quote := src[i]
+			b.WriteByte(src[i])
+			i++
+			for i < len(src) {
+				if src[i] == '\\' && i+1 < len(src) {
+					b.WriteByte(src[i])
+					b.WriteByte(src[i+1])
+					i += 2
+					continue
+				}
+				b.WriteByte(src[i])
+				if src[i] == quote {
+					i++
+					break
+				}
+				i++
+			}
+			continue
+		}
+		if i+1 < len(src) && src[i] == '/' && src[i+1] == '/' {
+			for i < len(src) && src[i] != '\n' {
+				i++
+			}
+			continue
+		}
+		if i+1 < len(src) && src[i] == '/' && src[i+1] == '*' {
+			i += 2
+			for i+1 < len(src) && !(src[i] == '*' && src[i+1] == '/') {
+				i++
+			}
+			if i+1 < len(src) {
+				i += 2
+			}
+			continue
+		}
+		b.WriteByte(src[i])
+		i++
+	}
+	return b.String()
 }
 
 func runScriptMain(cfg *config.RawConfig, src string) error {
@@ -57,7 +119,8 @@ func runScriptMain(cfg *config.RawConfig, src string) error {
 	}
 	fn, ok := goja.AssertFunction(vm.Get("main"))
 	if !ok {
-		return fmt.Errorf("script: main is not a function")
+		log.Warnln("script has no main(), skipped")
+		return nil
 	}
 	val, err := fn(goja.Undefined(), vm.ToValue(doc))
 	if err != nil {
@@ -71,21 +134,33 @@ func runScriptMain(cfg *config.RawConfig, src string) error {
 	if !ok {
 		return fmt.Errorf("script main() must return an object")
 	}
-	if hasProxies {
-		out["proxies"] = proxies
-	} else {
-		delete(out, "proxies")
+	// A script may rename nodes and add DIRECT proxies. Keep that list when it
+	// returned one. An empty list means "do not touch nodes".
+	if isEmptyList(out["proxies"]) {
+		if hasProxies {
+			out["proxies"] = proxies
+		} else {
+			delete(out, "proxies")
+		}
 	}
-	if hasProviders {
-		out["proxy-providers"] = providers
-	} else {
-		delete(out, "proxy-providers")
+	if isEmptyMap(out["proxy-providers"]) {
+		if hasProviders {
+			out["proxy-providers"] = providers
+		} else {
+			delete(out, "proxy-providers")
+		}
 	}
+	repairDoc(out)
 	rewritten, err := yaml.Marshal(out)
 	if err != nil {
 		return err
 	}
 	next, err := config.UnmarshalRawConfig(rewritten)
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		if fixed, ferr := repairConfigYAML(rewritten); ferr == nil {
+			next, err = config.UnmarshalRawConfig(fixed)
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("script config: %w", err)
 	}

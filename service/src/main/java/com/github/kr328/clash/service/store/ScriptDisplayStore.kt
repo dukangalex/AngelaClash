@@ -12,7 +12,7 @@ import java.io.File
 class ScriptDisplayStore(private val context: Context) {
     data class Row(val name: String, val on: Boolean, val summary: String?)
     data class Section(val group: String, val rows: List<Row>)
-    data class Snapshot(val enabled: Boolean, val sections: List<Section>, val compatible: String)
+    data class Snapshot(val scriptEnabled: Boolean, val sections: List<Section>, val compatible: String)
     data class VpnHints(
         val captureAll: Boolean,
         val blockBypass: Boolean,
@@ -28,7 +28,7 @@ class ScriptDisplayStore(private val context: Context) {
         get() = dir.resolve(SCRIPT)
 
     fun ensureScript() {
-        if (!scriptFile.exists()) {
+        if (!scriptFile.exists() || isLegacyStub(scriptFile.readText())) {
             writeAtomic(scriptFile, defaultScript())
         }
     }
@@ -40,15 +40,14 @@ class ScriptDisplayStore(private val context: Context) {
 
     fun writeScript(text: String) {
         writeAtomic(scriptFile, text)
-        val enabled = readPersisted().enabled
+        val enabled = readPersisted().scriptEnabled
         writePersisted(enabled, effectiveValues())
     }
 
     fun restoreDefault() {
         writeAtomic(scriptFile, defaultScript())
-        val enabled = readPersisted().enabled
-        writePersisted(enabled, linkedMapOf())
-        writePersisted(enabled, effectiveValues())
+        writePersisted(readPersisted().scriptEnabled, linkedMapOf())
+        writePersisted(readPersisted().scriptEnabled, effectiveValues())
     }
 
     fun snapshot(): Snapshot {
@@ -58,44 +57,49 @@ class ScriptDisplayStore(private val context: Context) {
         val saved = readPersisted()
         val sections = listOf(
             section(GROUP_RULE, declared.rule, saved.values),
-            section(GROUP_LEAK, declared.leak, saved.values),
-            section(GROUP_CN, declared.cn, saved.values),
-            section(GROUP_STRICT, declared.strict, saved.values),
         )
         val compatible = when {
             declared.angela -> "angela"
             declared.bettbox -> "bettbox"
             else -> ""
         }
-        val values = LinkedHashMap<String, Boolean>()
-        for (section in sections) {
-            for (row in section.rows) values[key(section.group, row.name)] = row.on
-        }
-        writePersisted(saved.enabled, values)
-        return Snapshot(saved.enabled, sections, compatible)
+        // Keep leak / China / strict switches. Writing only the rule rows
+        // used to wipe the dashboard options the next time this page opened.
+        writePersisted(saved.scriptEnabled, effectiveValues())
+        return Snapshot(saved.scriptEnabled, sections, compatible)
     }
 
-    fun setEnabled(enabled: Boolean) {
+    fun systemSections(): List<Section> {
+        val saved = readPersisted().values
+        return listOf(GROUP_LEAK, GROUP_CN, GROUP_STRICT).map { group ->
+            section(group, null, saved)
+        }
+    }
+
+    fun scriptEnabled(): Boolean = readPersisted().scriptEnabled
+
+    fun setScriptEnabled(enabled: Boolean) {
         writePersisted(enabled, effectiveValues())
     }
 
     fun setOption(group: String, name: String, on: Boolean) {
         val values = effectiveValues()
         values[key(group, name)] = on
-        writePersisted(readPersisted().enabled, values)
+        writePersisted(readPersisted().scriptEnabled, values)
     }
 
     fun vpnHints(): VpnHints {
-        val saved = readPersisted()
-        if (!saved.enabled) return VpnHints(false, false, false, false)
         val values = effectiveValues()
-        fun on(group: String, name: String): Boolean = values[key(group, name)] == true
-        val strict = on(GROUP_STRICT, "严格路由")
+        fun on(group: String, name: String, fallback: Boolean): Boolean =
+            values[key(group, name)] ?: fallback
+        val strict = on(GROUP_STRICT, "严格路由", false)
         return VpnHints(
             captureAll = strict,
-            blockBypass = strict || on(GROUP_STRICT, "禁止绕过 VPN"),
-            blockIpv6 = on(GROUP_LEAK, "关闭 IPv6"),
-            hijackDns = on(GROUP_LEAK, "DNS 走代理") || on(GROUP_LEAK, "禁止系统 DNS") || on(GROUP_STRICT, "DNS 遵循规则"),
+            blockBypass = strict || on(GROUP_STRICT, "禁止绕过 VPN", false),
+            blockIpv6 = on(GROUP_LEAK, "关闭 IPv6", true),
+            hijackDns = on(GROUP_LEAK, "DNS 走代理", true) ||
+                on(GROUP_LEAK, "禁止系统 DNS", true) ||
+                on(GROUP_STRICT, "DNS 遵循规则", true),
         )
     }
 
@@ -104,16 +108,15 @@ class ScriptDisplayStore(private val context: Context) {
         val declared = parse(scriptFile.readText())
         val saved = readPersisted().values
         val out = LinkedHashMap<String, Boolean>()
-        fun take(group: String, declaredMap: LinkedHashMap<String, Boolean>?) {
-            val defaults = declaredMap ?: builtins(group)
+        fun take(group: String, defaults: LinkedHashMap<String, Boolean>) {
             for ((name, fallback) in defaults) {
                 out[key(group, name)] = saved[key(group, name)] ?: fallback
             }
         }
-        take(GROUP_RULE, declared.rule)
-        take(GROUP_LEAK, declared.leak)
-        take(GROUP_CN, declared.cn)
-        take(GROUP_STRICT, declared.strict)
+        take(GROUP_RULE, declared.rule ?: builtins(GROUP_RULE))
+        take(GROUP_LEAK, builtins(GROUP_LEAK))
+        take(GROUP_CN, builtins(GROUP_CN))
+        take(GROUP_STRICT, builtins(GROUP_STRICT))
         return out
     }
 
@@ -133,10 +136,10 @@ class ScriptDisplayStore(private val context: Context) {
         return context.assets.open(ASSET).bufferedReader().use { it.readText() }
     }
 
-    private data class Persisted(val enabled: Boolean, val values: LinkedHashMap<String, Boolean>)
+    private data class Persisted(val scriptEnabled: Boolean, val values: LinkedHashMap<String, Boolean>)
 
     private fun readPersisted(): Persisted {
-        if (!optionFile.exists()) return Persisted(false, linkedMapOf())
+        if (!optionFile.exists()) return Persisted(true, linkedMapOf())
         return try {
             val root = JSONObject(optionFile.readText())
             val values = linkedMapOf<String, Boolean>()
@@ -148,19 +151,40 @@ class ScriptDisplayStore(private val context: Context) {
                     values[k] = obj.optBoolean(k, false)
                 }
             }
-            Persisted(root.optBoolean("enabled", false), values)
+            Persisted(root.optBoolean("scriptEnabled", true), values)
         } catch (_: Exception) {
-            Persisted(false, linkedMapOf())
+            Persisted(true, linkedMapOf())
         }
     }
 
-    private fun writePersisted(enabled: Boolean, values: Map<String, Boolean>) {
+    private fun writePersisted(scriptEnabled: Boolean, values: Map<String, Boolean>) {
         val obj = JSONObject()
-        obj.put("enabled", enabled)
+        obj.put("scriptEnabled", scriptEnabled)
+        obj.put("enabled", true)
         val map = JSONObject()
         for ((k, v) in values) map.put(k, v)
         obj.put("values", map)
         writeAtomic(optionFile, obj.toString())
+    }
+
+    private fun isLegacyStub(text: String): Boolean {
+        val stripped = StringBuilder()
+        var i = 0
+        while (i < text.length) {
+            if (i + 1 < text.length && text[i] == '/' && text[i + 1] == '/') {
+                val nl = text.indexOf('\n', i)
+                i = if (nl < 0) text.length else nl + 1
+                continue
+            }
+            if (i + 1 < text.length && text[i] == '/' && text[i + 1] == '*') {
+                val end = text.indexOf("*/", i + 2)
+                i = if (end < 0) text.length else end + 2
+                continue
+            }
+            stripped.append(text[i])
+            i++
+        }
+        return !stripped.contains("function main")
     }
 
     companion object {

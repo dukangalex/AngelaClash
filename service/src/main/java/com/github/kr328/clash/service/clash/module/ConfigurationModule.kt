@@ -8,6 +8,7 @@ import com.github.kr328.clash.service.StatusProvider
 import com.github.kr328.clash.service.data.ImportedDao
 import com.github.kr328.clash.service.data.SelectionDao
 import com.github.kr328.clash.service.store.ChainStore
+import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.service.store.ServiceStore
 import com.github.kr328.clash.service.util.importedDir
 import com.github.kr328.clash.service.util.sendProfileLoaded
@@ -60,6 +61,7 @@ class ConfigurationModule(service: Service) : Module<ConfigurationModule.LoadExc
 
                 val activeDir = service.importedDir.resolve(active.uuid.toString())
                 ChainStore.write(activeDir, ChainStore(service).get(active.uuid))
+                ScriptDisplayStore(service).ensureScript()
 
                 Clash.load(activeDir).await()
 

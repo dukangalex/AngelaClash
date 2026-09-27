@@ -36,6 +36,12 @@
         <variable
             name="hasProviders"
             type="boolean" />
+        <variable
+            name="showScript"
+            type="boolean" />
+        <variable
+            name="showChain"
+            type="boolean" />
 
         <import type="android.view.View" />
         <import type="com.github.kr328.clash.design.MainDesign.Request" />
@@ -203,35 +209,50 @@
                             android:text="@string/direct_mode" />
                     </com.google.android.material.button.MaterialButtonToggleGroup>
 
-                    <LinearLayout
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="20dp"
+                        android:text="@string/system_options"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
 
-                        <com.google.android.material.button.MaterialButton
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:onClick="@{() -> self.request(Request.OpenScript)}"
-                            android:text="@string/script_display_options" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/system_options_summary"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                        <com.google.android.material.button.MaterialButton
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:onClick="@{() -> self.request(Request.OpenChain)}"
-                            android:text="@string/chain_proxy" />
-                    </LinearLayout>
+                    <LinearLayout
+                        android:id="@+id/explicit_host"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <com.google.android.material.button.MaterialButton
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:onClick="@{() -> self.request(Request.OpenScript)}"
+                        android:text="@string/script_display_options"
+                        android:visibility="@{showScript ? View.VISIBLE : View.GONE}" />
+
+                    <com.google.android.material.button.MaterialButton
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:onClick="@{() -> self.request(Request.OpenChain)}"
+                        android:text="@string/chain_proxy"
+                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@{chainSummary}"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
+                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}" />
                 </LinearLayout>
             </ScrollView>
 

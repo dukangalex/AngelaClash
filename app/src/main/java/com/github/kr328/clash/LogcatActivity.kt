@@ -115,6 +115,8 @@ class LogcatActivity : BaseActivity<LogcatDesign>() {
                             startActivity(LogsActivity::class.intent)
                             finish()
                         }
+                        LogcatDesign.Request.History ->
+                            startActivity(LogsActivity::class.intent)
                         else -> Unit
                     }
                 }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.View
 import com.github.kr328.clash.design.databinding.DesignSettingsCommonBinding
 import com.github.kr328.clash.design.preference.OnChangedListener
-import com.github.kr328.clash.design.preference.Preference
 import com.github.kr328.clash.design.preference.category
 import com.github.kr328.clash.design.preference.clickable
 import com.github.kr328.clash.design.preference.preferenceScreen
@@ -24,6 +23,7 @@ class ScriptOptionsDesign(
     enum class Request {
         EditScript,
         RestoreScript,
+        Reload,
     }
 
     private class Flag(var on: Boolean)
@@ -41,28 +41,24 @@ class ScriptOptionsDesign(
 
         val snap = store.snapshot()
         val screen = preferenceScreen(context) {
-            val deps = mutableListOf<Preference>()
-            val enabled = Flag(snap.enabled)
+            val enabled = Flag(snap.scriptEnabled)
 
             switch(
                 value = enabled::on,
-                title = R.string.script_display_enable,
-                summary = R.string.script_display_enable_summary,
+                title = R.string.script_enable,
+                summary = R.string.script_enable_summary,
             ) {
                 listener = OnChangedListener {
-                    store.setEnabled(enabled.on)
-                    deps.forEach { it.enabled = enabled.on }
+                    store.setScriptEnabled(enabled.on)
+                    requests.trySend(Request.Reload)
                 }
             }
 
             if (running) {
                 tips(R.string.script_display_running)
             }
-            when (snap.compatible) {
-                "bettbox" -> tips(R.string.script_display_bettbox)
-                "angela" -> tips(R.string.script_display_angela)
-                else -> tips(R.string.script_display_hint)
-            }
+            tips(R.string.script_page_hint)
+            tips(R.string.script_credit)
 
             clickable(
                 title = R.string.script_display_edit,
@@ -77,31 +73,20 @@ class ScriptOptionsDesign(
                 clicked { requests.trySend(Request.RestoreScript) }
             }
 
-            val titles = mapOf(
-                ScriptDisplayStore.GROUP_RULE to R.string.script_display_rule,
-                ScriptDisplayStore.GROUP_LEAK to R.string.script_display_leak,
-                ScriptDisplayStore.GROUP_CN to R.string.script_display_cn,
-                ScriptDisplayStore.GROUP_STRICT to R.string.script_display_strict,
-            )
-            for (section in snap.sections) {
-                category(titles.getValue(section.group))
-                for (row in section.rows) {
+            if (snap.sections.isNotEmpty() && snap.sections[0].rows.isNotEmpty()) {
+                category(R.string.script_display_rule)
+                for (row in snap.sections[0].rows) {
                     val flag = Flag(row.on)
-                    val group = section.group
                     val name = row.name
-                    val pref = switch(flag::on) {
+                    switch(flag::on) {
                         title = name
                         summary = row.summary
                         listener = OnChangedListener {
-                            store.setOption(group, name, flag.on)
+                            store.setOption(ScriptDisplayStore.GROUP_RULE, name, flag.on)
+                            requests.trySend(Request.Reload)
                         }
                     }
-                    deps.add(pref)
                 }
-            }
-
-            if (!enabled.on) {
-                deps.forEach { it.enabled = false }
             }
         }
 

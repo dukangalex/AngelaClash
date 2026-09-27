@@ -17,17 +17,17 @@ import (
 )
 
 var processors = []processor{
-	patchScriptOverride, // script main() replaces the profile, then nodes are restored
+	patchScriptOverride,     // script main() replaces the profile, then nodes are restored
 	patchExternalController, // must before patchOverride, so we only apply ExternalController in Override settings
 	patchOverride,
 	patchGeneral,
 	patchProfile,
 	patchDns,
 	patchTun,
-	patchScriptDisplay,
 	patchListeners,
 	patchChain,
 	patchProviders,
+	patchScriptDisplay, // system options win over the script, profile, and chain
 	validConfig,
 }
 
@@ -56,6 +56,9 @@ func patchGeneral(cfg *config.RawConfig, profileDir string) error {
 	cfg.RoutingMark = 0
 	if cfg.ExternalController != "" || cfg.ExternalControllerTLS != "" {
 		cfg.ExternalUI = profileDir + "/ui"
+	}
+	if cfg.LogLevel == log.SILENT && !strings.Contains(ReadOverride(OverrideSlotPersist), "log-level") {
+		cfg.LogLevel = log.INFO
 	}
 
 	return nil
