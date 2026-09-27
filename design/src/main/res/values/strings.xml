@@ -413,8 +413,7 @@
     <string name="script_display_enable">Enable script options</string>
     <string name="script_display_enable_summary">Switches below are applied the next time the service starts</string>
     <string name="script_display_running">The service is running. Saving the script reloads it now</string>
-    <string name="script_display_hint">Declare ruleOptionsEnable in the override script to show rule switches. Leak protection, China direct, and strict routing are always listed as well.</string>
-    <string name="script_display_bettbox">Rule switches follow policy group names. Turning one off removes that group and sends its rules back to the main group.</string>
+    <string name="script_display_hint">Rule switches are on the proxy page. System options on the home page still win.</string>
     <string name="script_display_angela">Angela Clash script declaration detected.</string>
     <string name="script_display_edit">Edit override script</string>
     <string name="script_display_edit_summary">main() overwrites everything except nodes. Saving reloads a running service</string>
@@ -425,8 +424,14 @@
     <string name="script_display_leak">Leak protection</string>
     <string name="script_display_cn">China direct</string>
     <string name="script_display_strict">Strict routing</string>
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_tools">Tools</string>
+    <string name="nav_dashboard">Home</string>
+    <string name="nav_tools">More</string>
+    <string name="service_status">Service</string>
+    <string name="rule_switches">Rule switches</string>
+    <string name="rule_switches_summary">Turning one off removes that group and sends its rules back to the main group. System options still win.</string>
+    <string name="section_view">View</string>
+    <string name="section_other">Other</string>
+    <string name="logs_summary">Live log</string>
     <string name="dashboard_up">Up %1$s</string>
     <string name="dashboard_down">Down %1$s</string>
     <string name="dashboard_total">Total %1$s</string>

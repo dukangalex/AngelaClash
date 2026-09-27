@@ -2,15 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_dashboard"
-        android:icon="@drawable/ic_baseline_dns"
+        android:icon="@drawable/ic_nav_home"
         android:title="@string/nav_dashboard" />
     <item
         android:id="@+id/nav_proxy"
-        android:icon="@drawable/ic_baseline_apps"
+        android:icon="@drawable/ic_baseline_view_list"
         android:title="@string/proxy" />
     <item
         android:id="@+id/nav_profiles"
-        android:icon="@drawable/ic_baseline_view_list"
+        android:icon="@drawable/ic_outline_folder"
         android:title="@string/profiles" />
     <item
         android:id="@+id/nav_tools"

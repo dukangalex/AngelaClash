@@ -58,7 +58,7 @@
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
                         android:layout_marginStart="@dimen/item_tailing_margin"
-                        android:layout_toStartOf="@id/menu_view">
+                        android:layout_toStartOf="@id/rule_view">
 
                         <ImageView
                             android:id="@+id/url_test_view"
@@ -79,6 +79,22 @@
                             android:layout_height="@dimen/item_tailing_component_size"
                             android:visibility="gone" />
                     </FrameLayout>
+
+                    <ImageView
+                        android:id="@+id/rule_view"
+                        android:layout_width="@dimen/item_tailing_component_size"
+                        android:layout_height="@dimen/item_tailing_component_size"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="@dimen/item_tailing_margin"
+                        android:layout_toStartOf="@id/menu_view"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@string/rule_switches"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.requestOpenRules()}"
+                        android:padding="@dimen/toolbar_image_action_padding"
+                        android:src="@drawable/ic_rule_switches"
+                        android:tint="?attr/colorControlNormal" />
 
                     <ImageView
                         android:id="@+id/menu_view"

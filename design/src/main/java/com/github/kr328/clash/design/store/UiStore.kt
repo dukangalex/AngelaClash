@@ -23,9 +23,21 @@ class UiStore(context: Context) {
 
     var darkMode: DarkMode by store.enum(
         key = "dark_mode",
-        defaultValue = DarkMode.Auto,
+        defaultValue = DarkMode.ForceDark,
         values = DarkMode.values()
     )
+
+    var themeReady: Boolean by store.boolean(
+        key = "theme_ready_v2",
+        defaultValue = false,
+    )
+
+    init {
+        if (!themeReady) {
+            darkMode = DarkMode.ForceDark
+            themeReady = true
+        }
+    }
 
     var hideAppIcon: Boolean by store.boolean(
         key = "hide_app_icon",

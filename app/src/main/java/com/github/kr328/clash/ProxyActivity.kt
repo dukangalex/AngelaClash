@@ -99,6 +99,8 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                                 design.requests.send(ProxyDesign.Request.Reload(it.index))
                             }
                         }
+                        ProxyDesign.Request.OpenRules ->
+                            startActivity(RuleSwitchesActivity::class.intent)
                         is ProxyDesign.Request.PatchMode -> {
                             design.showModeSwitchTips()
 

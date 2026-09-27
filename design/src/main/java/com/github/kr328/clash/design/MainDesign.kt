@@ -151,7 +151,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             })
         }
         return MaterialCardView(context).apply {
-            radius = 16 * density
+            radius = 20 * density
             cardElevation = 0f
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -159,6 +159,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             )
             params.topMargin = dp(10)
             layoutParams = params
+            setCardBackgroundColor(context.resolveThemedColor(com.google.android.material.R.attr.colorSurface))
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 addView(header)
@@ -170,8 +171,6 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     suspend fun setClashRunning(running: Boolean) {
         withContext(Dispatchers.Main) {
             binding.clashRunning = running
-            val color = if (running) binding.colorClashStarted else binding.colorClashStopped
-            binding.power.backgroundTintList = ColorStateList.valueOf(color)
         }
     }
 
@@ -192,7 +191,22 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                 else -> R.id.mode_rule
             }
             binding.modeGroup.check(id)
+            paintMode(id)
             suppressMode = false
+        }
+    }
+
+    private fun paintMode(selected: Int) {
+        val primary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
+        val onPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorOnPrimary)
+        val normal = context.resolveThemedColor(android.R.attr.textColorPrimary)
+        for (button in listOf(binding.modeRule, binding.modeGlobal, binding.modeDirect)) {
+            val on = button.id == selected
+            button.backgroundTintList = ColorStateList.valueOf(
+                if (on) primary else android.graphics.Color.TRANSPARENT
+            )
+            button.setTextColor(if (on) onPrimary else normal)
+            button.strokeWidth = 0
         }
     }
 
@@ -226,7 +240,6 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         binding.colorClashStarted = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         binding.colorClashStopped = context.resolveThemedColor(R.attr.colorClashStopped)
         binding.chainSummary = ""
-        binding.power.backgroundTintList = ColorStateList.valueOf(binding.colorClashStopped)
 
         binding.modeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked || suppressMode) return@addOnButtonCheckedListener

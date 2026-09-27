@@ -72,154 +72,246 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="20dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="16dp">
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="24dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:contentDescription="@string/application_name"
-                            android:src="@drawable/ic_app_logo" />
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="4dp">
 
                         <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/nav_dashboard"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/power"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:text="@string/application_name"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+                            android:checked="@{clashRunning}"
+                            android:contentDescription="@string/running"
+                            android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@{@string/dashboard_total(forwarded)}"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="@{@string/dashboard_up(upload)}"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@{@string/dashboard_down(download)}"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.request(Request.OpenProfiles)}"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/profile"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:text="@{profileName != null ? profileName : @string/not_selected}"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.request(Request.ToggleStatus)}"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/service_status"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:text="@{clashRunning ? @string/running : @string/stopped}"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.request(Request.OpenProxy)}"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/proxy"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="6dp"
+                                    android:text="@string/rule_switches"
+                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:onClick="@{() -> self.request(Request.OpenProfiles)}"
-                        app:cardCornerRadius="16dp"
+                        android:layout_marginTop="12dp"
+                        app:cardCornerRadius="20dp"
                         app:cardElevation="0dp">
 
-                        <LinearLayout
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/mode_group"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
+                            android:padding="6dp"
+                            app:selectionRequired="true"
+                            app:singleSelection="true">
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/mode_rule"
+                                style="@style/Widget.MaterialComponents.Button.TextButton"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="@string/profile"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                                android:layout_weight="1"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:text="@string/rule_mode"
+                                app:cornerRadius="14dp" />
 
-                            <TextView
-                                android:layout_width="match_parent"
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/mode_global"
+                                style="@style/Widget.MaterialComponents.Button.TextButton"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@{profileName != null ? profileName : @string/not_selected}"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-                        </LinearLayout>
+                                android:layout_weight="1"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:text="@string/global_mode"
+                                app:cornerRadius="14dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/mode_direct"
+                                style="@style/Widget.MaterialComponents.Button.TextButton"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:text="@string/direct_mode"
+                                app:cornerRadius="14dp" />
+                        </com.google.android.material.button.MaterialButtonToggleGroup>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp">
-
-                        <TextView
-                            android:id="@+id/power"
-                            android:layout_width="148dp"
-                            android:layout_height="148dp"
-                            android:layout_gravity="center"
-                            android:background="@drawable/bg_power"
-                            android:gravity="center"
-                            android:onClick="@{() -> self.request(Request.ToggleStatus)}"
-                            android:text="@{clashRunning ? @string/running : @string/tap_to_start}"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp" />
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:text="@{@string/dashboard_up(upload)}"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:text="@{@string/dashboard_down(download)}"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
-                    </LinearLayout>
-
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:gravity="center"
-                        android:text="@{@string/dashboard_total(forwarded)}"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/mode_group"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        app:selectionRequired="true"
-                        app:singleSelection="true">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/mode_rule"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/rule_mode" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/mode_global"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/global_mode" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/mode_direct"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/direct_mode" />
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="18dp"
+                        android:paddingHorizontal="4dp"
                         android:text="@string/system_options"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
+                        android:paddingHorizontal="4dp"
                         android:text="@string/system_options_summary"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
@@ -229,30 +321,56 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical" />
 
-                    <com.google.android.material.button.MaterialButton
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:onClick="@{() -> self.request(Request.OpenScript)}"
-                        android:text="@string/script_display_options"
-                        android:visibility="@{showScript ? View.VISIBLE : View.GONE}" />
+                        android:visibility="@{showScript ? View.VISIBLE : View.GONE}"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
 
-                    <com.google.android.material.button.MaterialButton
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:text="@string/script_display_options"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:onClick="@{() -> self.request(Request.OpenChain)}"
-                        android:text="@string/chain_proxy"
-                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}" />
+                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@{chainSummary}"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/chain_proxy"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@{chainSummary}"
+                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
             </ScrollView>
 
@@ -266,98 +384,172 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingHorizontal="8dp"
+                    android:paddingHorizontal="16dp"
                     android:paddingTop="8dp"
-                    android:paddingBottom="16dp">
+                    android:paddingBottom="24dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:paddingHorizontal="16dp"
-                        android:paddingTop="8dp"
-                        android:text="@string/tools_more"
+                        android:paddingHorizontal="4dp"
+                        android:paddingBottom="12dp"
+                        android:text="@string/nav_tools"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="4dp"
+                        android:text="@string/section_view"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenLogs)}"
-                        app:icon="@drawable/ic_baseline_assignment"
-                        app:text="@string/logs" />
+                        android:layout_marginTop="6dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenScript)}"
-                        app:icon="@drawable/ic_baseline_extension"
-                        app:text="@string/script_display_options" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenProviders)}"
-                        android:visibility="@{clashRunning &amp;&amp; hasProviders ? View.VISIBLE : View.GONE}"
-                        app:icon="@drawable/ic_baseline_swap_vertical_circle"
-                        app:text="@string/providers" />
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenLogs)}"
+                                app:icon="@drawable/ic_baseline_assignment"
+                                app:subtext="@string/logs_summary"
+                                app:text="@string/logs" />
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenChain)}"
-                        app:icon="@drawable/ic_baseline_swap_vert"
-                        app:text="@string/chain_proxy" />
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenScript)}"
+                                android:visibility="@{showScript ? View.VISIBLE : View.GONE}"
+                                app:icon="@drawable/ic_baseline_extension"
+                                app:text="@string/script_display_options" />
+
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenProviders)}"
+                                android:visibility="@{clashRunning &amp;&amp; hasProviders ? View.VISIBLE : View.GONE}"
+                                app:icon="@drawable/ic_baseline_swap_vertical_circle"
+                                app:text="@string/providers" />
+
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenChain)}"
+                                android:visibility="@{showChain ? View.VISIBLE : View.GONE}"
+                                app:icon="@drawable/ic_baseline_swap_vert"
+                                app:text="@string/chain_proxy" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:paddingHorizontal="16dp"
-                        android:paddingTop="12dp"
+                        android:layout_marginTop="16dp"
+                        android:paddingHorizontal="4dp"
                         android:text="@string/tools_settings"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenAccess)}"
-                        app:icon="@drawable/ic_baseline_apps"
-                        app:text="@string/access_control_packages" />
+                        android:layout_marginTop="6dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenSettings)}"
-                        app:icon="@drawable/ic_baseline_settings"
-                        app:text="@string/settings" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.CheckUpdate)}"
-                        app:icon="@drawable/ic_baseline_update"
-                        app:text="@string/check_update" />
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenAccess)}"
+                                app:icon="@drawable/ic_baseline_apps"
+                                app:text="@string/access_control_packages" />
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenHelp)}"
-                        app:icon="@drawable/ic_baseline_help_center"
-                        app:text="@string/help" />
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenSettings)}"
+                                app:icon="@drawable/ic_baseline_settings"
+                                app:text="@string/settings" />
 
-                    <com.github.kr328.clash.design.view.LargeActionLabel
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.CheckUpdate)}"
+                                app:icon="@drawable/ic_baseline_update"
+                                app:text="@string/check_update" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:onClick="@{() -> self.request(Request.OpenAbout)}"
-                        app:icon="@drawable/ic_baseline_info"
-                        app:text="@string/about" />
+                        android:layout_marginTop="16dp"
+                        android:paddingHorizontal="4dp"
+                        android:text="@string/section_other"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenHelp)}"
+                                app:icon="@drawable/ic_baseline_help_center"
+                                app:text="@string/help" />
+
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenAbout)}"
+                                app:icon="@drawable/ic_baseline_info"
+                                app:text="@string/about" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
             </ScrollView>
         </FrameLayout>
 
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottom_nav"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:labelVisibilityMode="labeled"
-            app:menu="@menu/menu_main" />
+            android:layout_marginStart="28dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="28dp"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="6dp">
+
+            <com.google.android.material.bottomnavigation.BottomNavigationView
+                android:id="@+id/bottom_nav"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                app:itemIconSize="22dp"
+                app:labelVisibilityMode="labeled"
+                app:menu="@menu/menu_main" />
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </layout>

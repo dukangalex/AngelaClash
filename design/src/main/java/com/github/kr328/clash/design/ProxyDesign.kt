@@ -18,6 +18,7 @@ import com.github.kr328.clash.design.util.applyFrom
 import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.root
+import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.google.android.material.tabs.TabLayoutMediator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -36,6 +37,7 @@ class ProxyDesign(
         data class Reload(val index: Int) : Request()
         data class Select(val index: Int, val name: String) : Request()
         data class UrlTest(val index: Int) : Request()
+        object OpenRules : Request()
     }
 
     private val binding = DesignProxyBinding
@@ -62,6 +64,17 @@ class ProxyDesign(
         }
 
     override val root: View = binding.root
+
+    fun requestOpenRules() {
+        requests.trySend(Request.OpenRules)
+    }
+
+    init {
+        val rows = runCatching {
+            ScriptDisplayStore(context).snapshot().sections.firstOrNull()?.rows.orEmpty()
+        }.getOrDefault(emptyList())
+        binding.ruleView.visibility = if (rows.isEmpty()) View.GONE else View.VISIBLE
+    }
 
     suspend fun updateGroup(
         position: Int,
