@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_dashboard"
+        android:icon="@drawable/ic_baseline_dns"
+        android:title="@string/nav_dashboard" />
+    <item
+        android:id="@+id/nav_proxy"
+        android:icon="@drawable/ic_baseline_apps"
+        android:title="@string/proxy" />
+    <item
+        android:id="@+id/nav_profiles"
+        android:icon="@drawable/ic_baseline_view_list"
+        android:title="@string/profiles" />
+    <item
+        android:id="@+id/nav_tools"
+        android:icon="@drawable/ic_baseline_settings"
+        android:title="@string/nav_tools" />
+</menu>

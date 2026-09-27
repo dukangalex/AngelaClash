@@ -35,7 +35,7 @@
 | 官方上游 | [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) 分支 **Alpha**。不要跟踪它的 `main` |
 | 本项目内核 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo) 分支 **`chain-dev`**，tag `v1.19.31-chain.1` |
 | 已同步基线 | 官方 **Alpha** `f103639`（2026-09-25，已包含 tag **v1.19.31** 及其后的 Alpha 提交） |
-| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.0.2**） |
+| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.0.3**） |
 
 本 fork 的 `main` 不是内核，那是上游默认分支上的另一份内容。内核只在 `chain-dev`。
 

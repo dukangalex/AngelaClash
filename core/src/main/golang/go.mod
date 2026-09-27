@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/dlclark/regexp2 v1.12.0
+	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
 	github.com/metacubex/mihomo v1.7.0
 	golang.org/x/sync v0.11.0
 )
@@ -32,6 +33,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
+	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect

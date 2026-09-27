@@ -405,12 +405,12 @@
     <string name="script_display_options">Script options</string>
     <string name="script_display_enable">Enable script options</string>
     <string name="script_display_enable_summary">Switches below are applied the next time the service starts</string>
-    <string name="script_display_running">The service is running. Changes apply on the next start</string>
+    <string name="script_display_running">The service is running. Saving the script reloads it now</string>
     <string name="script_display_hint">Declare ruleOptionsEnable in the override script to show rule switches. Leak protection, China direct, and strict routing are always listed as well.</string>
     <string name="script_display_bettbox">Rule switches follow policy group names. Turning one off removes that group and sends its rules back to the main group.</string>
     <string name="script_display_angela">Angela Clash script declaration detected.</string>
     <string name="script_display_edit">Edit override script</string>
-    <string name="script_display_edit_summary">Only the true/false maps are read. main() is not executed</string>
+    <string name="script_display_edit_summary">main() overwrites the profile except nodes, then reloads if the service is running</string>
     <string name="script_display_restore">Restore built-in script</string>
     <string name="script_display_restore_summary">Reset switches to the built-in Angela Clash script</string>
     <string name="script_display_restore_message">The current script and switch overrides will be replaced by the built-in script.</string>
@@ -418,4 +418,18 @@
     <string name="script_display_leak">Leak protection</string>
     <string name="script_display_cn">China direct</string>
     <string name="script_display_strict">Strict routing</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_tools">Tools</string>
+    <string name="dashboard_up">Up %1$s</string>
+    <string name="dashboard_down">Down %1$s</string>
+    <string name="dashboard_total">Total %1$s</string>
+    <string name="tools_more">More</string>
+    <string name="tools_settings">Settings</string>
+    <string name="check_update">Check for updates</string>
+    <string name="check_update_running">Checking for updates</string>
+    <string name="check_update_none">Already up to date</string>
+    <string name="check_update_found">Version %1$s is available</string>
+    <string name="check_update_failed">Could not check for updates</string>
+    <string name="check_update_downloading">Downloading the update</string>
+    <string name="script_applied">Script saved. Reloading</string>
 </resources>

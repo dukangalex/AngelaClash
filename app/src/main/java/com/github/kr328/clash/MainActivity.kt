@@ -21,7 +21,9 @@ import com.github.kr328.clash.util.startClashService
 import com.github.kr328.clash.util.stopClashService
 import com.github.kr328.clash.util.withClash
 import com.github.kr328.clash.util.withProfile
-import com.github.kr328.clash.core.bridge.*
+import com.github.kr328.clash.core.Clash
+import com.github.kr328.clash.core.bridge.Bridge
+import com.github.kr328.clash.core.model.TunnelState
 import com.github.kr328.clash.design.R as DesignR
 import com.github.kr328.clash.service.store.ChainStore
 import kotlinx.coroutines.Dispatchers
@@ -80,6 +82,18 @@ class MainActivity : BaseActivity<MainDesign>() {
                             startActivity(HelpActivity::class.intent)
                         MainDesign.Request.OpenAbout ->
                             design.showAbout(queryAppVersionName())
+                        MainDesign.Request.OpenScript ->
+                            startActivity(ScriptOptionsActivity::class.intent)
+                        MainDesign.Request.OpenAccess ->
+                            startActivity(AccessControlActivity::class.intent)
+                        MainDesign.Request.CheckUpdate ->
+                            AppUpdate(this@MainActivity).check()
+                        MainDesign.Request.SetRuleMode ->
+                            patchMode(TunnelState.Mode.Rule)
+                        MainDesign.Request.SetGlobalMode ->
+                            patchMode(TunnelState.Mode.Global)
+                        MainDesign.Request.SetDirectMode ->
+                            patchMode(TunnelState.Mode.Direct)
                     }
                 }
                 if (clashRunning) {
@@ -113,8 +127,18 @@ class MainActivity : BaseActivity<MainDesign>() {
 
     private suspend fun MainDesign.fetchTraffic() {
         withClash {
-            setForwarded(queryTrafficTotal())
+            setTraffic(queryTrafficNow(), queryTrafficTotal())
         }
+    }
+
+    private suspend fun patchMode(mode: TunnelState.Mode) {
+        if (!clashRunning) return
+        withClash {
+            val override = queryOverride(Clash.OverrideSlot.Session)
+            override.mode = mode
+            patchOverride(Clash.OverrideSlot.Session, override)
+        }
+        design?.setMode(mode)
     }
 
     private suspend fun MainDesign.startClash() {
@@ -181,7 +205,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         val toggle = ShortcutInfoCompat.Builder(this, "toggle_clash")
             .setShortLabel(getString(DesignR.string.shortcut_toggle_short))
             .setLongLabel(getString(DesignR.string.shortcut_toggle_long))
-            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_toggle_all))
+            .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
             .setIntent(
                 Intent(Intents.ACTION_TOGGLE_CLASH)
                     .setClassName(this, ExternalControlActivity::class.java.name)
@@ -193,7 +217,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         val start = ShortcutInfoCompat.Builder(this, "start_clash")
             .setShortLabel(getString(DesignR.string.shortcut_start_short))
             .setLongLabel(getString(DesignR.string.shortcut_start_long))
-            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_toggle_on))
+            .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
             .setIntent(
                 Intent(Intents.ACTION_START_CLASH)
                     .setClassName(this, ExternalControlActivity::class.java.name)
@@ -205,7 +229,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         val stop = ShortcutInfoCompat.Builder(this, "stop_clash")
             .setShortLabel(getString(DesignR.string.shortcut_stop_short))
             .setLongLabel(getString(DesignR.string.shortcut_stop_long))
-            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_toggle_off))
+            .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
             .setIntent(
                 Intent(Intents.ACTION_STOP_CLASH)
                     .setClassName(this, ExternalControlActivity::class.java.name)

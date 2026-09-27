@@ -17,6 +17,7 @@ import (
 )
 
 var processors = []processor{
+	patchScriptOverride, // script main() replaces the profile, then nodes are restored
 	patchExternalController, // must before patchOverride, so we only apply ExternalController in Override settings
 	patchOverride,
 	patchGeneral,

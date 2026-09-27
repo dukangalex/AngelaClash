@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.service.quicksettings.Tile
@@ -77,9 +79,19 @@ class TileService : TileService() {
         else
             currentProfile
 
-        tile.icon = Icon.createWithResource(this, R.drawable.ic_logo_service)
+        tile.icon = appIcon()
 
         tile.updateTile()
+    }
+
+    private fun appIcon(): Icon {
+        val drawable = packageManager.getApplicationIcon(packageName)
+        val size = (48 * resources.displayMetrics.density).toInt().coerceAtLeast(48)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, size, size)
+        drawable.draw(canvas)
+        return Icon.createWithBitmap(bitmap)
     }
 
     private val receiver = object : BroadcastReceiver() {

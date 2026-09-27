@@ -7,8 +7,12 @@ import android.widget.ScrollView
 import com.github.kr328.clash.design.R
 import com.github.kr328.clash.design.ScriptOptionsDesign
 import com.github.kr328.clash.service.store.ScriptDisplayStore
+import com.github.kr328.clash.design.ui.ToastDuration
+import com.github.kr328.clash.service.util.sendProfileChanged
+import com.github.kr328.clash.util.withProfile
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 
 class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
@@ -53,7 +57,14 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
             .setView(scroll)
             .setPositiveButton(R.string.save) { _, _ ->
                 store.writeScript(input.text?.toString().orEmpty())
-                recreate()
+                launch {
+                    val active = withProfile { queryActive() }
+                    if (active != null && clashRunning) {
+                        sendProfileChanged(active.uuid)
+                        design?.showToast(R.string.script_applied, ToastDuration.Short)
+                    }
+                    recreate()
+                }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()

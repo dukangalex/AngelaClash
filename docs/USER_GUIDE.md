@@ -37,17 +37,17 @@ Angela Clash 是面向社区用户的 Android 代理客户端，内核基于开�
 
 内核用的是官方 `dialer-proxy`，没有第二套协议。
 
-## 脚本显示选项
+## 脚本
 
-设置里有 **脚本显示选项**，默认关闭。
+工具或仪表盘里打开 **脚本显示选项**。
 
-覆写脚本里声明 `ruleOptionsEnable` 后会出现分流开关。另外固定有三组：防泄漏、中国直连、严格路由。打开总开关后，下次启动才会改运行配置。订阅原文不会被改。
+脚本里的 `main(config)` 会覆写除节点和节点订阅以外的配置。正在运行时保存会立刻重载。显示开关默认关闭，打开后才改分流、防泄漏、中国直连、严格路由。
 
 细节见 [SCRIPT_OPTIONS.md](SCRIPT_OPTIONS.md)。
 
 ## 检查更新
 
-请使用本仓库 GitHub Releases。不要从 F-Droid 或官方 MetaCubeX 发布渠道获取本分支安装包。
+工具页里可以检查更新，有新版本会下载安装包。也可以从 [Releases](https://github.com/dukangalex/AngelaClash/releases) 手动下载 `Angela-Clash-*.apk`。不要从 F-Droid 或官方 MetaCubeX 发布渠道获取本分支安装包。
 
 ## 许可与免责
 

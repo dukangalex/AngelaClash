@@ -1,7 +1,7 @@
-// Angela Clash 脚本显示选项
-// 声明 Compatible_With_AngelaClash 后，分流开关会出现在「脚本显示选项」。
-// 另外三组是防泄漏、中国直连、严格路由。
-// 客户端只读取这些对象里的 true/false，不会执行 main()。
+// Angela Clash 覆写脚本
+// function main(config) { ... return config } 会覆写除 proxies、proxy-providers 以外的配置。
+// 保存时如果服务正在运行，会立刻重载。
+// 下面这些 true/false 是显示开关，总开关打开后才会改运行配置。
 const Compatible_With_AngelaClash = {
   ruleOptionsEnable: true,
   leakOptionsEnable: true,

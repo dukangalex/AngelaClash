@@ -1,8 +1,22 @@
-# 脚本显示选项
+# 脚本
 
-设置 → **脚本显示选项**。默认关闭。打开后，下次启动服务时生效。
+工具 → **脚本显示选项**，或仪表盘上的脚本入口。
 
-覆写脚本里声明：
+如果脚本里有 `function main(config)`，保存后会用它的返回值覆写当前配置，但 **proxies 和 proxy-providers（节点和节点订阅）保持原配置**。服务正在运行时会立刻重载。`main` 必须 `return config`。
+
+```javascript
+function main(config) {
+  config["proxy-groups"] = [
+    { name: "PROXY", type: "select", proxies: ["节点名"] },
+  ];
+  config.rules = ["MATCH,PROXY"];
+  return config;
+}
+```
+
+显示开关默认关闭。打开后，下次启动（或这次重载）还会按开关改分流、防泄漏、中国直连、严格路由。
+
+覆写脚本里可以声明：
 
 ```javascript
 const Compatible_With_AngelaClash = { ruleOptionsEnable: true };
