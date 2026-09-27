@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/metacubex/mihomo/common/orderedmap"
-	"github.com/metacubex/mihomo/component/process"
+	procmode "github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/log"
@@ -135,7 +135,7 @@ func applyStrict(cfg *config.RawConfig, strict map[string]bool) {
 		cfg.DNS.RespectRules = true
 	}
 	if flag(strict, "进程严格匹配", "find-process-strict") {
-		cfg.FindProcessMode = process.FindProcessStrict
+		cfg.FindProcessMode = procmode.FindProcessStrict
 	}
 }
 
