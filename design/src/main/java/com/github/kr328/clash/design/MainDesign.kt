@@ -18,6 +18,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         ToggleStatus,
         OpenProxy,
         OpenProfiles,
+        OpenChain,
         OpenProviders,
         OpenLogs,
         OpenSettings,
@@ -34,6 +35,12 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     suspend fun setProfileName(name: String?) {
         withContext(Dispatchers.Main) {
             binding.profileName = name
+        }
+    }
+
+    suspend fun setChainSummary(summary: String?) {
+        withContext(Dispatchers.Main) {
+            binding.chainSummary = summary ?: context.getString(R.string.chain_not_set)
         }
     }
 
@@ -83,6 +90,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
         binding.colorClashStarted = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         binding.colorClashStopped = context.resolveThemedColor(R.attr.colorClashStopped)
+        binding.chainSummary = context.getString(R.string.chain_not_set)
     }
 
     fun request(request: Request) {

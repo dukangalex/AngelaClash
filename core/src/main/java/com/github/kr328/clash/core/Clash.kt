@@ -171,6 +171,10 @@ object Clash {
         }
     }
 
+    fun queryProfileOutline(path: File): String {
+        return Bridge.nativeQueryProfileOutline(path.absolutePath)
+    }
+
     fun queryProviders(): List<Provider> {
         val providers =
             Json.Default.decodeFromString(JsonArray.serializer(), Bridge.nativeQueryProviders())

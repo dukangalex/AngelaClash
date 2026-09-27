@@ -213,6 +213,17 @@ Java_com_github_kr328_clash_core_bridge_Bridge_nativePatchSelector(JNIEnv *env, 
     return (jboolean) patchSelector(_selector, _name);
 }
 
+JNIEXPORT jstring JNICALL
+Java_com_github_kr328_clash_core_bridge_Bridge_nativeQueryProfileOutline(JNIEnv *env, jobject thiz,
+                                                                          jstring path) {
+    TRACE_METHOD();
+
+    scoped_string _path = get_string(path);
+    scoped_string response = queryProfileOutline(_path);
+
+    return new_string(response);
+}
+
 JNIEXPORT void JNICALL
 Java_com_github_kr328_clash_core_bridge_Bridge_nativeLoad(JNIEnv *env, jobject thiz,
                                                           jobject completable, jstring path) {

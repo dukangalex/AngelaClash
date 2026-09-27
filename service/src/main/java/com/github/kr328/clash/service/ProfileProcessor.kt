@@ -11,6 +11,7 @@ import com.github.kr328.clash.service.data.Pending
 import com.github.kr328.clash.service.data.PendingDao
 import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.service.remote.IFetchObserver
+import com.github.kr328.clash.service.store.ChainStore
 import com.github.kr328.clash.service.store.ServiceStore
 import com.github.kr328.clash.service.util.importedDir
 import com.github.kr328.clash.service.util.pendingDir
@@ -166,6 +167,7 @@ object ProfileProcessor {
             profileLock.withLock {
                 ImportedDao().remove(uuid)
                 PendingDao().remove(uuid)
+                ChainStore(context).removeProfile(uuid)
 
                 val pending = context.pendingDir.resolve(uuid.toString())
                 val imported = context.importedDir.resolve(uuid.toString())

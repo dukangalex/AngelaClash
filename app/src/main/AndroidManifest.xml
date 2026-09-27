@@ -153,6 +153,11 @@
             android:exported="false"
             android:label="@string/settings" />
         <activity
+            android:name=".ChainActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/chain_proxy" />
+        <activity
             android:name=".NetworkSettingsActivity"
             android:configChanges="uiMode"
             android:exported="false"

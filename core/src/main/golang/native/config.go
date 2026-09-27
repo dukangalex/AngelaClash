@@ -5,6 +5,7 @@ import "C"
 
 import (
 	"runtime"
+	"strconv"
 	"unsafe"
 
 	"cfa/native/config"
@@ -36,6 +37,15 @@ func fetchAndValid(callback unsafe.Pointer, path, url C.c_string, force C.int) {
 
 		runtime.GC()
 	}(C.GoString(path), C.GoString(url), callback)
+}
+
+//export queryProfileOutline
+func queryProfileOutline(path C.c_string) *C.char {
+	outline, err := config.Outline(C.GoString(path))
+	if err != nil {
+		return C.CString(`{"groups":[],"proxies":[],"error":` + strconv.Quote(err.Error()) + `}`)
+	}
+	return C.CString(outline)
 }
 
 //export load
