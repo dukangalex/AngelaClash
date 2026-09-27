@@ -46,6 +46,7 @@ fun PreferenceScreen.switch(
             get() = binding.summaryView.text
             set(value) {
                 binding.summaryView.text = value
+                binding.summaryView.visibility = if (value.isNullOrEmpty()) View.GONE else View.VISIBLE
             }
         override var listener: OnChangedListener? = null
         override var enabled: Boolean

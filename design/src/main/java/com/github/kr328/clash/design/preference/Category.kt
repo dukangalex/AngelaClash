@@ -8,10 +8,16 @@ import com.github.kr328.clash.design.util.layoutInflater
 fun PreferenceScreen.category(
     @StringRes text: Int,
 ) {
+    category(context.getString(text))
+}
+
+fun PreferenceScreen.category(
+    text: CharSequence,
+) {
     val binding = PreferenceCategoryBinding
         .inflate(context.layoutInflater, root, false)
 
-    binding.textView.text = context.getString(text)
+    binding.textView.text = text
 
     addElement(object : Preference {
         override val view: View

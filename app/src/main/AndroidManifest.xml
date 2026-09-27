@@ -173,6 +173,11 @@
             android:exported="false"
             android:label="@string/override" />
         <activity
+            android:name=".ScriptOptionsActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/script_display_options" />
+        <activity
             android:name=".MetaFeatureSettingsActivity"
             android:configChanges="uiMode"
             android:exported="false"

@@ -401,4 +401,21 @@
     <string name="shortcut_start_long">Start Clash service</string>
     <string name="shortcut_stop_short">Stop Clash</string>
     <string name="shortcut_stop_long">Stop Clash service</string>
+
+    <string name="script_display_options">Script options</string>
+    <string name="script_display_enable">Enable script options</string>
+    <string name="script_display_enable_summary">Switches below are applied the next time the service starts</string>
+    <string name="script_display_running">The service is running. Changes apply on the next start</string>
+    <string name="script_display_hint">Declare ruleOptionsEnable in an override script, same as Bettbox. Angela Clash also shows leak, China-direct, and strict-route switches.</string>
+    <string name="script_display_bettbox">This script declares Compatible_With_Bettbox. Rule switches follow policy group names.</string>
+    <string name="script_display_angela">Angela Clash script declaration detected.</string>
+    <string name="script_display_edit">Edit override script</string>
+    <string name="script_display_edit_summary">Only the true/false maps are read. main() is not executed</string>
+    <string name="script_display_restore">Restore built-in script</string>
+    <string name="script_display_restore_summary">Reset switches to the built-in Angela Clash script</string>
+    <string name="script_display_restore_message">The current script and switch overrides will be replaced by the built-in script.</string>
+    <string name="script_display_rule">Rule options</string>
+    <string name="script_display_leak">Leak protection</string>
+    <string name="script_display_cn">China direct</string>
+    <string name="script_display_strict">Strict routing</string>
 </resources>

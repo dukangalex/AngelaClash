@@ -52,6 +52,13 @@
                 <com.github.kr328.clash.design.view.ActionLabel
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:onClick="@{() -> self.request(Request.StartScript)}"
+                    app:icon="@drawable/ic_baseline_view_list"
+                    app:text="@string/script_display_options" />
+
+                <com.github.kr328.clash.design.view.ActionLabel
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:onClick="@{() -> self.request(Request.StartMetaFeature)}"
                     app:icon="@drawable/ic_baseline_meta"
                     app:text="@string/meta_features" />

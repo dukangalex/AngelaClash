@@ -1,6 +1,10 @@
 # Angela Clash
 
-**Angela Clash** 是基于 [mihomo](https://github.com/MetaCubeX/mihomo)（Clash Meta）内核的 Android 代理客户端。官方内核保持完整。链式出站沿用官方 `dialer-proxy`，不另做协议栈。独立的入口/落地界面还没做，见 [docs/USER_GUIDE.md](docs/USER_GUIDE.md)。
+<p align="center">
+  <img src="docs/brand/angela-clash-logo.png" width="180" alt="Angela Clash">
+</p>
+
+**Angela Clash** 是基于 [mihomo](https://github.com/MetaCubeX/mihomo)（Clash Meta）内核的 Android 代理客户端。官方内核保持完整。链式出站沿用官方 `dialer-proxy`，不另做协议栈。独立的入口/落地界面见 [docs/USER_GUIDE.md](docs/USER_GUIDE.md)。脚本显示选项兼容 Bettbox 的 `ruleOptionsEnable`，并加上防泄漏、中国直连、严格路由，见 [docs/SCRIPT_OPTIONS.md](docs/SCRIPT_OPTIONS.md)。
 
 本项目与 MetaCubeX 及官方 Clash Meta for Android 无从属或授权关系，不得使用官方名称及标志进行商业发布或应用商店上架。
 
@@ -31,7 +35,7 @@
 | 官方上游 | [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) 分支 **Alpha**。不要跟踪它的 `main` |
 | 本项目内核 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo) 分支 **`chain-dev`**，tag `v1.19.31-chain.1` |
 | 已同步基线 | 官方 **Alpha** `f103639`（2026-09-25，已包含 tag **v1.19.31** 及其后的 Alpha 提交） |
-| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.0.1**） |
+| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.0.2**） |
 
 本 fork 的 `main` 不是内核，那是上游默认分支上的另一份内容。内核只在 `chain-dev`。
 

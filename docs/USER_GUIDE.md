@@ -37,6 +37,14 @@ Angela Clash 是面向社区用户的 Android 代理客户端，内核基于开�
 
 内核用的是官方 `dialer-proxy`，没有第二套协议。
 
+## 脚本显示选项
+
+设置里有 **脚本显示选项**，默认关闭。
+
+分流开关的写法和 [Bettbox](https://github.com/appshubcc/Bettbox) 一样：脚本里放 `ruleOptionsEnable`。另外固定有三组：防泄漏、中国直连、严格路由。打开总开关后，下次启动才会改运行配置。订阅原文不会被改。
+
+细节见 [SCRIPT_OPTIONS.md](SCRIPT_OPTIONS.md)。
+
 ## 检查更新
 
 请使用本仓库 GitHub Releases。不要从 F-Droid 或官方 MetaCubeX 发布渠道获取本分支安装包。

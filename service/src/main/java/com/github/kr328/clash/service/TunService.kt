@@ -122,20 +122,25 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
 
     private fun TunModule.open() {
         val store = ServiceStore(self)
+        val hints = com.github.kr328.clash.service.store.ScriptDisplayStore(self).vpnHints()
+        val bypassPrivate = if (hints.captureAll) false else store.bypassPrivateNetwork
+        val allowIpv6 = if (hints.blockIpv6) false else store.allowIpv6
+        val bypassAllowed = if (hints.blockBypass) false else store.allowBypass
+        val dnsHijacking = if (hints.hijackDns) true else store.dnsHijacking
 
         val device = with(Builder()) {
             // Interface address
             addAddress(TUN_GATEWAY, TUN_SUBNET_PREFIX)
-            if (store.allowIpv6) {
+            if (allowIpv6) {
                 addAddress(TUN_GATEWAY6, TUN_SUBNET_PREFIX6)
             }
 
             // Route
-            if (store.bypassPrivateNetwork) {
+            if (bypassPrivate) {
                 resources.getStringArray(R.array.bypass_private_route).map(::parseCIDR).forEach {
                     addRoute(it.ip, it.prefix)
                 }
-                if (store.allowIpv6) {
+                if (allowIpv6) {
                     resources.getStringArray(R.array.bypass_private_route6).map(::parseCIDR).forEach {
                         addRoute(it.ip, it.prefix)
                     }
@@ -143,12 +148,12 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
 
                 // Route of virtual DNS
                 addRoute(TUN_DNS, 32)
-                if (store.allowIpv6) {
+                if (allowIpv6) {
                     addRoute(TUN_DNS6, 128)
                 }
             } else {
                 addRoute(NET_ANY, 0)
-                if (store.allowIpv6) {
+                if (allowIpv6) {
                     addRoute(NET_ANY6, 0)
                 }
             }
@@ -179,7 +184,7 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
 
             // Virtual Dns Server
             addDnsServer(TUN_DNS)
-            if (store.allowIpv6) {
+            if (allowIpv6) {
                 addDnsServer(TUN_DNS6)
             }
 
@@ -205,13 +210,13 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
                         ProxyInfo.buildDirectProxy(
                             it.address.hostAddress,
                             it.port,
-                            HTTP_PROXY_BLACK_LIST + if (store.bypassPrivateNetwork) HTTP_PROXY_LOCAL_LIST else emptyList()
+                            HTTP_PROXY_BLACK_LIST + if (bypassPrivate) HTTP_PROXY_LOCAL_LIST else emptyList()
                         )
                     )
                 }
             }
 
-            if (store.allowBypass) {
+            if (bypassAllowed) {
                 allowBypass()
             }
 
@@ -219,9 +224,9 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
                 fd = establish()?.detachFd()
                     ?: throw NullPointerException("Establish VPN rejected by system"),
                 stack = store.tunStackMode,
-                gateway = "$TUN_GATEWAY/$TUN_SUBNET_PREFIX" + if (store.allowIpv6) ",$TUN_GATEWAY6/$TUN_SUBNET_PREFIX6" else "",
-                portal = TUN_PORTAL + if (store.allowIpv6) ",$TUN_PORTAL6" else "",
-                dns = if (store.dnsHijacking) NET_ANY else (TUN_DNS + if (store.allowIpv6) ",$TUN_DNS6" else ""),
+                gateway = "$TUN_GATEWAY/$TUN_SUBNET_PREFIX" + if (allowIpv6) ",$TUN_GATEWAY6/$TUN_SUBNET_PREFIX6" else "",
+                portal = TUN_PORTAL + if (allowIpv6) ",$TUN_PORTAL6" else "",
+                dns = if (dnsHijacking) NET_ANY else (TUN_DNS + if (allowIpv6) ",$TUN_DNS6" else ""),
             )
         }
 

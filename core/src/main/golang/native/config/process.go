@@ -23,6 +23,7 @@ var processors = []processor{
 	patchProfile,
 	patchDns,
 	patchTun,
+	patchScriptDisplay,
 	patchListeners,
 	patchChain,
 	patchProviders,
