@@ -3,6 +3,7 @@ package com.github.kr328.clash.design
 import android.content.Context
 import android.content.res.ColorStateList
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -14,6 +15,7 @@ import com.github.kr328.clash.core.util.trafficTotal
 import com.github.kr328.clash.core.util.trafficUpload
 import com.github.kr328.clash.design.databinding.DesignAboutBinding
 import com.github.kr328.clash.design.databinding.DesignMainBinding
+import com.github.kr328.clash.design.store.UiStore
 import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.root
@@ -31,6 +33,8 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         OpenProviders,
         OpenLogs,
         OpenSettings,
+        OpenApp,
+        OpenEnhance,
         OpenHelp,
         OpenAbout,
         OpenScript,
@@ -76,6 +80,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             ScriptDisplayStore.GROUP_LEAK to R.string.script_display_leak,
             ScriptDisplayStore.GROUP_CN to R.string.script_display_cn,
             ScriptDisplayStore.GROUP_STRICT to R.string.script_display_strict,
+            ScriptDisplayStore.GROUP_PRIVACY to R.string.script_display_privacy,
         )
         for (section in store.systemSections()) {
             host.addView(systemCard(store, section, context.getString(titles.getValue(section.group))))
@@ -251,6 +256,9 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         }
 
         binding.bottomNav.setOnItemSelectedListener { item ->
+            if (UiStore(context).hapticFeedback) {
+                binding.bottomNav.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            }
             when (item.itemId) {
                 R.id.nav_tools -> {
                     binding.pageTools = true

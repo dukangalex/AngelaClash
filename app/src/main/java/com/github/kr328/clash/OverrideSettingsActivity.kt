@@ -7,7 +7,6 @@ import com.github.kr328.clash.core.Clash
 import com.github.kr328.clash.design.OverrideSettingsDesign
 import com.github.kr328.clash.design.model.AppInfo
 import com.github.kr328.clash.design.util.toAppInfo
-import com.github.kr328.clash.service.store.ServiceStore
 import com.github.kr328.clash.util.withClash
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -17,7 +16,13 @@ import kotlinx.coroutines.withContext
 class OverrideSettingsActivity : BaseActivity<OverrideSettingsDesign>() {
     override suspend fun main() {
         val configuration = withClash { queryOverride(Clash.OverrideSlot.Persist) }
-        val service = ServiceStore(this)
+        val section = intent.getStringExtra(SECTION) ?: "all"
+        setTitle(when (section) {
+            "dns" -> getString(com.github.kr328.clash.design.R.string.dns)
+            "hosts" -> getString(com.github.kr328.clash.design.R.string.hosts)
+            "general" -> getString(com.github.kr328.clash.design.R.string.general)
+            else -> title
+        })
 
         defer {
             withClash {
@@ -27,7 +32,8 @@ class OverrideSettingsActivity : BaseActivity<OverrideSettingsDesign>() {
 
         val design = OverrideSettingsDesign(
             this,
-            configuration
+            configuration,
+            section,
         )
 
         setContentDesign(design)
@@ -54,5 +60,9 @@ class OverrideSettingsActivity : BaseActivity<OverrideSettingsDesign>() {
                 }
             }
         }
+    }
+
+    companion object {
+        const val SECTION = "section"
     }
 }

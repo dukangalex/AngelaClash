@@ -18,6 +18,7 @@ fun PreferenceScreen.category(
         .inflate(context.layoutInflater, root, false)
 
     binding.textView.text = text
+    binding.root.tag = PREF_OUTSIDE
 
     addElement(object : Preference {
         override val view: View

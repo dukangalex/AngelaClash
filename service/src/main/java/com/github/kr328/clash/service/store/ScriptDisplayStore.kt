@@ -76,7 +76,7 @@ class ScriptDisplayStore(private val context: Context) {
 
     fun systemSections(): List<Section> {
         val saved = readPersisted().values
-        return listOf(GROUP_LEAK, GROUP_CN, GROUP_STRICT).map { group ->
+        return listOf(GROUP_LEAK, GROUP_CN, GROUP_STRICT, GROUP_PRIVACY).map { group ->
             section(group, null, saved)
         }
     }
@@ -85,6 +85,10 @@ class ScriptDisplayStore(private val context: Context) {
 
     fun setScriptEnabled(enabled: Boolean) {
         writePersisted(enabled, effectiveValues())
+    }
+
+    fun optionOn(group: String, name: String, fallback: Boolean): Boolean {
+        return effectiveValues()[key(group, name)] ?: fallback
     }
 
     fun setOption(group: String, name: String, on: Boolean) {
@@ -122,6 +126,7 @@ class ScriptDisplayStore(private val context: Context) {
         take(GROUP_LEAK, builtins(GROUP_LEAK))
         take(GROUP_CN, builtins(GROUP_CN))
         take(GROUP_STRICT, builtins(GROUP_STRICT))
+        take(GROUP_PRIVACY, builtins(GROUP_PRIVACY))
         return out
     }
 
@@ -181,6 +186,7 @@ class ScriptDisplayStore(private val context: Context) {
         const val GROUP_LEAK = "leak"
         const val GROUP_CN = "cn"
         const val GROUP_STRICT = "strict"
+        const val GROUP_PRIVACY = "privacy"
 
         fun key(group: String, name: String) = "$group\u001f$name"
 
@@ -195,6 +201,7 @@ class ScriptDisplayStore(private val context: Context) {
             "禁止系统 DNS" to "去掉 system://，避免查询落到运营商",
             "关闭 IPv6" to "关闭内核和 VPN 的 IPv6，避免地址泄漏",
             "阻断 QUIC" to "拒绝 UDP 443，避免 QUIC 绕过代理",
+            "放行中国 QUIC" to "阻断 QUIC 时仍放行中国大陆的 QUIC",
             "嗅探防泄漏" to "开启嗅探并覆盖目标地址",
             "中国大陆 IP 直连" to "GEOIP 中国大陆走 DIRECT",
             "中国大陆域名直连" to "GEOSITE cn 走 DIRECT",
@@ -204,6 +211,9 @@ class ScriptDisplayStore(private val context: Context) {
             "禁止绕过 VPN" to "关闭系统的 VPN 绕过",
             "DNS 遵循规则" to "DNS 出口跟分流规则走",
             "进程严格匹配" to "find-process-mode 设为 strict",
+            "隐藏订阅名" to "通知里不显示当前订阅名称",
+            "拦截 STUN" to "拒绝常见 STUN 端口，降低地址暴露",
+            "屏蔽局域网发现" to "拒绝 mDNS、SSDP、NetBIOS 发现流量",
         )
 
         fun builtins(group: String): LinkedHashMap<String, Boolean> = when (group) {
@@ -220,6 +230,7 @@ class ScriptDisplayStore(private val context: Context) {
                 "禁止系统 DNS" to true,
                 "关闭 IPv6" to true,
                 "阻断 QUIC" to false,
+                "放行中国 QUIC" to false,
                 "嗅探防泄漏" to true,
             )
             GROUP_CN -> linkedMapOf(
@@ -228,11 +239,16 @@ class ScriptDisplayStore(private val context: Context) {
                 "国内 DNS" to true,
                 "局域网直连" to true,
             )
-            else -> linkedMapOf(
+            GROUP_STRICT -> linkedMapOf(
                 "严格路由" to false,
                 "禁止绕过 VPN" to false,
                 "DNS 遵循规则" to true,
                 "进程严格匹配" to false,
+            )
+            else -> linkedMapOf(
+                "隐藏订阅名" to false,
+                "拦截 STUN" to false,
+                "屏蔽局域网发现" to false,
             )
         }
 

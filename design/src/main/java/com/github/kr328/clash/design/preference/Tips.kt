@@ -33,6 +33,7 @@ fun PreferenceScreen.tips(
     }
 
     binding.tips.text = context.getHtml(text)
+    binding.root.tag = PREF_OUTSIDE
 
     impl.configure()
 

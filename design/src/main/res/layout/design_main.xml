@@ -338,18 +338,19 @@
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:onClick="@{() -> self.request(Request.OpenScript)}"
-                                android:visibility="@{showScript ? View.VISIBLE : View.GONE}"
-                                app:icon="@drawable/ic_baseline_extension"
-                                app:text="@string/script_display_options" />
+                                android:onClick="@{() -> self.request(Request.OpenProviders)}"
+                                android:visibility="@{clashRunning &amp;&amp; hasProviders ? View.VISIBLE : View.GONE}"
+                                app:icon="@drawable/ic_baseline_swap_vertical_circle"
+                                app:subtext="@string/providers_summary"
+                                app:text="@string/providers" />
 
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:onClick="@{() -> self.request(Request.OpenProviders)}"
-                                android:visibility="@{clashRunning &amp;&amp; hasProviders ? View.VISIBLE : View.GONE}"
-                                app:icon="@drawable/ic_baseline_swap_vertical_circle"
-                                app:text="@string/providers" />
+                                android:onClick="@{() -> self.request(Request.OpenScript)}"
+                                app:icon="@drawable/ic_baseline_extension"
+                                app:subtext="@string/script_entry_summary"
+                                app:text="@string/script_display_options" />
 
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
@@ -384,16 +385,34 @@
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:onClick="@{() -> self.request(Request.OpenAccess)}"
-                                app:icon="@drawable/ic_baseline_apps"
-                                app:text="@string/access_control_packages" />
+                                android:onClick="@{() -> self.request(Request.OpenApp)}"
+                                app:icon="@drawable/ic_baseline_settings"
+                                app:subtext="@string/application_page_summary"
+                                app:text="@string/application_page" />
 
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:onClick="@{() -> self.request(Request.OpenSettings)}"
-                                app:icon="@drawable/ic_baseline_settings"
-                                app:text="@string/settings" />
+                                app:icon="@drawable/ic_baseline_extension"
+                                app:subtext="@string/kernel_config_summary"
+                                app:text="@string/kernel_config" />
+
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenAccess)}"
+                                app:icon="@drawable/ic_baseline_apps"
+                                app:subtext="@string/access_summary"
+                                app:text="@string/access_control_packages" />
+
+                            <com.github.kr328.clash.design.view.LargeActionLabel
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:onClick="@{() -> self.request(Request.OpenEnhance)}"
+                                app:icon="@drawable/ic_baseline_flash_on"
+                                app:subtext="@string/enhance_tools_summary"
+                                app:text="@string/enhance_tools" />
 
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"

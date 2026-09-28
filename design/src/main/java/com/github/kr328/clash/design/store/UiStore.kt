@@ -90,6 +90,21 @@ class UiStore(context: Context) {
         defaultValue = false,
     )
 
+    var hapticFeedback: Boolean by store.boolean(
+        key = "haptic_feedback",
+        defaultValue = true,
+    )
+
+    var autoConnect: Boolean by store.boolean(
+        key = "auto_connect",
+        defaultValue = false,
+    )
+
+    var autoCheckUpdate: Boolean by store.boolean(
+        key = "auto_check_update",
+        defaultValue = false,
+    )
+
     companion object {
         private const val PREFERENCE_NAME = "ui"
 

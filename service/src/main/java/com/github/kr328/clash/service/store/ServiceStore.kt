@@ -65,4 +65,29 @@ class ServiceStore(context: Context) {
         key = "dynamic_notification",
         defaultValue = true
     )
+
+    var autoRestart by store.boolean(
+        key = "auto_restart_flag",
+        defaultValue = false
+    )
+
+    var autoRestartMigrated by store.boolean(
+        key = "auto_restart_migrated",
+        defaultValue = false
+    )
+
+    var startOnBoot by store.boolean(
+        key = "start_on_boot",
+        defaultValue = false
+    )
+
+    var storeFix by store.boolean(
+        key = "store_fix",
+        defaultValue = false
+    )
+
+    var highPriorityNotification by store.boolean(
+        key = "high_priority_notification",
+        defaultValue = false
+    )
 }

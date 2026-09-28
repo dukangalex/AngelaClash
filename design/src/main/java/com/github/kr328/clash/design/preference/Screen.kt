@@ -1,20 +1,24 @@
 package com.github.kr328.clash.design.preference
 
-import android.content.Context
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.LinearLayout.LayoutParams
 import android.widget.LinearLayout.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+import com.github.kr328.clash.design.util.resolveThemedColor
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.CoroutineScope
 
 interface PreferenceScreen : CoroutineScope {
-    val context: Context
+    val context: android.content.Context
     val root: ViewGroup
 }
 
+const val PREF_OUTSIDE = "pref_outside"
+
 fun CoroutineScope.preferenceScreen(
-    context: Context,
+    context: android.content.Context,
     configure: PreferenceScreen.() -> Unit
 ): PreferenceScreen {
     val root = LinearLayout(context).apply {
@@ -22,7 +26,7 @@ fun CoroutineScope.preferenceScreen(
     }
 
     val impl = object : PreferenceScreen, CoroutineScope by this {
-        override val context: Context
+        override val context: android.content.Context
             get() = context
         override val root: ViewGroup
             get() = root
@@ -34,10 +38,43 @@ fun CoroutineScope.preferenceScreen(
 }
 
 fun PreferenceScreen.addElement(preference: Preference) {
-    val params = LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+    val view = preference.view
     val density = root.resources.displayMetrics.density
-    val horizontal = (12 * density).toInt()
-    val vertical = (4 * density).toInt()
-    params.setMargins(horizontal, vertical, horizontal, vertical)
-    root.addView(preference.view, params)
+    fun dp(n: Int) = (n * density).toInt()
+
+    if (view.tag == PREF_OUTSIDE) {
+        root.tag = null
+        val params = LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        params.setMargins(dp(20), dp(12), dp(16), 0)
+        root.addView(view, params)
+        return
+    }
+
+    val box = root.tag as? LinearLayout ?: LinearLayout(root.context).also { inner ->
+        inner.orientation = LinearLayout.VERTICAL
+        val card = MaterialCardView(root.context).apply {
+            radius = 20 * density
+            cardElevation = 0f
+            setCardBackgroundColor(
+                root.context.resolveThemedColor(com.google.android.material.R.attr.colorSurface)
+            )
+            addView(inner, LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+        }
+        val params = LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        params.setMargins(dp(16), dp(6), dp(16), dp(8))
+        root.addView(card, params)
+        root.tag = inner
+    }
+
+    if (box.childCount > 0) {
+        val line = View(root.context)
+        val attrs = root.context.obtainStyledAttributes(intArrayOf(android.R.attr.listDivider))
+        line.background = attrs.getDrawable(0)
+        attrs.recycle()
+        val lineParams = LayoutParams(MATCH_PARENT, dp(1).coerceAtLeast(1))
+        lineParams.marginStart = dp(16)
+        lineParams.marginEnd = dp(16)
+        box.addView(line, lineParams)
+    }
+    box.addView(view, LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 }

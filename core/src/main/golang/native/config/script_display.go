@@ -22,6 +22,7 @@ func patchScriptDisplay(cfg *config.RawConfig, _ string) error {
 	applyLeak(cfg, groups.leak)
 	applyChina(cfg, groups.cn)
 	applyStrict(cfg, groups.strict)
+	applyPrivacy(cfg, groups.privacy)
 	if cfg.DNS.Enable && len(cfg.DNS.NameServer) == 0 {
 		cfg.DNS.NameServer = []string{"https://223.5.5.5/dns-query", "https://1.1.1.1/dns-query"}
 	}
@@ -35,7 +36,7 @@ type scriptOptionFile struct {
 }
 
 type scriptGroups struct {
-	rule, leak, cn, strict map[string]bool
+	rule, leak, cn, strict, privacy map[string]bool
 }
 
 func readScriptOptions() (scriptOptionFile, bool) {
@@ -54,10 +55,11 @@ func readScriptOptions() (scriptOptionFile, bool) {
 
 func splitScriptOptions(values map[string]bool) scriptGroups {
 	g := scriptGroups{
-		rule:   map[string]bool{},
-		leak:   map[string]bool{},
-		cn:     map[string]bool{},
-		strict: map[string]bool{},
+		rule:    map[string]bool{},
+		leak:    map[string]bool{},
+		cn:      map[string]bool{},
+		strict:  map[string]bool{},
+		privacy: map[string]bool{},
 	}
 	for key, on := range values {
 		group, name, ok := strings.Cut(key, "\u001f")
@@ -73,6 +75,8 @@ func splitScriptOptions(values map[string]bool) scriptGroups {
 			g.cn[name] = on
 		case "strict":
 			g.strict[name] = on
+		case "privacy":
+			g.privacy[name] = on
 		}
 	}
 	return g
@@ -116,7 +120,11 @@ func applyLeak(cfg *config.RawConfig, leak map[string]bool) {
 	}
 	cfg.Rule = dropMatching(cfg.Rule, isQuicReject)
 	if on(leak, false, "阻断 QUIC", "block-quic") {
-		cfg.Rule = append([]string{"AND,((NETWORK,UDP),(DST-PORT,443)),REJECT"}, cfg.Rule...)
+		rule := "AND,((NETWORK,UDP),(DST-PORT,443)),REJECT"
+		if on(leak, false, "放行中国 QUIC", "allow-cn-quic") {
+			rule = "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((GEOSITE,cn)))),REJECT"
+		}
+		cfg.Rule = append([]string{rule}, cfg.Rule...)
 	}
 	if on(leak, true, "嗅探防泄漏", "sniff-leak") {
 		cfg.Sniffer.Enable = true
@@ -154,6 +162,39 @@ func applyChina(cfg *config.RawConfig, cn map[string]bool) {
 	} else if cfg.DNS.NameServerPolicy != nil {
 		cfg.DNS.NameServerPolicy.Delete("geosite:cn")
 	}
+}
+
+func applyPrivacy(cfg *config.RawConfig, privacy map[string]bool) {
+	cfg.Rule = dropMatching(cfg.Rule, isPrivacyReject)
+	var front []string
+	if on(privacy, false, "拦截 STUN", "block-stun") {
+		front = append(front,
+			"AND,((NETWORK,UDP),(DST-PORT,3478)),REJECT",
+			"AND,((NETWORK,UDP),(DST-PORT,19302)),REJECT",
+		)
+	}
+	if on(privacy, false, "屏蔽局域网发现", "block-discovery") {
+		front = append(front,
+			"AND,((NETWORK,UDP),(DST-PORT,5353)),REJECT",
+			"AND,((NETWORK,UDP),(DST-PORT,1900)),REJECT",
+			"AND,((NETWORK,UDP),(DST-PORT,137)),REJECT",
+			"AND,((NETWORK,UDP),(DST-PORT,138)),REJECT",
+		)
+	}
+	cfg.Rule = prependMissing(cfg.Rule, front)
+}
+
+func isPrivacyReject(rule string) bool {
+	upper := strings.ToUpper(rule)
+	if !strings.Contains(upper, "REJECT") {
+		return false
+	}
+	for _, port := range []string{"3478", "19302", "5353", "1900", "137", "138"} {
+		if strings.Contains(upper, "DST-PORT,"+port) {
+			return true
+		}
+	}
+	return false
 }
 
 func applyStrict(cfg *config.RawConfig, strict map[string]bool) {

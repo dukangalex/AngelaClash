@@ -158,16 +158,36 @@ class TunService : VpnService(), CoroutineScope by CoroutineScope(Dispatchers.De
                 }
             }
 
-            // Access Control
+            // Access Control. Store fix keeps the store off the VPN without
+            // rewriting the saved access list.
+            val play = setOf(
+                "com.android.vending",
+                "com.google.android.gms",
+                "com.google.android.gsf",
+            )
             when (store.accessControlMode) {
-                AccessControlMode.AcceptAll -> Unit
+                AccessControlMode.AcceptAll -> {
+                    if (store.storeFix) {
+                        play.forEach { runCatching { addDisallowedApplication(it) } }
+                    }
+                }
                 AccessControlMode.AcceptSelected -> {
-                    (store.accessControlPackages + packageName).forEach {
+                    val allowed = if (store.storeFix) {
+                        store.accessControlPackages - play
+                    } else {
+                        store.accessControlPackages
+                    }
+                    (allowed + packageName).forEach {
                         runCatching { addAllowedApplication(it) }
                     }
                 }
                 AccessControlMode.DenySelected -> {
-                    (store.accessControlPackages - packageName).forEach {
+                    val denied = if (store.storeFix) {
+                        store.accessControlPackages + play
+                    } else {
+                        store.accessControlPackages
+                    }
+                    (denied - packageName).forEach {
                         runCatching { addDisallowedApplication(it) }
                     }
                 }

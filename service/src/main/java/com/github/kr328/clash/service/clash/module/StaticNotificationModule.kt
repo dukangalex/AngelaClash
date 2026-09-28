@@ -13,10 +13,13 @@ import com.github.kr328.clash.common.constants.Components
 import com.github.kr328.clash.common.constants.Intents
 import com.github.kr328.clash.service.R
 import com.github.kr328.clash.service.StatusProvider
+import com.github.kr328.clash.service.store.ScriptDisplayStore
+import com.github.kr328.clash.service.store.ServiceStore
 import kotlinx.coroutines.channels.Channel
 
 class StaticNotificationModule(service: Service) : Module<Unit>(service) {
-    private val builder = NotificationCompat.Builder(service, CHANNEL_ID)
+    private val channel = channelId(service)
+    private val builder = NotificationCompat.Builder(service, channel)
         .setSmallIcon(R.drawable.ic_logo_service)
         .setOngoing(true)
         .setColor(service.getColorCompat(R.color.color_clash))
@@ -41,7 +44,11 @@ class StaticNotificationModule(service: Service) : Module<Unit>(service) {
         while (true) {
             loaded.receive()
 
-            val profileName = StatusProvider.currentProfile ?: "Not selected"
+            val profileName = if (hideProfile(service)) {
+                service.getString(R.string.running)
+            } else {
+                StatusProvider.currentProfile ?: service.getString(R.string.running)
+            }
 
             val notification = builder
                 .setContentTitle(profileName)
@@ -54,19 +61,34 @@ class StaticNotificationModule(service: Service) : Module<Unit>(service) {
 
     companion object {
         const val CHANNEL_ID = "clash_status_channel"
+        const val CHANNEL_HIGH = "clash_status_channel_high"
+
+        fun channelId(service: Service): String {
+            return if (ServiceStore(service).highPriorityNotification) CHANNEL_HIGH else CHANNEL_ID
+        }
+
+        private fun hideProfile(service: Service): Boolean {
+            return ScriptDisplayStore(service).optionOn(
+                ScriptDisplayStore.GROUP_PRIVACY,
+                "隐藏订阅名",
+                false,
+            )
+        }
 
         fun createNotificationChannel(service: Service) {
+            val high = ServiceStore(service).highPriorityNotification
             NotificationManagerCompat.from(service).createNotificationChannel(
                 NotificationChannelCompat.Builder(
-                    CHANNEL_ID,
-                    NotificationManagerCompat.IMPORTANCE_LOW
+                    if (high) CHANNEL_HIGH else CHANNEL_ID,
+                    if (high) NotificationManagerCompat.IMPORTANCE_DEFAULT
+                    else NotificationManagerCompat.IMPORTANCE_LOW
                 ).setName(service.getText(R.string.clash_service_status_channel)).build()
             )
         }
 
         fun notifyLoadingNotification(service: Service) {
             val notification =
-                NotificationCompat.Builder(service, CHANNEL_ID)
+                NotificationCompat.Builder(service, channelId(service))
                     .setSmallIcon(R.drawable.ic_logo_service)
                     .setOngoing(true)
                     .setColor(service.getColorCompat(R.color.color_clash))

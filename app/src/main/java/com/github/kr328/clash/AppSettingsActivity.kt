@@ -1,6 +1,5 @@
 package com.github.kr328.clash
 
-import android.content.ComponentName
 import android.content.pm.PackageManager
 import com.github.kr328.clash.common.util.componentName
 import com.github.kr328.clash.design.AppSettingsDesign
@@ -13,6 +12,7 @@ import kotlinx.coroutines.selects.select
 
 class AppSettingsActivity : BaseActivity<AppSettingsDesign>(), Behavior {
     override suspend fun main() {
+        RestartReceiver.sync(this)
         val design = AppSettingsDesign(
             this,
             uiStore,
@@ -20,6 +20,7 @@ class AppSettingsActivity : BaseActivity<AppSettingsDesign>(), Behavior {
             this,
             clashRunning,
             ::onHideIconChange,
+            { RestartReceiver.sync(this) },
         )
 
         setContentDesign(design)
@@ -43,24 +44,10 @@ class AppSettingsActivity : BaseActivity<AppSettingsDesign>(), Behavior {
     }
 
     override var autoRestart: Boolean
-        get() {
-            val status = packageManager.getComponentEnabledSetting(
-                RestartReceiver::class.componentName
-            )
-
-            return status == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-        }
+        get() = ServiceStore(this).autoRestart
         set(value) {
-            val status = if (value)
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-            else
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-
-            packageManager.setComponentEnabledSetting(
-                RestartReceiver::class.componentName,
-                status,
-                PackageManager.DONT_KILL_APP,
-            )
+            ServiceStore(this).autoRestart = value
+            RestartReceiver.sync(this)
         }
 
     private fun onHideIconChange(hide: Boolean) {

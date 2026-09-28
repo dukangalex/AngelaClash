@@ -19,7 +19,8 @@ import kotlin.coroutines.resume
 
 class OverrideSettingsDesign(
     context: Context,
-    configuration: ConfigurationOverride
+    configuration: ConfigurationOverride,
+    private val section: String = "all",
 ) : Design<OverrideSettingsDesign.Request>(context) {
     enum class Request {
         ResetOverride
@@ -70,6 +71,7 @@ class OverrideSettingsDesign(
         )
 
         val screen = preferenceScreen(context) {
+            if (section == "all" || section == "general") {
             category(R.string.general)
 
             editableText(
@@ -216,6 +218,10 @@ class OverrideSettingsDesign(
                 ),
                 title = R.string.log_level,
             )
+            }
+
+            if (section == "all" || section == "hosts") {
+            category(R.string.hosts)
 
             editableTextMap(
                 value = configuration::hosts,
@@ -224,7 +230,9 @@ class OverrideSettingsDesign(
                 title = R.string.hosts,
                 placeholder = R.string.dont_modify,
             )
+            }
 
+            if (section == "all" || section == "dns") {
             category(R.string.dns)
 
             val dnsDependencies: MutableList<Preference> = mutableListOf()
@@ -408,6 +416,7 @@ class OverrideSettingsDesign(
             )
 
             dns.listener?.onChanged()
+            }
         }
 
         binding.content.addView(screen.root)

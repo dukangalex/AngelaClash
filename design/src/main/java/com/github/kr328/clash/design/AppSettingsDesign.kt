@@ -20,6 +20,7 @@ class AppSettingsDesign(
     behavior: Behavior,
     running: Boolean,
     onHideIconChange: (hide: Boolean) -> Unit,
+    onBootFlagsChanged: () -> Unit,
 ) : Design<AppSettingsDesign.Request>(context) {
     enum class Request {
         ReCreateAllActivities
@@ -46,6 +47,24 @@ class AppSettingsDesign(
                 icon = R.drawable.ic_baseline_restore,
                 title = R.string.auto_restart,
                 summary = R.string.allow_clash_auto_restart,
+            ) {
+                listener = OnChangedListener { onBootFlagsChanged() }
+            }
+
+            switch(
+                value = srvStore::startOnBoot,
+                icon = R.drawable.ic_baseline_settings,
+                title = R.string.boot_start,
+                summary = R.string.boot_start_summary,
+            ) {
+                listener = OnChangedListener { onBootFlagsChanged() }
+            }
+
+            switch(
+                value = uiStore::autoConnect,
+                icon = R.drawable.ic_baseline_flash_on,
+                title = R.string.auto_connect,
+                summary = R.string.auto_connect_summary,
             )
 
             category(R.string.interface_)
@@ -87,6 +106,20 @@ class AppSettingsDesign(
                     requests.trySend(Request.ReCreateAllActivities)
                 }
             }
+
+            switch(
+                value = uiStore::hapticFeedback,
+                icon = R.drawable.ic_baseline_settings,
+                title = R.string.haptic_feedback,
+                summary = R.string.haptic_feedback_summary,
+            )
+
+            switch(
+                value = uiStore::autoCheckUpdate,
+                icon = R.drawable.ic_baseline_update,
+                title = R.string.auto_check_update,
+                summary = R.string.auto_check_update_summary,
+            )
 
             category(R.string.service)
 

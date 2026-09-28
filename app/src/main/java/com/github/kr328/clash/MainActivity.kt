@@ -41,8 +41,17 @@ class MainActivity : BaseActivity<MainDesign>() {
         val design = MainDesign(this)
         val options = ScriptDisplayStore(this)
         design.mountSystem(options)
-
+        RestartReceiver.sync(this)
         setContentDesign(design)
+        if (!launched) {
+            launched = true
+            if (uiStore.autoConnect && !clashRunning) {
+                design.startClash()
+            }
+            if (uiStore.autoCheckUpdate) {
+                AppUpdate(this).check(silent = true)
+            }
+        }
 
         design.fetch()
 
@@ -79,6 +88,10 @@ class MainActivity : BaseActivity<MainDesign>() {
                             startActivity(LogcatActivity::class.intent)
                         MainDesign.Request.OpenSettings ->
                             startActivity(SettingsActivity::class.intent)
+                        MainDesign.Request.OpenApp ->
+                            startActivity(AppSettingsActivity::class.intent)
+                        MainDesign.Request.OpenEnhance ->
+                            startActivity(EnhanceToolsActivity::class.intent)
                         MainDesign.Request.OpenHelp ->
                             startActivity(HelpActivity::class.intent)
                         MainDesign.Request.OpenAbout ->
@@ -247,5 +260,9 @@ class MainActivity : BaseActivity<MainDesign>() {
             .build()
 
         ShortcutManagerCompat.setDynamicShortcuts(this, listOf(toggle, start, stop))
+    }
+
+    companion object {
+        private var launched = false
     }
 }

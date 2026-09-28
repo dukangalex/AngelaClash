@@ -21,19 +21,21 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class AppUpdate(private val activity: BaseActivity<*>) {
-    suspend fun check() {
-        activity.toast(DesignR.string.check_update_running)
+    suspend fun check(silent: Boolean = false) {
+        if (!silent) activity.toast(DesignR.string.check_update_running)
         val latest = withContext(Dispatchers.IO) {
             runCatching { fetchLatest() }.getOrElse {
-                withContext(Dispatchers.Main) {
-                    activity.toast(DesignR.string.check_update_failed)
+                if (!silent) {
+                    withContext(Dispatchers.Main) {
+                        activity.toast(DesignR.string.check_update_failed)
+                    }
                 }
                 null
             }
         } ?: return
         val current = activity.packageManager.getPackageInfo(activity.packageName, 0).versionName ?: "0"
         if (!isNewer(latest.version, current)) {
-            activity.toast(DesignR.string.check_update_none)
+            if (!silent) activity.toast(DesignR.string.check_update_none)
             return
         }
         withContext(Dispatchers.Main) {

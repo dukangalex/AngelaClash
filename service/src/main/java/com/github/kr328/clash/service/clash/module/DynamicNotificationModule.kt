@@ -17,13 +17,14 @@ import com.github.kr328.clash.core.util.trafficDownload
 import com.github.kr328.clash.core.util.trafficUpload
 import com.github.kr328.clash.service.R
 import com.github.kr328.clash.service.StatusProvider
+import com.github.kr328.clash.service.store.ScriptDisplayStore
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.selects.select
 import java.util.concurrent.TimeUnit
 
 class DynamicNotificationModule(service: Service) : Module<Unit>(service) {
-    private val builder = NotificationCompat.Builder(service, StaticNotificationModule.CHANNEL_ID)
+    private val builder = NotificationCompat.Builder(service, StaticNotificationModule.channelId(service))
         .setSmallIcon(R.drawable.ic_logo_service)
         .setOngoing(true)
         .setColor(service.getColorCompat(R.color.color_clash))
@@ -95,7 +96,12 @@ class DynamicNotificationModule(service: Service) : Module<Unit>(service) {
                     }
                 }
                 profileLoaded.onReceive {
-                    builder.setContentTitle(StatusProvider.currentProfile ?: "Not selected")
+                    builder.setContentTitle(
+                        if (ScriptDisplayStore(service).optionOn(ScriptDisplayStore.GROUP_PRIVACY, "隐藏订阅名", false))
+                            service.getString(R.string.running)
+                        else
+                            StatusProvider.currentProfile ?: service.getString(R.string.running)
+                    )
                 }
                 if (shouldUpdate) {
                     ticker.onReceive {

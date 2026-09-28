@@ -28,40 +28,71 @@
                 android:paddingTop="@{(float) self.surface.insets.top + @dimen/toolbar_height}"
                 android:paddingBottom="@{self.surface.insets.bottom}">
 
-                <com.github.kr328.clash.design.view.ActionLabel
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:onClick="@{() -> self.request(Request.StartApp)}"
-                    app:icon="@drawable/ic_baseline_settings"
-                    app:text="@string/app" />
+                    android:paddingStart="20dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="16dp"
+                    android:text="@string/kernel_config"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="13sp" />
 
-                <com.github.kr328.clash.design.view.ActionLabel
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:onClick="@{() -> self.request(Request.StartNetwork)}"
-                    app:icon="@drawable/ic_baseline_dns"
-                    app:text="@string/network" />
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginEnd="16dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp">
 
-                <com.github.kr328.clash.design.view.ActionLabel
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="@{() -> self.request(Request.StartOverride)}"
-                    app:icon="@drawable/ic_baseline_extension"
-                    app:text="@string/override" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
-                <com.github.kr328.clash.design.view.ActionLabel
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="@{() -> self.request(Request.StartScript)}"
-                    app:icon="@drawable/ic_baseline_view_list"
-                    app:text="@string/script_display_options" />
+                        <com.github.kr328.clash.design.view.LargeActionLabel
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:onClick="@{() -> self.request(Request.StartGeneral)}"
+                            app:icon="@drawable/ic_baseline_settings"
+                            app:subtext="@string/kernel_general_summary"
+                            app:text="@string/general" />
 
-                <com.github.kr328.clash.design.view.ActionLabel
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:onClick="@{() -> self.request(Request.StartMetaFeature)}"
-                    app:icon="@drawable/ic_baseline_meta"
-                    app:text="@string/meta_features" />
+                        <com.github.kr328.clash.design.view.LargeActionLabel
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:onClick="@{() -> self.request(Request.StartNetwork)}"
+                            app:icon="@drawable/ic_baseline_vpn_lock"
+                            app:subtext="@string/kernel_network_summary"
+                            app:text="@string/network" />
+
+                        <com.github.kr328.clash.design.view.LargeActionLabel
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:onClick="@{() -> self.request(Request.StartDns)}"
+                            app:icon="@drawable/ic_baseline_dns"
+                            app:subtext="@string/kernel_dns_summary"
+                            app:text="@string/dns" />
+
+                        <com.github.kr328.clash.design.view.LargeActionLabel
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:onClick="@{() -> self.request(Request.StartHosts)}"
+                            app:icon="@drawable/ic_baseline_view_list"
+                            app:subtext="@string/kernel_hosts_summary"
+                            app:text="@string/hosts" />
+
+                        <com.github.kr328.clash.design.view.LargeActionLabel
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:onClick="@{() -> self.request(Request.StartMetaFeature)}"
+                            app:icon="@drawable/ic_baseline_extension"
+                            app:subtext="@string/kernel_meta_summary"
+                            app:text="@string/meta_features" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
         </com.github.kr328.clash.design.view.ObservableScrollView>
