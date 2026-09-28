@@ -80,6 +80,7 @@ Angela Clash 建立在上游开源工作之上：
 
 - [mihomo](https://github.com/MetaCubeX/mihomo)，由 MetaCubeX 维护的 Clash Meta 内核
 - [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid)，本客户端的上游界面与服务框架
+- 
 上述致谢不构成从属、授权或官方认可。
 
 ## 许可
