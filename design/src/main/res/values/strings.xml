@@ -269,7 +269,7 @@
     <string name="clash_meta_core_url" translatable="false">https://github.com/MetaCubeX/Clash.Meta</string>
 
     <string name="tips_properties"><![CDATA[Accept Only <strong>Clash Config</strong>(including <strong>Proxy</strong>/<strong>Rules</strong>)]]></string>
-    <string name="tips_help"><![CDATA[Clash Meta for Android is a <strong>freeware</strong> and we do <strong>NOT</strong> provide any service for it]]></string>
+    <string name="tips_help">This app is free and does not sell a network service. Please only report issues that come from the app itself.</string>
 
     <string name="google_play_url" translatable="false">https://play.google.com/store/apps/details?id=com.github.kr328.clash</string>
 
@@ -343,7 +343,7 @@
     <string name="clash_meta_wiki">Clash Meta Wiki</string>
     <string name="clash_meta_wiki_url" translatable="false">https://wiki.metacubex.one</string>
 
-    <string name="meta_features">Meta Features</string>
+    <string name="meta_features">Advanced</string>
     <string name="unified_delay">Unified Delay</string>
     <string name="geodata_mode">Geodata Mode</string>
     <string name="tcp_concurrent">TCP Concurrent</string>
@@ -385,8 +385,8 @@
     <string name="toast_profile_updated_complete">Update profile %s completed</string>
     <string name="toast_profile_updated_failed">Update profile %1$s failed: %2$s</string>
     <string name="external_control_activity">External Control</string>
-    <string name="external_control_started">Clash.Meta service started</string>
-    <string name="external_control_stopped">Clash.Meta service stopped</string>
+    <string name="external_control_started">Service started</string>
+    <string name="external_control_stopped">Service stopped</string>
 
     <string name="hide_app_icon_title">Hide App Icon</string>
     <string name="hide_app_icon_desc">You can dial *#*#252746382#*#* to open this App</string>
@@ -395,25 +395,25 @@
     <string name="import_from_qr_no_permission">Camera access is restricted. Please enable it in Settings.</string>
     <string name="import_from_qr_exception">An unhandled system exception occurred.</string>
 
-    <string name="shortcut_toggle_short">Toggle Clash</string>
-    <string name="shortcut_toggle_long">Toggle Clash service on/off</string>
-    <string name="shortcut_start_short">Start Clash</string>
-    <string name="shortcut_start_long">Start Clash service</string>
-    <string name="shortcut_stop_short">Stop Clash</string>
-    <string name="shortcut_stop_long">Stop Clash service</string>
+    <string name="shortcut_toggle_short">Toggle</string>
+    <string name="shortcut_toggle_long">Toggle the service</string>
+    <string name="shortcut_start_short">Start</string>
+    <string name="shortcut_start_long">Start the service</string>
+    <string name="shortcut_stop_short">Stop</string>
+    <string name="shortcut_stop_long">Stop the service</string>
 
     <string name="script_display_options">Override script</string>
     <string name="script_enable">Enable override script</string>
-    <string name="script_enable_summary">main() rewrites the profile except nodes. Turn this off and the shortcut leaves the dashboard</string>
-    <string name="script_page_hint">System options on the dashboard win when they disagree with the script or the subscription.</string>
-    <string name="script_credit">Built-in script from HiClash. Original author: AIsouler.</string>
+    <string name="script_enable_summary">main() rewrites the profile except nodes. Turn this off and the script is not applied</string>
+    <string name="script_page_hint">System options win when they disagree with the script or the subscription.</string>
+    <string name="script_credit"></string>
     <string name="system_options">System options</string>
-    <string name="system_options_summary">These switches outrank the script and the profile. Tap a group, pull down on a sub page to go back.</string>
+    <string name="system_options_summary">These switches outrank the script and the subscription.</string>
     <string name="log_filter_all">All</string>
     <string name="script_display_enable">Enable script options</string>
     <string name="script_display_enable_summary">Switches below are applied the next time the service starts</string>
     <string name="script_display_running">The service is running. Saving the script reloads it now</string>
-    <string name="script_display_hint">Rule switches are on the proxy page. System options on the home page still win.</string>
+    <string name="script_display_hint">Rule switches are on the proxy page. System options still win.</string>
     <string name="script_display_angela">Angela Clash script declaration detected.</string>
     <string name="script_display_edit">Edit override script</string>
     <string name="script_display_edit_summary">main() overwrites everything except nodes. Saving reloads a running service</string>
@@ -432,6 +432,11 @@
     <string name="section_view">View</string>
     <string name="section_other">Other</string>
     <string name="logs_summary">Live log</string>
+    <string name="dashboard_speed">Network speed</string>
+    <string name="dashboard_up_label">Upload</string>
+    <string name="dashboard_down_label">Download</string>
+    <string name="dashboard_mode">Outbound mode</string>
+    <string name="acknowledgments">Acknowledgments</string>
     <string name="dashboard_up">Up %1$s</string>
     <string name="dashboard_down">Down %1$s</string>
     <string name="dashboard_total">Total %1$s</string>

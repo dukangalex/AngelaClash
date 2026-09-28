@@ -33,7 +33,7 @@ class HelpDesign(
         val screen = preferenceScreen(context) {
             tips(R.string.tips_help)
 
-            category(R.string.document)
+            category(R.string.acknowledgments)
 
             clickable(
                 title = R.string.clash_wiki,
@@ -52,8 +52,6 @@ class HelpDesign(
                     openLink(Uri.parse(context.getString(R.string.clash_meta_wiki_url)))
                 }
             }
-
-            category(R.string.sources)
 
             clickable(
                 title = R.string.clash_meta_core,

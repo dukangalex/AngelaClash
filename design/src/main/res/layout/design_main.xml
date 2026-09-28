@@ -100,254 +100,10 @@
                             android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="0dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="16dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@{@string/dashboard_total(forwarded)}"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="@{@string/dashboard_up(upload)}"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="2dp"
-                                    android:text="@{@string/dashboard_down(download)}"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:onClick="@{() -> self.request(Request.OpenProfiles)}"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="0dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="16dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/profile"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="6dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="2"
-                                    android:text="@{profileName != null ? profileName : @string/not_selected}"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:onClick="@{() -> self.request(Request.ToggleStatus)}"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="0dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="16dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/service_status"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="6dp"
-                                    android:text="@{clashRunning ? @string/running : @string/stopped}"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:onClick="@{() -> self.request(Request.OpenProxy)}"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="0dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="16dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/proxy"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="6dp"
-                                    android:text="@string/rule_switches"
-                                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
-                    </LinearLayout>
-
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="0dp">
-
-                        <com.google.android.material.button.MaterialButtonToggleGroup
-                            android:id="@+id/mode_group"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:padding="6dp"
-                            app:selectionRequired="true"
-                            app:singleSelection="true">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/mode_rule"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:insetTop="0dp"
-                                android:insetBottom="0dp"
-                                android:text="@string/rule_mode"
-                                app:cornerRadius="14dp" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/mode_global"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:insetTop="0dp"
-                                android:insetBottom="0dp"
-                                android:text="@string/global_mode"
-                                app:cornerRadius="14dp" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/mode_direct"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:insetTop="0dp"
-                                android:insetBottom="0dp"
-                                android:text="@string/direct_mode"
-                                app:cornerRadius="14dp" />
-                        </com.google.android.material.button.MaterialButtonToggleGroup>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp"
-                        android:paddingHorizontal="4dp"
-                        android:text="@string/system_options"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:paddingHorizontal="4dp"
-                        android:text="@string/system_options_summary"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
-
-                    <LinearLayout
-                        android:id="@+id/explicit_host"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:onClick="@{() -> self.request(Request.OpenScript)}"
-                        android:visibility="@{showScript ? View.VISIBLE : View.GONE}"
-                        app:cardCornerRadius="20dp"
-                        app:cardElevation="0dp">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:padding="16dp"
-                            android:text="@string/script_display_options"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:onClick="@{() -> self.request(Request.OpenChain)}"
-                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}"
+                        android:layout_marginTop="16dp"
                         app:cardCornerRadius="20dp"
                         app:cardElevation="0dp">
 
@@ -358,17 +114,172 @@
                             android:padding="16dp">
 
                             <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dashboard_speed"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="13sp" />
+
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/chain_proxy"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                                android:layout_marginTop="12dp"
+                                android:orientation="horizontal">
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/dashboard_up_label"
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="@{upload}"
+                                        android:textSize="22sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/dashboard_down_label"
+                                        android:textColor="?android:attr/textColorSecondary"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="@{download}"
+                                        android:textSize="22sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@{@string/dashboard_total(forwarded)}"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.request(Request.OpenProfiles)}"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/profile"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="13sp" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@{chainSummary}"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+                                android:layout_marginTop="6dp"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@{profileName != null ? profileName : @string/not_selected}"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="8dp"
+                            android:paddingTop="14dp"
+                            android:paddingBottom="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingHorizontal="8dp"
+                                android:text="@string/dashboard_mode"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="13sp" />
+
+                            <com.google.android.material.button.MaterialButtonToggleGroup
+                                android:id="@+id/mode_group"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                app:selectionRequired="true"
+                                app:singleSelection="true">
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/mode_rule"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:insetTop="0dp"
+                                    android:insetBottom="0dp"
+                                    android:text="@string/rule_mode"
+                                    app:cornerRadius="14dp" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/mode_global"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:insetTop="0dp"
+                                    android:insetBottom="0dp"
+                                    android:text="@string/global_mode"
+                                    app:cornerRadius="14dp" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/mode_direct"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:insetTop="0dp"
+                                    android:insetBottom="0dp"
+                                    android:text="@string/direct_mode"
+                                    app:cornerRadius="14dp" />
+                            </com.google.android.material.button.MaterialButtonToggleGroup>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
@@ -498,6 +409,28 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:paddingHorizontal="4dp"
+                        android:text="@string/system_options"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:paddingHorizontal="4dp"
+                        android:text="@string/system_options_summary"
+                        android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
+
+                    <LinearLayout
+                        android:id="@+id/explicit_host"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:paddingHorizontal="4dp"
                         android:text="@string/section_other"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Caption" />
 
@@ -548,6 +481,8 @@
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
                 app:itemIconSize="22dp"
+                app:itemIconTint="@color/nav_item"
+                app:itemTextColor="@color/nav_item"
                 app:labelVisibilityMode="labeled"
                 app:menu="@menu/menu_main" />
         </com.google.android.material.card.MaterialCardView>

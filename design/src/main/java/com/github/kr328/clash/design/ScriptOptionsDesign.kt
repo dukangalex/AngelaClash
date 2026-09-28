@@ -22,7 +22,6 @@ class ScriptOptionsDesign(
 ) : Design<ScriptOptionsDesign.Request>(context) {
     enum class Request {
         EditScript,
-        RestoreScript,
         Reload,
     }
 
@@ -58,19 +57,12 @@ class ScriptOptionsDesign(
                 tips(R.string.script_display_running)
             }
             tips(R.string.script_page_hint)
-            tips(R.string.script_credit)
 
             clickable(
                 title = R.string.script_display_edit,
                 summary = R.string.script_display_edit_summary,
             ) {
                 clicked { requests.trySend(Request.EditScript) }
-            }
-            clickable(
-                title = R.string.script_display_restore,
-                summary = R.string.script_display_restore_summary,
-            ) {
-                clicked { requests.trySend(Request.RestoreScript) }
             }
 
             if (snap.sections.isNotEmpty() && snap.sections[0].rows.isNotEmpty()) {

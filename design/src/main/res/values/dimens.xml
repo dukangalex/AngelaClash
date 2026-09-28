@@ -14,12 +14,12 @@
     <!--  Toolbar  -->
     <dimen name="toolbar_height">56dp</dimen>
     <dimen name="log_filter_height">44dp</dimen>
-    <dimen name="toolbar_elevation">5dp</dimen>
+    <dimen name="toolbar_elevation">0dp</dimen>
     <dimen name="toolbar_image_action_padding">5dp</dimen>
 
     <!--  Tab Layout  -->
     <dimen name="tab_layout_height">48dp</dimen>
-    <dimen name="tab_layout_elevation">5dp</dimen>
+    <dimen name="tab_layout_elevation">0dp</dimen>
 
     <!--  Bottom Sheet  -->
     <dimen name="bottom_sheet_background_padding_top">10dp</dimen>
@@ -72,7 +72,7 @@
     <dimen name="proxy_text_margin_grid3">5dp</dimen>
     <dimen name="proxy_text_size">12sp</dimen>
     <dimen name="proxy_text_size_grid3">11sp</dimen>
-    <dimen name="proxy_card_radius">5dp</dimen>
+    <dimen name="proxy_card_radius">16dp</dimen>
     <dimen name="proxy_card_offset">0dp</dimen>
 
     <!-- Properties Design -->

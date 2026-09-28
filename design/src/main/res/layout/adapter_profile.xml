@@ -23,8 +23,8 @@
         android:id="@+id/root_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="5dp"
-        android:layout_marginHorizontal="@dimen/item_header_margin"
+        android:layout_marginVertical="6dp"
+        android:layout_marginHorizontal="16dp"
         android:background="@drawable/bg_b"
         android:foreground="?attr/selectableItemBackground"
         android:clickable="true"
@@ -113,12 +113,6 @@
             android:layout_toStartOf="@id/menu_view"
             android:text="@{IntervalKt.elapsedIntervalString(currentTime.value - profile.updatedAt, context)}"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Tooltip" />
-
-        <View
-            android:layout_width="2dp"
-            android:layout_height="match_parent"
-            android:layout_toStartOf="@id/menu_view"
-            android:background="@color/color_clash_dark" />
 
         <FrameLayout
             android:id="@+id/menu_view"

@@ -34,7 +34,6 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
                 design.requests.onReceive {
                     when (it) {
                         ScriptOptionsDesign.Request.EditScript -> showEditor(store)
-                        ScriptOptionsDesign.Request.RestoreScript -> confirmRestore(store)
                         ScriptOptionsDesign.Request.Reload -> {
                             val active = withProfile { queryActive() }
                             if (active != null && clashRunning) sendProfileChanged(active.uuid)
@@ -69,18 +68,6 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
                     }
                     recreate()
                 }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun confirmRestore(store: ScriptDisplayStore) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.script_display_restore)
-            .setMessage(R.string.script_display_restore_message)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                store.restoreDefault()
-                recreate()
             }
             .setNegativeButton(R.string.cancel, null)
             .show()

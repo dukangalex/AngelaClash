@@ -85,7 +85,8 @@ class TileService : TileService() {
     }
 
     private fun appIcon(): Icon {
-        val drawable = packageManager.getApplicationIcon(packageName)
+        val drawable = getDrawable(com.github.kr328.clash.R.drawable.ic_launcher_foreground)
+            ?: packageManager.getApplicationIcon(packageName)
         val size = (48 * resources.displayMetrics.density).toInt().coerceAtLeast(48)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)

@@ -213,7 +213,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         val toggle = ShortcutInfoCompat.Builder(this, "toggle_clash")
             .setShortLabel(getString(DesignR.string.shortcut_toggle_short))
             .setLongLabel(getString(DesignR.string.shortcut_toggle_long))
-            .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
+            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_launcher_foreground))
             .setIntent(
                 Intent(Intents.ACTION_TOGGLE_CLASH)
                     .setClassName(this, ExternalControlActivity::class.java.name)
@@ -225,7 +225,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         val start = ShortcutInfoCompat.Builder(this, "start_clash")
             .setShortLabel(getString(DesignR.string.shortcut_start_short))
             .setLongLabel(getString(DesignR.string.shortcut_start_long))
-            .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
+            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_launcher_foreground))
             .setIntent(
                 Intent(Intents.ACTION_START_CLASH)
                     .setClassName(this, ExternalControlActivity::class.java.name)
@@ -237,7 +237,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         val stop = ShortcutInfoCompat.Builder(this, "stop_clash")
             .setShortLabel(getString(DesignR.string.shortcut_stop_short))
             .setLongLabel(getString(DesignR.string.shortcut_stop_long))
-            .setIcon(IconCompat.createWithResource(this, R.mipmap.ic_launcher))
+            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_launcher_foreground))
             .setIntent(
                 Intent(Intents.ACTION_STOP_CLASH)
                     .setClassName(this, ExternalControlActivity::class.java.name)

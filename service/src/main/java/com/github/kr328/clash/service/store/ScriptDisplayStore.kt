@@ -3,6 +3,7 @@ package com.github.kr328.clash.service.store
 import android.content.Context
 import org.json.JSONObject
 import java.io.File
+import java.security.MessageDigest
 
 /**
  * Script display options. The script only declares switches.
@@ -28,8 +29,13 @@ class ScriptDisplayStore(private val context: Context) {
         get() = dir.resolve(SCRIPT)
 
     fun ensureScript() {
-        if (!scriptFile.exists() || isLegacyStub(scriptFile.readText())) {
-            writeAtomic(scriptFile, defaultScript())
+        if (!scriptFile.exists()) {
+            writeAtomic(scriptFile, "")
+            return
+        }
+        val text = scriptFile.readText()
+        if (sha256(text) == BUNDLED_SHA) {
+            writeAtomic(scriptFile, "")
         }
     }
 
@@ -45,9 +51,8 @@ class ScriptDisplayStore(private val context: Context) {
     }
 
     fun restoreDefault() {
-        writeAtomic(scriptFile, defaultScript())
-        writePersisted(readPersisted().scriptEnabled, linkedMapOf())
-        writePersisted(readPersisted().scriptEnabled, effectiveValues())
+        writeAtomic(scriptFile, "")
+        writePersisted(false, linkedMapOf())
     }
 
     fun snapshot(): Snapshot {
@@ -132,8 +137,9 @@ class ScriptDisplayStore(private val context: Context) {
         return Section(group, rows)
     }
 
-    private fun defaultScript(): String {
-        return context.assets.open(ASSET).bufferedReader().use { it.readText() }
+    private fun sha256(text: String): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(text.toByteArray())
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     private data class Persisted(val scriptEnabled: Boolean, val values: LinkedHashMap<String, Boolean>)
@@ -167,30 +173,10 @@ class ScriptDisplayStore(private val context: Context) {
         writeAtomic(optionFile, obj.toString())
     }
 
-    private fun isLegacyStub(text: String): Boolean {
-        val stripped = StringBuilder()
-        var i = 0
-        while (i < text.length) {
-            if (i + 1 < text.length && text[i] == '/' && text[i + 1] == '/') {
-                val nl = text.indexOf('\n', i)
-                i = if (nl < 0) text.length else nl + 1
-                continue
-            }
-            if (i + 1 < text.length && text[i] == '/' && text[i + 1] == '*') {
-                val end = text.indexOf("*/", i + 2)
-                i = if (end < 0) text.length else end + 2
-                continue
-            }
-            stripped.append(text[i])
-            i++
-        }
-        return !stripped.contains("function main")
-    }
-
     companion object {
         const val OPTIONS = "script-options.json"
         const val SCRIPT = "script.js"
-        private const val ASSET = "angela/default-script.js"
+        private const val BUNDLED_SHA = "5644b4612054640018fb2f298cc72231311ac7da171e6c4bff15229fc09e3bbb"
         const val GROUP_RULE = "rule"
         const val GROUP_LEAK = "leak"
         const val GROUP_CN = "cn"
