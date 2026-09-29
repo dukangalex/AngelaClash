@@ -98,8 +98,6 @@ class MainActivity : BaseActivity<MainDesign>() {
                             design.showAbout(queryAppVersionName())
                         MainDesign.Request.OpenScript ->
                             startActivity(ScriptOptionsActivity::class.intent)
-                        MainDesign.Request.OpenAccess ->
-                            startActivity(AccessControlActivity::class.intent)
                         MainDesign.Request.CheckUpdate ->
                             AppUpdate(this@MainActivity).check()
                         MainDesign.Request.SetRuleMode ->
