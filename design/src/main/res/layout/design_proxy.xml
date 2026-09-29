@@ -111,20 +111,7 @@
                         android:src="@drawable/ic_baseline_more_vert" />
 
                 </RelativeLayout>
-            </com.github.kr328.clash.design.view.ActivityBarLayout>
-
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tab_layout_view"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/tab_layout_height"
-                android:alpha="1"
-                android:background="@android:color/transparent"
-                android:elevation="0dp"
-                app:tabBackground="@android:color/transparent"
-                app:tabIndicatorColor="?attr/colorPrimary"
-                app:tabIndicatorFullWidth="false"
-                app:tabMode="scrollable"
-                app:tabRippleColor="@android:color/transparent" />
+            </com.google.android.material.tabs.TabLayout>
 
             <View
                 android:id="@+id/elevation_view"
@@ -135,20 +122,5 @@
                 android:elevation="@dimen/tab_layout_elevation" />
         </LinearLayout>
 
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end|bottom"
-            android:paddingBottom="@{self.surface.insets.bottom}">
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/url_test_float_view"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/item_tailing_margin"
-                android:contentDescription="@string/delay_test"
-                android:onClick="@{() -> self.requestUrlTesting()}"
-                android:src="@drawable/ic_baseline_flash_on" />
-        </FrameLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>
