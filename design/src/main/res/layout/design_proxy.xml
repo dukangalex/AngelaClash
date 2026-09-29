@@ -111,7 +111,20 @@
                         android:src="@drawable/ic_baseline_more_vert" />
 
                 </RelativeLayout>
-            </com.google.android.material.tabs.TabLayout>
+            </com.github.kr328.clash.design.view.ActivityBarLayout>
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_layout_view"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/tab_layout_height"
+                android:alpha="1"
+                android:background="@android:color/transparent"
+                android:elevation="0dp"
+                app:tabBackground="@android:color/transparent"
+                app:tabIndicatorColor="?attr/colorPrimary"
+                app:tabIndicatorFullWidth="false"
+                app:tabMode="scrollable"
+                app:tabRippleColor="@android:color/transparent" />
 
             <View
                 android:id="@+id/elevation_view"
