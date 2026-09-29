@@ -42,8 +42,6 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                     when (it) {
                         ProfilesDesign.Request.Create ->
                             startActivity(NewProfileActivity::class.intent)
-                        ProfilesDesign.Request.OpenScript ->
-                            startActivity(ScriptOptionsActivity::class.intent)
                         ProfilesDesign.Request.UpdateAll ->
                             withProfile {
                                 try {
