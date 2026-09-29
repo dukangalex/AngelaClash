@@ -5,8 +5,6 @@
         <variable
             name="self"
             type="com.github.kr328.clash.design.ProfilesDesign" />
-
-        <import type="android.view.View" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -43,8 +41,9 @@
                     android:id="@+id/update_layout"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:layout_toStartOf="@id/script_view">
+                    android:layout_toStartOf="@id/add_view">
 
                     <ImageView
                         android:id="@+id/update_view"
@@ -61,23 +60,6 @@
                         android:src="@drawable/ic_baseline_sync"
                         android:visibility="gone" />
                 </FrameLayout>
-
-                <TextView
-                    android:id="@+id/script_view"
-                    android:layout_width="40dp"
-                    android:layout_height="@dimen/item_tailing_component_size"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="@dimen/item_tailing_margin"
-                    android:layout_toStartOf="@id/add_view"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:contentDescription="@string/script_display_options"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:onClick="@{() -> self.requestScript()}"
-                    android:text="Σ"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
 
                 <ImageView
                     android:id="@+id/add_view"

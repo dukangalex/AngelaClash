@@ -79,6 +79,29 @@ jobs:
           key.password=$SIGNING_KEY_PASSWORD
           EOF
 
+      - name: Verify release signing material
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+        run: |
+          set +e
+          store_output=$(keytool -list -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" 2>&1)
+          store_status=$?
+          if [ "$store_status" -eq 0 ]; then
+            echo "Keystore password: valid"
+            echo "$store_output" | grep -E "Your keystore contains|PrivateKeyEntry|trustedCertEntry" || true
+          else
+            echo "Keystore password: invalid or keystore is unreadable"
+            exit "$store_status"
+          fi
+
+          alias_output=$(keytool -list -v -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" 2>&1)
+          alias_status=$?
+          echo "$alias_output" | grep -E "Alias name:|Entry type:|SHA256:" || true
+          if [ "$alias_status" -ne 0 ]; then
+            echo "Keystore opened successfully, but the configured key alias could not be opened." >&2
+            exit "$alias_status"
+          fi
       - name: Build
         if: success()
         run: ./gradlew --no-daemon app:assembleAlphaRelease

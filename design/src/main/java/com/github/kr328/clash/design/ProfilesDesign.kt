@@ -20,7 +20,6 @@ class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context)
     sealed class Request {
         object UpdateAll : Request()
         object Create : Request()
-        object OpenScript : Request()
         data class Active(val profile: Profile) : Request()
         data class Update(val profile: Profile) : Request()
         data class Edit(val profile: Profile) : Request()
@@ -106,10 +105,6 @@ class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context)
 
     fun requestCreate() {
         requests.trySend(Request.Create)
-    }
-
-    fun requestScript() {
-        requests.trySend(Request.OpenScript)
     }
 
     private fun requestActive(profile: Profile) {

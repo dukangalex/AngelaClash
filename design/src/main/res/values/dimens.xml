@@ -46,8 +46,8 @@
     <dimen name="item_midden_margin">10dp</dimen>
 
     <!-- Large Card -->
-    <dimen name="large_action_card_radius">8dp</dimen>
-    <dimen name="large_action_card_elevation">5dp</dimen>
+    <dimen name="large_action_card_radius">20dp</dimen>
+    <dimen name="large_action_card_elevation">0dp</dimen>
     <dimen name="large_action_card_min_height">85dp</dimen>
 
     <!-- Tips -->
@@ -60,9 +60,9 @@
     <!-- Main Design -->
     <dimen name="main_card_margin_vertical">5dp</dimen>
     <dimen name="main_label_margin_vertical">2dp</dimen>
-    <dimen name="main_padding_horizontal">30dp</dimen>
+    <dimen name="main_padding_horizontal">16dp</dimen>
     <dimen name="main_logo_size">50dp</dimen>
-    <dimen name="main_top_banner_height">90dp</dimen>
+    <dimen name="main_top_banner_height">104dp</dimen>
 
     <!--  Proxy Design -->
     <dimen name="proxy_layout_padding">3dp</dimen>

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="color_clash_light">#1565C0</color>
-    <color name="color_clash_dark">#5EB0FF</color>
+    <color name="color_clash_light">#2563EB</color>
+    <color name="color_clash_dark">#6EA8FF</color>
     <color name="color_system_ui_overlay">#50000000</color>
-    <color name="color_light_background">#FFF3F5F8</color>
-    <color name="color_dark_background">#FF0F1216</color>
-    <color name="color_dark_surface">#FF1C212B</color>
-    <color name="color_light_clash_stopped">#FF808080</color>
+    <color name="color_light_background">#FFF6F8FB</color>
+    <color name="color_dark_background">#FF0D1117</color>
+    <color name="color_dark_surface">#FF171C24</color>
+    <color name="color_light_clash_stopped">#FF7A8494</color>
     <color name="color_light_control_disabled">#FFD3D3D3</color>
     <color name="color_dark_control_disabled">#FF808080</color>
     <color name="color_error">#FFB00020</color>
