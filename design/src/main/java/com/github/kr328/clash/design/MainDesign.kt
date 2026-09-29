@@ -38,7 +38,6 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         OpenHelp,
         OpenAbout,
         OpenScript,
-        OpenAccess,
         CheckUpdate,
         SetRuleMode,
         SetGlobalMode,
