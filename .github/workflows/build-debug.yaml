@@ -84,8 +84,7 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
         run: |
-          keytool -list -v -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" \\
-            | grep -E "Alias name:|Entry type:|SHA256:"
+          keytool -list -v -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" | grep -E "Alias name:|Entry type:|SHA256:"
 
       - name: Build
         if: success()
