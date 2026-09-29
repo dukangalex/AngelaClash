@@ -79,25 +79,46 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
+                        android:orientation="vertical"
                         android:paddingHorizontal="4dp">
 
-                        <TextView
-                            android:layout_width="0dp"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/nav_dashboard"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/power"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:checked="@{clashRunning}"
-                            android:contentDescription="@string/running"
-                            android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/nav_dashboard"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@{clashRunning ? @string/running : @string/stopped}"
+                                    android:textColor="@{clashRunning ? colorClashStarted : colorClashStopped}"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/power"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="@{clashRunning}"
+                                android:contentDescription="@string/running"
+                                android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
+                        </LinearLayout>
                     </LinearLayout>
 
                     <com.google.android.material.card.MaterialCardView
@@ -177,7 +198,8 @@
                                 android:layout_marginTop="12dp"
                                 android:text="@{@string/dashboard_total(forwarded)}"
                                 android:textColor="?android:attr/textColorSecondary"
-                                android:textSize="12sp" />
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
@@ -487,9 +509,9 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="28dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="28dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
             android:layout_marginBottom="12dp"
             app:cardCornerRadius="28dp"
             app:cardElevation="6dp">
