@@ -84,8 +84,14 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
         run: |
-          keytool -list -v -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" | grep -E "Alias name:|Entry type:|SHA256:"
-
+          set +e
+          output=$(keytool -list -v -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" 2>&1)
+          status=$?
+          echo "$output" | grep -E "Alias name:|Entry type:|SHA256:" || true
+          if [ "$status" -ne 0 ]; then
+            echo "keytool could not open the release keystore with the configured store password/alias." >&2
+            exit "$status"
+          fi
       - name: Build
         if: success()
         run: ./gradlew --no-daemon app:assembleAlphaRelease
