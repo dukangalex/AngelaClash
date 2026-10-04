@@ -114,7 +114,16 @@ jobs:
           KEY=$(trim "$SIGNING_KEY_PASSWORD")
           printf 'keystore.password=%s\nkey.alias=%s\nkey.password=%s\n' "$STORE" "$ALIAS" "$KEY" > signing.properties
           echo "alias_length=${#ALIAS} store_password_length=${#STORE} key_password_length=${#KEY}"
-          keytool -list -keystore release.keystore -storepass "$STORE" -alias "$ALIAS" >/dev/null
+          if ! keytool -list -keystore release.keystore -storepass "$STORE" -alias "$ALIAS" >/dev/null 2>&1; then
+            if keytool -list -keystore release.keystore -storepass "$KEY" -alias "$ALIAS" >/dev/null 2>&1; then
+              echo "store password did not open the key; the key password did"
+              STORE=$KEY
+            else
+              echo "neither stored password opens release.keystore" >&2
+              exit 1
+            fi
+          fi
+          printf 'keystore.password=%s\nkey.alias=%s\nkey.password=%s\n' "$STORE" "$ALIAS" "$KEY" > signing.properties
 
       - name: Release Build
         if: success()
