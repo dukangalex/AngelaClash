@@ -1,7 +1,6 @@
 package com.github.kr328.clash.design.component
 
 import android.content.Context
-import android.graphics.Color
 import com.github.kr328.clash.design.R
 import com.github.kr328.clash.design.util.getPixels
 import com.github.kr328.clash.design.util.resolveThemedColor
@@ -18,7 +17,7 @@ class ProxyViewConfig(val context: Context, var proxyLine: Int) {
 
     val unselectedControl = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
     val unselectedBackground: Int
-        get() = if (proxyLine==1) Color.TRANSPARENT else colorSurface
+        get() = colorSurface
 
     val layoutPadding = context.getPixels(R.dimen.proxy_layout_padding).toFloat()
     val contentPadding
@@ -27,13 +26,6 @@ class ProxyViewConfig(val context: Context, var proxyLine: Int) {
         get() = if (proxyLine==2) context.getPixels(R.dimen.proxy_text_margin).toFloat() else context.getPixels(R.dimen.proxy_text_margin_grid3).toFloat()
     val textSize
         get() = if (proxyLine==2) context.getPixels(R.dimen.proxy_text_size).toFloat() else context.getPixels(R.dimen.proxy_text_size_grid3).toFloat()
-
-    val shadow = Color.argb(
-        0x15,
-        Color.red(Color.DKGRAY),
-        Color.green(Color.DKGRAY),
-        Color.blue(Color.DKGRAY),
-    )
 
     val cardRadius = context.getPixels(R.dimen.proxy_card_radius).toFloat()
     var cardOffset = context.getPixels(R.dimen.proxy_card_offset).toFloat()

@@ -1,6 +1,5 @@
 package com.github.kr328.clash.design.preference
 
-import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.LinearLayout.LayoutParams
@@ -66,15 +65,5 @@ fun PreferenceScreen.addElement(preference: Preference) {
         root.tag = inner
     }
 
-    if (box.childCount > 0) {
-        val line = View(root.context)
-        val attrs = root.context.obtainStyledAttributes(intArrayOf(android.R.attr.listDivider))
-        line.background = attrs.getDrawable(0)
-        attrs.recycle()
-        val lineParams = LayoutParams(MATCH_PARENT, dp(1).coerceAtLeast(1))
-        lineParams.marginStart = dp(16)
-        lineParams.marginEnd = dp(16)
-        box.addView(line, lineParams)
-    }
     box.addView(view, LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 }

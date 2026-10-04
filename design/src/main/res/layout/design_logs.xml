@@ -56,27 +56,33 @@
                 </RelativeLayout>
             </com.github.kr328.clash.design.view.ActivityBarLayout>
 
-            <com.github.kr328.clash.design.view.ActionLabel
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:onClick="@{() -> self.requests.offer(Request.StartLogcat.INSTANCE)}"
-                app:icon="@drawable/ic_baseline_adb"
-                app:subtext="@string/tap_to_start"
-                app:text="@string/clash_logcat" />
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?attr/colorControlHighlight" />
+                <com.github.kr328.clash.design.view.ActionLabel
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:onClick="@{() -> self.requests.offer(Request.StartLogcat.INSTANCE)}"
+                    app:icon="@drawable/ic_baseline_adb"
+                    app:subtext="@string/tap_to_start"
+                    app:text="@string/clash_logcat" />
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingVertical="@dimen/item_padding_vertical"
-                android:paddingStart="@{@dimen/item_header_component_size + @dimen/item_header_margin * 2}"
-                android:paddingEnd="@dimen/item_tailing_margin"
+                android:paddingStart="20dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="4dp"
                 android:text="@string/history"
-                android:textColor="?attr/colorControlActivated" />
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_list"

@@ -87,8 +87,11 @@ class LogcatDesign(
             for ((view, level) in chips) {
                 val selected = floor == level
                 view.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
-                view.setTextColor(if (selected) Color.WHITE else 0xFF5C6570.toInt())
-                view.setBackgroundColor(if (selected) 0xFF1F4B99.toInt() else Color.TRANSPARENT)
+                view.setTextColor(if (selected) Color.WHITE else 0xFF8A93A6.toInt())
+                val chip = android.graphics.drawable.GradientDrawable()
+                chip.cornerRadius = 16 * view.resources.displayMetrics.density
+                chip.setColor(if (selected) 0xFF2563EB.toInt() else 0xFF171C24.toInt())
+                view.background = chip
             }
         }
         for ((view, level) in chips) {
