@@ -42,6 +42,24 @@
         <variable
             name="showChain"
             type="boolean" />
+        <variable
+            name="homeConnected"
+            type="String" />
+        <variable
+            name="homeSafety"
+            type="String" />
+        <variable
+            name="homePolicy"
+            type="String" />
+        <variable
+            name="homeNetwork"
+            type="String" />
+        <variable
+            name="homeAttention"
+            type="String" />
+        <variable
+            name="showAttention"
+            type="boolean" />
 
         <import type="android.view.View" />
         <import type="com.github.kr328.clash.design.MainDesign.Request" />
@@ -120,6 +138,129 @@
                                 android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
                         </LinearLayout>
                     </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/home_now"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="13sp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="64dp"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/home_connected_label"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@{homeConnected}"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="64dp"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/home_safety_label"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@{homeSafety}"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:onClick="@{() -> self.request(Request.OpenProfiles)}"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="64dp"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/home_policy_label"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@{homePolicy}"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="64dp"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/home_network_label"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@{homeNetwork}"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:onClick="@{() -> self.onAttention()}"
+                                android:text="@{homeAttention}"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="13sp"
+                                android:visibility="@{showAttention ? View.VISIBLE : View.GONE}" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"

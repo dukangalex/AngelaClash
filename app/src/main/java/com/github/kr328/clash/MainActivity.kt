@@ -106,7 +106,10 @@ class MainActivity : BaseActivity<MainDesign>() {
                             patchMode(TunnelState.Mode.Global)
                         MainDesign.Request.SetDirectMode ->
                             patchMode(TunnelState.Mode.Direct)
-                        MainDesign.Request.ReloadConfig -> reloadActive()
+                        MainDesign.Request.ReloadConfig -> {
+                            reloadActive()
+                            design.fetch()
+                        }
                     }
                 }
                 if (clashRunning) {
@@ -136,6 +139,40 @@ class MainActivity : BaseActivity<MainDesign>() {
         val summary = active?.let { ChainStore(this@MainActivity).summary(it.uuid) }
         setChainSummary(summary)
         setFeatureVisibility(ScriptDisplayStore(this@MainActivity).scriptEnabled(), !summary.isNullOrBlank())
+        setHome(
+            connected = getString(if (clashRunning) DesignR.string.home_connected_on else DesignR.string.home_connected_off),
+            safety = homeSafety(state.mode),
+            policy = homePolicy(active?.name, state.mode, summary),
+            network = getString(if (clashRunning) DesignR.string.home_network_on else DesignR.string.home_network_off),
+            attention = when {
+                active == null || !active.imported -> getString(DesignR.string.home_need_profile)
+                !clashRunning -> getString(DesignR.string.home_need_start)
+                else -> null
+            },
+            opensProfiles = active == null || !active.imported,
+        )
+    }
+
+    private fun homeSafety(mode: TunnelState.Mode): String {
+        if (mode == TunnelState.Mode.Direct) {
+            return getString(DesignR.string.home_safety_direct)
+        }
+        val store = ScriptDisplayStore(this)
+        val leak = listOf("DNS 走代理", "禁止系统 DNS", "关闭 IPv6", "嗅探防泄漏")
+            .all { store.optionOn(ScriptDisplayStore.GROUP_LEAK, it, true) }
+        return getString(if (leak) DesignR.string.home_safety_on else DesignR.string.home_safety_partial)
+    }
+
+    private fun homePolicy(name: String?, mode: TunnelState.Mode, chain: String?): String {
+        if (name.isNullOrBlank()) return getString(DesignR.string.not_selected)
+        val modeLabel = getString(
+            when (mode) {
+                TunnelState.Mode.Global -> DesignR.string.global_mode
+                TunnelState.Mode.Direct -> DesignR.string.direct_mode
+                else -> DesignR.string.rule_mode
+            }
+        )
+        return if (chain.isNullOrBlank()) "$name · $modeLabel" else "$name · $modeLabel · $chain"
     }
 
     private suspend fun reloadActive() {
@@ -157,7 +194,7 @@ class MainActivity : BaseActivity<MainDesign>() {
             override.mode = mode
             patchOverride(Clash.OverrideSlot.Session, override)
         }
-        design?.setMode(mode)
+        design?.fetch()
     }
 
     private suspend fun MainDesign.startClash() {

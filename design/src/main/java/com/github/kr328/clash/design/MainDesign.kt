@@ -49,6 +49,30 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         .inflate(context.layoutInflater, context.root, false)
 
     private var suppressMode = false
+    private var attentionOpensProfiles = false
+
+    fun onAttention() {
+        if (attentionOpensProfiles) request(Request.OpenProfiles)
+    }
+
+    suspend fun setHome(
+        connected: String,
+        safety: String,
+        policy: String,
+        network: String,
+        attention: String?,
+        opensProfiles: Boolean,
+    ) {
+        withContext(Dispatchers.Main) {
+            attentionOpensProfiles = opensProfiles
+            binding.homeConnected = connected
+            binding.homeSafety = safety
+            binding.homePolicy = policy
+            binding.homeNetwork = network
+            binding.homeAttention = attention ?: ""
+            binding.showAttention = !attention.isNullOrBlank()
+        }
+    }
 
     override val root: View
         get() = binding.root
