@@ -118,7 +118,16 @@ jobs:
         if: success()
         run: ./gradlew --no-daemon app:assembleMetaRelease
 
+      - name: Upload APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Angela-Clash-android
+          path: app/build/outputs/apk/meta/release/*.apk
+          if-no-files-found: error
+
       - name: Tag Repo
+        continue-on-error: true
         uses: richardsimko/update-tag@v3
         with:
           tag_name: ${{ inputs.release-tag }}
@@ -127,6 +136,7 @@ jobs:
 
       - name: Upload Release
         uses: softprops/action-gh-release@v3
+        continue-on-error: true
         if: ${{ success() }}
         with:
           tag_name: ${{ inputs.release-tag }}
