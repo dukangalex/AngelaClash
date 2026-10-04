@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams
 import androidx.recyclerview.widget.RecyclerView
+import com.github.kr328.clash.design.R
 import com.github.kr328.clash.design.model.LogFile
 import com.github.kr328.clash.design.util.format
 import com.github.kr328.clash.design.view.ActionLabel
@@ -18,7 +19,16 @@ class LogFileAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         return Holder(ActionLabel(context).apply {
-            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            val density = context.resources.displayMetrics.density
+            val margin = (16 * density).toInt()
+            val gap = (4 * density).toInt()
+            layoutParams = ViewGroup.MarginLayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT,
+            ).apply {
+                setMargins(margin, gap, margin, gap)
+            }
+            setBackgroundResource(R.drawable.bg_b)
         })
     }
 

@@ -22,8 +22,11 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="4dp"
+        android:background="@drawable/bg_b"
         android:minHeight="@dimen/item_min_height"
-        android:paddingStart="@dimen/item_header_margin"
+        android:paddingStart="16dp"
         android:paddingEnd="0dp">
 
         <LinearLayout
@@ -45,7 +48,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/item_text_margin"
                 android:text="@{I18nKt.type(provider, context)}"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2" />
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                android:textColor="?android:attr/textColorSecondary" />
         </LinearLayout>
 
         <TextView
@@ -55,16 +59,8 @@
             android:layout_centerVertical="true"
             android:layout_marginEnd="@dimen/item_midden_margin"
             android:layout_toStartOf="@id/end_view"
-            android:text="@{IntervalKt.elapsedIntervalString(currentTime.value - state.updatedAt, context)}" />
-
-        <View
-            android:id="@+id/divider"
-            android:layout_width="@dimen/divider_size"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_toStartOf="@id/end_view"
-            android:background="?attr/colorControlHighlight"
-            android:minHeight="@{@dimen/item_tailing_component_size * 1.5f}" />
+            android:text="@{IntervalKt.elapsedIntervalString(currentTime.value - state.updatedAt, context)}"
+            android:textColor="?android:attr/textColorSecondary" />
 
         <FrameLayout
             android:id="@+id/end_view"

@@ -123,8 +123,11 @@
                 app:tabBackground="@android:color/transparent"
                 app:tabIndicatorColor="?attr/colorPrimary"
                 app:tabIndicatorFullWidth="false"
+                app:tabIndicatorHeight="3dp"
                 app:tabMode="scrollable"
-                app:tabRippleColor="@android:color/transparent" />
+                app:tabRippleColor="@android:color/transparent"
+                app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabTextColor="?android:attr/textColorSecondary" />
 
             <View
                 android:id="@+id/elevation_view"

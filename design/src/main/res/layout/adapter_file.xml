@@ -23,7 +23,10 @@
         android:id="@+id/root_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="4dp"
+        android:background="@drawable/bg_b"
+        android:foreground="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
         android:minHeight="@dimen/item_min_height"
@@ -61,6 +64,7 @@
                 android:layout_marginTop="@dimen/item_text_margin"
                 android:text="@{file.directory ? null : I18nKt.toBytesString(file.size)}"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                android:textColor="?android:attr/textColorSecondary"
                 android:visibility="@{file.directory ? View.GONE : View.VISIBLE}" />
         </LinearLayout>
 
@@ -74,14 +78,6 @@
             android:text="@{file.directory ? null : IntervalKt.elapsedIntervalString(currentTime.value - file.lastModified, context)}"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Tooltip"
             android:visibility="@{file.directory ? View.GONE : View.VISIBLE}" />
-
-        <View
-            android:layout_width="@dimen/divider_size"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_toStartOf="@id/menu_view"
-            android:background="?attr/colorControlHighlight"
-            android:minHeight="@{@dimen/item_tailing_component_size * 1.5f}" />
 
         <FrameLayout
             android:id="@+id/menu_view"
