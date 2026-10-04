@@ -108,11 +108,13 @@ jobs:
             exit 1
           fi
           umask 077
-          cat > signing.properties << EOF
-          keystore.password=$SIGNING_STORE_PASSWORD
-          key.alias=$SIGNING_KEY_ALIAS
-          key.password=$SIGNING_KEY_PASSWORD
-          EOF
+          trim() { printf '%s' "$1" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
+          STORE=$(trim "$SIGNING_STORE_PASSWORD")
+          ALIAS=$(trim "$SIGNING_KEY_ALIAS")
+          KEY=$(trim "$SIGNING_KEY_PASSWORD")
+          printf 'keystore.password=%s\nkey.alias=%s\nkey.password=%s\n' "$STORE" "$ALIAS" "$KEY" > signing.properties
+          echo "alias_length=${#ALIAS} store_password_length=${#STORE} key_password_length=${#KEY}"
+          keytool -list -keystore release.keystore -storepass "$STORE" -alias "$ALIAS" >/dev/null
 
       - name: Release Build
         if: success()
