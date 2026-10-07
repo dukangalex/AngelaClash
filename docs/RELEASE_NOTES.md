@@ -1,5 +1,46 @@
 # Angela Clash 更新说明
 
+## 1.1.0
+
+- 客户端 `1.1.0`（`10010`）
+- 内核仓库与 commit：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) 分支 `chain-dev` @ `fd6cf5e80577ab63865ad5c3dfa6720afd3b38b3`（tag `v1.19.31-chain.1`）
+- 官方上游基线：跟踪 MetaCubeX/mihomo Alpha `f103639`（v1.19.31）
+- 证书 SHA-256 不变
+
+### 新版特性与改进：
+
+1. **公网出口 IP 与地理位置探测 (Outbound IP & Geo Probe)**
+   - 首页增加公网出口探测卡片，支持实时检测公网 IP、所属地区旗帜、所在城市、ISP 运营商与 ASN 编号。
+   - 链式代理启用时真实反映落地节点（Landing Exit IP），直观验证真实流量路径与防直连泄露效果。
+
+2. **实时活动连接监控 (Active Connections)**
+   - 实时捕获并列出活跃的 TCP/UDP 连接，包含目标域名、目的 IP、端口与关联进程。
+   - 实时呈现分流规则命中依据（如 `DOMAIN-SUFFIX: chatgpt.com`）与完整出站链路。
+   - 动态监控连接上下行速率及吞吐量，支持单独断开指定连接或一键「中断全部连接」。
+
+3. **分流规则总览与交互式域名路由测试器 (Rules Explorer & Tester)**
+   - 集中展示内核已加载的规则集（`DOMAIN-SUFFIX`、`GEOIP`、`IP-CIDR`、`MATCH`）。
+   - 交互式路由模拟测试器：输入任意测试域名，即时展示分流命中链路：目标域名 → 命中规则 → 目标策略组 → 最终出站节点。
+
+4. **DNS 诊断与主流上游测速 (DNS Benchmark & Fake-IP)**
+   - 支持对阿里云公共 DNS、腾讯 DNSPod、Cloudflare、Google 及 DoH 进行实时并发延迟测速。
+   - 监控增强模式 Fake-IP (`198.18.0.1/16`) 缓存状态，支持一键清空与刷新解析缓存。
+
+5. **链式代理体验升级 (Chain Proxy Dual-Hop Latency)**
+   - 拓扑图引入「入口延迟 + 落地延迟 = 整链综合延迟」的动态估算与出口 IP 预演。
+   - 严格保证 Fail-Closed 闭环策略，链路失败立即阻止启动，绝不静默落回 DIRECT。
+
+6. **测速源优化与峰值带宽统计**
+   - 增加 Cloudflare (204)、Google Gstatic、YouTube 测速目标切换。
+   - 节点列表展示分组平均延迟并自动标注「最优节点 (Best)」，波形图记录并展示峰值吞吐量。
+
+7. **全量双语无缝切换 (Bilingual Toggle)**
+   - 顶部导航栏提供一键中文与英文切换，所有菜单及专业术语完整本地化。
+
+### 致谢与鸣谢 (Acknowledgements)
+
+特别感谢 Bettbox 为本版本提供的现代化网络诊断工具与界面交互设计参考，以及 MetaCubeX/mihomo 与 Clash Meta for Android 社区的持续技术支持。
+
 ## 1.0.9
 
 - 客户端 `1.0.9`（`10009`）
@@ -33,7 +74,6 @@
 首页改成卡片网格和悬浮底栏，默认深色。代理页右上角进入规则开关。更多页按查看、设置、其他分组。系统显式选项仍在首页，优先级不变。
 
 ## 1.0.4
-
 
 - 客户端 `1.0.4`（`10004`）
 - 内核 [dukangalex/mihomo](https://github.com/dukangalex/mihomo) `chain-dev` @ `fd6cf5e`，官方基线 MetaCubeX/mihomo Alpha `f103639`（v1.19.31）
