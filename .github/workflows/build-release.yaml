@@ -77,8 +77,8 @@ jobs:
             git config --global user.email 'action@github.com'
             git add version.properties
             git commit -am "Bump version to $newVersionName ($newVersionCode)"
-            git tag "v$newVersionName"
-            git push --follow-tags origin HEAD:dev
+            git tag -f "v$newVersionName"
+            git push -f --follow-tags origin HEAD:dev
           fi
 
       - name: Update CA
