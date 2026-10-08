@@ -49,10 +49,10 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         .inflate(context.layoutInflater, context.root, false)
 
     private var suppressMode = false
-    private var attentionOpensProfiles = false
+    private var attentionAction: Request? = null
 
     fun onAttention() {
-        if (attentionOpensProfiles) request(Request.OpenProfiles)
+        attentionAction?.let(::request)
     }
 
     suspend fun setHome(
@@ -61,10 +61,10 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         policy: String,
         network: String,
         attention: String?,
-        opensProfiles: Boolean,
+        attentionAction: Request?,
     ) {
         withContext(Dispatchers.Main) {
-            attentionOpensProfiles = opensProfiles
+            this@MainDesign.attentionAction = attentionAction
             binding.homeConnected = connected
             binding.homeSafety = safety
             binding.homePolicy = policy

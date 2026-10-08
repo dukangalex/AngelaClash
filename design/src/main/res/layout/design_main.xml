@@ -134,7 +134,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:checked="@{clashRunning}"
-                                android:contentDescription="@string/running"
+                                android:contentDescription="@string/service_power_control"
                                 android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
                         </LinearLayout>
                     </LinearLayout>
@@ -255,7 +255,13 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:minHeight="48dp"
                                 android:onClick="@{() -> self.onAttention()}"
+                                android:paddingHorizontal="8dp"
                                 android:text="@{homeAttention}"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="13sp"

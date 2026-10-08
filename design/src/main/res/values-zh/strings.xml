@@ -357,13 +357,14 @@
     <string name="home_network_label">网络</string>
     <string name="home_connected_on">已连接</string>
     <string name="home_connected_off">未连接</string>
+    <string name="service_power_control">代理服务开关</string>
     <string name="home_safety_on">防泄漏已开启。你关掉之前会一直保持。</string>
     <string name="home_safety_partial">防泄漏没有全部打开。可以在「更多」里改。</string>
     <string name="home_safety_direct">直连，流量不经过代理。这是你选的，不会被偷偷改掉。</string>
     <string name="home_network_on">正在转发。速度在下面。</string>
     <string name="home_network_off">没有转发。</string>
-    <string name="home_need_profile">还没有配置。先导入，确认后再启动。</string>
-    <string name="home_need_start">尚未启动。上面的开关就是确认并启动。</string>
+    <string name="home_need_profile">还没有配置。点此导入配置，然后启动。</string>
+    <string name="home_need_start">尚未启动。点此或使用上方开关启动。</string>
     <string name="acknowledgments">致谢</string>
     <string name="dashboard_up">上行 %1$s</string>
     <string name="dashboard_down">下行 %1$s</string>

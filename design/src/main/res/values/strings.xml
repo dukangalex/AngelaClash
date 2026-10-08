@@ -448,13 +448,14 @@
     <string name="home_network_label">Network</string>
     <string name="home_connected_on">Connected</string>
     <string name="home_connected_off">Not connected</string>
+    <string name="service_power_control">Proxy service switch</string>
     <string name="home_safety_on">Leak protection is on. It stays until you turn it off.</string>
     <string name="home_safety_partial">Leak protection is not fully on. You can change it under More.</string>
     <string name="home_safety_direct">Direct. Traffic does not go through a proxy. This is your choice.</string>
     <string name="home_network_on">Forwarding. Speed is below.</string>
     <string name="home_network_off">Not forwarding.</string>
-    <string name="home_need_profile">No profile yet. Import one, then confirm and start.</string>
-    <string name="home_need_start">Not started. The switch above is the confirmation.</string>
+    <string name="home_need_profile">No profile yet. Tap here to import one, then start.</string>
+    <string name="home_need_start">Not started. Tap here or use the switch above to start.</string>
     <string name="acknowledgments">Acknowledgments</string>
     <string name="dashboard_up">Up %1$s</string>
     <string name="dashboard_down">Down %1$s</string>

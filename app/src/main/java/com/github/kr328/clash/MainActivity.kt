@@ -150,7 +150,11 @@ class MainActivity : BaseActivity<MainDesign>() {
                 !clashRunning -> getString(DesignR.string.home_need_start)
                 else -> null
             },
-            opensProfiles = active == null || !active.imported,
+            attentionAction = when {
+                active == null || !active.imported -> MainDesign.Request.OpenProfiles
+                !clashRunning -> MainDesign.Request.ToggleStatus
+                else -> null
+            },
         )
     }
 
