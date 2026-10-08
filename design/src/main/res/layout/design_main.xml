@@ -123,7 +123,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="@{clashRunning ? @string/running : @string/stopped}"
+                                    android:text="@{clashRunning ? @string/running : @string/tap_to_start}"
                                     android:textColor="@{clashRunning ? colorClashStarted : colorClashStopped}"
                                     android:textSize="13sp"
                                     android:textStyle="bold" />
@@ -133,8 +133,9 @@
                                 android:id="@+id/power"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:minHeight="48dp"
                                 android:checked="@{clashRunning}"
-                                android:contentDescription="@string/running"
+                                android:contentDescription="@{clashRunning ? @string/running : @string/tap_to_start}"
                                 android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
                         </LinearLayout>
                     </LinearLayout>
