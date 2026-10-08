@@ -86,7 +86,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     suspend fun setChainSummary(summary: String?) {
         withContext(Dispatchers.Main) {
             binding.showChain = !summary.isNullOrBlank()
-            binding.chainSummary = summary ?: ""
+            binding.chainSummary = summary ?: context.getString(R.string.chain_not_set)
         }
     }
 
@@ -267,7 +267,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
         binding.colorClashStarted = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         binding.colorClashStopped = context.resolveThemedColor(R.attr.colorClashStopped)
-        binding.chainSummary = ""
+        binding.chainSummary = context.getString(R.string.chain_not_set)
 
         binding.modeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked || suppressMode) return@addOnButtonCheckedListener

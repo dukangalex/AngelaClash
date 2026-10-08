@@ -16,6 +16,7 @@
     <string name="proxy_empty_tips">No groups can be displayed</string>
 
     <string name="profiles">Profiles</string>
+    <string name="profile_active_badge">ACTIVE</string>
     <string name="not_selected">Not selected</string>
     <string name="format_profile_activated">%s Activated</string>
 

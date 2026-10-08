@@ -138,11 +138,12 @@ class MainActivity : BaseActivity<MainDesign>() {
         setProfileName(active?.name)
         val summary = active?.let { ChainStore(this@MainActivity).summary(it.uuid) }
         setChainSummary(summary)
-        setFeatureVisibility(ScriptDisplayStore(this@MainActivity).scriptEnabled(), !summary.isNullOrBlank())
+        // Chaining is a built-in capability, so keep its entry visible before the first binding exists.
+        setFeatureVisibility(ScriptDisplayStore(this@MainActivity).scriptEnabled(), true)
         setHome(
             connected = getString(if (clashRunning) DesignR.string.home_connected_on else DesignR.string.home_connected_off),
             safety = homeSafety(state.mode),
-            policy = homePolicy(active?.name, state.mode, summary),
+            policy = homePolicy(active?.name, state.mode),
             network = getString(if (clashRunning) DesignR.string.home_network_on else DesignR.string.home_network_off),
             attention = when {
                 active == null || !active.imported -> getString(DesignR.string.home_need_profile)
@@ -163,7 +164,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         return getString(if (leak) DesignR.string.home_safety_on else DesignR.string.home_safety_partial)
     }
 
-    private fun homePolicy(name: String?, mode: TunnelState.Mode, chain: String?): String {
+    private fun homePolicy(name: String?, mode: TunnelState.Mode): String {
         if (name.isNullOrBlank()) return getString(DesignR.string.not_selected)
         val modeLabel = getString(
             when (mode) {
@@ -172,7 +173,7 @@ class MainActivity : BaseActivity<MainDesign>() {
                 else -> DesignR.string.rule_mode
             }
         )
-        return if (chain.isNullOrBlank()) "$name · $modeLabel" else "$name · $modeLabel · $chain"
+        return "$name · $modeLabel"
     }
 
     private suspend fun reloadActive() {
