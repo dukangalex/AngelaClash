@@ -1,4 +1,6 @@
+import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -49,9 +51,40 @@ task("downloadGeoFiles") {
             val url = URL(downloadUrl)
             val outputPath = file("$geoFilesDownloadDir/$outputFileName")
             outputPath.parentFile.mkdirs()
-            url.openStream().use { input ->
-                Files.copy(input, outputPath.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.connectTimeout = 15_000
+            connection.readTimeout = 60_000
+            connection.instanceFollowRedirects = true
+            val tempPath = Files.createTempFile(outputPath.parentFile.toPath(), "$outputFileName.", ".download")
+
+            try {
+                connection.connect()
+                val statusCode = connection.responseCode
+                if (statusCode !in 200..299) {
+                    throw GradleException("Failed to download $outputFileName: HTTP $statusCode")
+                }
+
+                connection.inputStream.use { input ->
+                    Files.newOutputStream(tempPath).use { output -> input.copyTo(output) }
+                }
+                if (Files.size(tempPath) == 0L) {
+                    throw GradleException("Downloaded $outputFileName is empty")
+                }
+
+                try {
+                    Files.move(
+                        tempPath,
+                        outputPath.toPath(),
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING,
+                    )
+                } catch (_: AtomicMoveNotSupportedException) {
+                    Files.move(tempPath, outputPath.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }
                 println("$outputFileName downloaded to $outputPath")
+            } finally {
+                connection.disconnect()
+                Files.deleteIfExists(tempPath)
             }
         }
     }
