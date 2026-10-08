@@ -123,7 +123,7 @@
                 app:tabBackground="@android:color/transparent"
                 app:tabIndicatorColor="?attr/colorPrimary"
                 app:tabIndicatorFullWidth="false"
-                app:tabIndicatorHeight="3dp"
+                app:tabIndicatorHeight="2dp"
                 app:tabMode="scrollable"
                 app:tabRippleColor="@android:color/transparent"
                 app:tabSelectedTextColor="?attr/colorPrimary"

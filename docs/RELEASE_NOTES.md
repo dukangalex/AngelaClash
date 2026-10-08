@@ -2,44 +2,28 @@
 
 ## 1.1.0
 
-- 客户端 `1.1.0`（`10010`）
+- 客户端版本：`1.1.0`（版本码 `10100`）
 - 内核仓库与 commit：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) 分支 `chain-dev` @ `fd6cf5e80577ab63865ad5c3dfa6720afd3b38b3`（tag `v1.19.31-chain.1`）
-- 官方上游基线：跟踪 MetaCubeX/mihomo Alpha `f103639`（v1.19.31）
-- 证书 SHA-256 不变
+- 官方上游基线：MetaCubeX/mihomo `Alpha` @ `f103639c808d93a2c34cae56757b458862871b22`（v1.19.31）
+- 链式出站覆盖层：已启用，使用 Mihomo 官方 `dialer-proxy`；链路失败会阻止启动，不会静默切回 `DIRECT`。
+- 正式签名证书 SHA-256 与 `docs/SIGNING.md` 一致：`82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`。
 
-### 新版特性与改进：
+### 新版特性与改进
 
-1. **公网出口 IP 与地理位置探测 (Outbound IP & Geo Probe)**
-   - 首页增加公网出口探测卡片，支持实时检测公网 IP、所属地区旗帜、所在城市、ISP 运营商与 ASN 编号。
-   - 链式代理启用时真实反映落地节点（Landing Exit IP），直观验证真实流量路径与防直连泄露效果。
+1. **首页状态与启动操作更清楚**
+   - 首页集中显示连接、安全、当前策略和网络转发状态。
+   - 没有可用配置时，提示可直接打开配置页；已有配置但服务停止时，提示可直接启动，也可使用服务开关。
+   - 服务开关使用准确的无障碍名称，提示区域可聚焦并有明确的触控反馈。
+2. **配置与链路更容易发现**
+   - 配置卡片突出当前配置，并整理订阅用量、到期和更新时间信息。
+   - 首页和「更多」均提供链式代理入口；配置前可见未组链状态，组链页面明确展示入口 → 落地。
+3. **保持 Angela Clash 的核心行为**
+   - 保留 Mihomo 代理模式、配置/provider/script、系统显式选项及入口 → 落地链路行为。
+   - 本次改动只涉及界面和启动提示，不改路由内核逻辑；链路仍遵循 fail-closed，不会因失败静默回落到 `DIRECT`。
 
-2. **实时活动连接监控 (Active Connections)**
-   - 实时捕获并列出活跃的 TCP/UDP 连接，包含目标域名、目的 IP、端口与关联进程。
-   - 实时呈现分流规则命中依据（如 `DOMAIN-SUFFIX: chatgpt.com`）与完整出站链路。
-   - 动态监控连接上下行速率及吞吐量，支持单独断开指定连接或一键「中断全部连接」。
+### 致谢
 
-3. **分流规则总览与交互式域名路由测试器 (Rules Explorer & Tester)**
-   - 集中展示内核已加载的规则集（`DOMAIN-SUFFIX`、`GEOIP`、`IP-CIDR`、`MATCH`）。
-   - 交互式路由模拟测试器：输入任意测试域名，即时展示分流命中链路：目标域名 → 命中规则 → 目标策略组 → 最终出站节点。
-
-4. **DNS 诊断与主流上游测速 (DNS Benchmark & Fake-IP)**
-   - 支持对阿里云公共 DNS、腾讯 DNSPod、Cloudflare、Google 及 DoH 进行实时并发延迟测速。
-   - 监控增强模式 Fake-IP (`198.18.0.1/16`) 缓存状态，支持一键清空与刷新解析缓存。
-
-5. **链式代理体验升级 (Chain Proxy Dual-Hop Latency)**
-   - 拓扑图引入「入口延迟 + 落地延迟 = 整链综合延迟」的动态估算与出口 IP 预演。
-   - 严格保证 Fail-Closed 闭环策略，链路失败立即阻止启动，绝不静默落回 DIRECT。
-
-6. **测速源优化与峰值带宽统计**
-   - 增加 Cloudflare (204)、Google Gstatic、YouTube 测速目标切换。
-   - 节点列表展示分组平均延迟并自动标注「最优节点 (Best)」，波形图记录并展示峰值吞吐量。
-
-7. **全量双语无缝切换 (Bilingual Toggle)**
-   - 顶部导航栏提供一键中文与英文切换，所有菜单及专业术语完整本地化。
-
-### 致谢与鸣谢 (Acknowledgements)
-
-特别感谢 Bettbox 为本版本提供的现代化网络诊断工具与界面交互设计参考，以及 MetaCubeX/mihomo 与 Clash Meta for Android 社区的持续技术支持。
+感谢 Bettbox 提供界面体验参考，也感谢 MetaCubeX/mihomo 与 Clash Meta for Android 社区的持续维护。
 
 ## 1.0.9
 
@@ -84,8 +68,4 @@
 
 ## 发版记录要求
 
-本文件供发版工作流读取。发布说明应同时写明：
-
-- 客户端 tag / VERSION_NAME
-- 内核仓库与 commit SHA
-- 官方上游分支（当前跟踪 MetaCubeX/mihomo Alpha）
+正式发版工作流会按 tag 版本提取本文件中对应的 `## 版本号` 小节，作为 GitHub Release 正文。每个小节应写明客户端版本与版本码、内核仓库与 commit SHA、官方上游基线、是否启用链式覆盖层，以及正式签名证书 SHA-256 是否与 `docs/SIGNING.md` 一致。
