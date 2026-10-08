@@ -40,23 +40,22 @@ Angela Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + 面�
 - 不整包重命名 `com.github.kr328.clash`，以免失去与上游合并的能力。
 
 ## 内核同步
-
 官方上游：`https://github.com/MetaCubeX/mihomo`
 
-CMFA 上游文档指定内核来自 `Alpha`（主线）与 `android-open` 合并后的 `android-real`。本项目当前对齐官方 **Alpha** `f103639`（含 **v1.19.31**），客户端子模块指向 `v1.19.31-chain.1`（`4e6f2eef`）。
+本项目以 Mihomo 已发布的正式标签为同步目标。当前对齐官方 `v1.19.32` @ `88dcbf7f1614a67c3b36b848ee3592dfa92ada36`；客户端子模块指向 fork `chain-dev` 上的 `v1.19.32-chain.1`。不要把正式标签之后的 Alpha 预发布提交自动带入。
 
-1. 只把官方 `Alpha` merge 进 `dukangalex/mihomo` 的 `chain-dev`。
+1. 只把明确选定的官方 Mihomo 正式发布标签 merge 进 `dukangalex/mihomo` 的 `chain-dev`。
 2. 只解决与链式出站覆盖层、`ANGELABOX.md`、`Makefile` 的 `chain-dev` 版本行相关的冲突。
 3. 子模块 `core/src/foss/golang/clash` 指向 `https://github.com/dukangalex/mihomo.git` 的 `chain-dev`。合入内核后同步 `core/src/foss/golang` 与 `core/src/main/golang` 的 `go.mod` / `go.sum`。
-4. 发版记录 `version.properties` 里的内核 commit SHA。
+4. `version.properties` 记录 fork 内核 commit SHA 和官方基线标签对应的 commit SHA。
 5. 禁止 merge 上游或本 fork 的 `main`。那条分支不是内核。
 
 ```bash
 git clone -b chain-dev https://github.com/dukangalex/mihomo.git
 cd mihomo
 git remote add upstream https://github.com/MetaCubeX/mihomo.git
-git fetch upstream Alpha
-git merge upstream/Alpha
+git fetch upstream refs/tags/v1.19.32:refs/tags/v1.19.32
+git merge --no-ff v1.19.32
 ```
 
 ## App 同步
