@@ -17,6 +17,9 @@
 
     <string name="profiles">Profiles</string>
     <string name="profile_active_badge">ACTIVE</string>
+    <string name="profile_usage_with_total">Used %1$s of %2$s</string>
+    <string name="profile_usage">Used %s</string>
+    <string name="profile_expires">Expires %s</string>
     <string name="not_selected">Not selected</string>
     <string name="format_profile_activated">%s Activated</string>
 

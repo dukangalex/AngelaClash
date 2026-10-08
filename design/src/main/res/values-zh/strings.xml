@@ -57,6 +57,9 @@
     <string name="ok">确认</string>
     <string name="profile">配置</string>
     <string name="profile_active_badge">当前配置</string>
+    <string name="profile_usage_with_total">已用 %1$s / %2$s</string>
+    <string name="profile_usage">已用 %s</string>
+    <string name="profile_expires">到期 %s</string>
     <string name="chain_proxy">链式代理</string>
     <string name="chain_not_set">未组链</string>
     <string name="chain_bound">已绑定链路</string>
