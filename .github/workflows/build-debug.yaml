@@ -68,40 +68,52 @@ jobs:
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
-          if [ -z "$SIGNING_STORE_PASSWORD" ] || [ -z "$SIGNING_KEY_ALIAS" ] || [ -z "$SIGNING_KEY_PASSWORD" ]; then
+          trim() { printf '%s' "$1" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
+          STORE=$(trim "$SIGNING_STORE_PASSWORD")
+          ALIAS=$(trim "$SIGNING_KEY_ALIAS")
+          KEY=$(trim "$SIGNING_KEY_PASSWORD")
+          if [ -z "$STORE" ] || [ -z "$ALIAS" ] || [ -z "$KEY" ]; then
             echo "Missing signing secrets" >&2
             exit 1
           fi
           umask 077
-          cat > signing.properties << EOF
-          keystore.password=$SIGNING_STORE_PASSWORD
-          key.alias=$SIGNING_KEY_ALIAS
-          key.password=$SIGNING_KEY_PASSWORD
-          EOF
+          printf 'keystore.password=%s\nkey.alias=%s\nkey.password=%s\n' "$STORE" "$ALIAS" "$KEY" > signing.properties
 
       - name: Verify release signing material
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
-          set +e
-          store_output=$(keytool -list -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" 2>&1)
-          store_status=$?
-          if [ "$store_status" -eq 0 ]; then
+          set -euo pipefail
+          trim() { printf '%s' "$1" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
+          STORE=$(trim "$SIGNING_STORE_PASSWORD")
+          ALIAS=$(trim "$SIGNING_KEY_ALIAS")
+          KEY=$(trim "$SIGNING_KEY_PASSWORD")
+          echo "alias_length=${#ALIAS} store_password_length=${#STORE} key_password_length=${#KEY}"
+
+          if keytool -list -keystore release.keystore -storepass "$STORE" -alias "$ALIAS" >/dev/null 2>&1; then
             echo "Keystore password: valid"
-            echo "$store_output" | grep -E "Your keystore contains|PrivateKeyEntry|trustedCertEntry" || true
           else
-            echo "Keystore password: invalid or keystore is unreadable"
-            exit "$store_status"
+            echo "Store password did not open the key; trying the key password"
+            if keytool -list -keystore release.keystore -storepass "$KEY" -alias "$ALIAS" >/dev/null 2>&1; then
+              echo "Store password did not open the key; the key password did"
+              STORE="$KEY"
+            else
+              echo "Neither stored password opens release.keystore with the configured alias" >&2
+              exit 1
+            fi
           fi
 
-          alias_output=$(keytool -list -v -keystore release.keystore -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" 2>&1)
-          alias_status=$?
-          echo "$alias_output" | grep -E "Alias name:|Entry type:|SHA256:" || true
-          if [ "$alias_status" -ne 0 ]; then
+          if alias_output=$(keytool -list -v -keystore release.keystore -storepass "$STORE" -alias "$ALIAS" 2>&1); then
+            :
+          else
             echo "Keystore opened successfully, but the configured key alias could not be opened." >&2
-            exit "$alias_status"
+            exit 1
           fi
+          echo "$alias_output" | grep -E "Alias name:|Entry type:|SHA256:" || true
+          umask 077
+          printf 'keystore.password=%s\nkey.alias=%s\nkey.password=%s\n' "$STORE" "$ALIAS" "$KEY" > signing.properties
       - name: Build
         if: success()
         run: ./gradlew --no-daemon app:assembleAlphaRelease
