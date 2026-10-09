@@ -38,7 +38,17 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginStart="2dp"
+                    android:letterSpacing="0.08"
+                    android:text="@string/script_engine_label"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:text="main(config)"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
                     android:textStyle="bold" />

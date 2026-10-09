@@ -332,6 +332,7 @@
     <string name="script_display_edit">编辑覆写脚本</string>
     <string name="script_display_edit_summary">main() 覆写除节点外的配置。服务运行时保存会立刻重载</string>
     <string name="script_editor_hint">打开代码编辑器，查看或修改覆写脚本</string>
+    <string name="script_editor_mode">LUA · MAIN(CONFIG)</string>
     <string name="script_editor_placeholder">在此编写或粘贴 main(config) 覆写脚本。</string>
     <string name="script_editor_empty_state">当前没有覆写脚本。可在下方编写或粘贴 main(config) 脚本；留空保存时配置不会被覆写。</string>
     <string name="script_display_restore">恢复内置脚本</string>
@@ -345,6 +346,8 @@
     <string name="script_display_privacy">防隐私</string>
     <string name="nav_dashboard">首页</string>
     <string name="nav_tools">更多</string>
+    <string name="home_console_label">MIHOMO · 网络控制台</string>
+    <string name="script_engine_label">MIHOMO / SCRIPT ENGINE</string>
     <string name="service_status">服务状态</string>
     <string name="rule_switches">规则开关</string>
     <string name="rule_switches_summary">关闭后移除此策略组，规则回到主组。系统显式选项仍然优先。</string>

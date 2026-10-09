@@ -107,6 +107,17 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
         }
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
+            addView(android.widget.TextView(this@ScriptOptionsActivity).apply {
+                text = getString(R.string.script_editor_mode)
+                textSize = 11f
+                letterSpacing = 0.08f
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(resolveThemedColor(com.google.android.material.R.attr.colorPrimary))
+                setPadding(dp(4), 0, dp(4), dp(8))
+            }, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ))
             addView(emptyState, LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,

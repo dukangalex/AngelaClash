@@ -155,7 +155,8 @@ class ScriptOptionsDesign(
             radius = dp(16).toFloat()
             cardElevation = 0f
             setCardBackgroundColor(surfaceColor())
-            strokeWidth = 0
+            strokeWidth = dp(1)
+            setStrokeColor(context.resolveThemedColor(R.attr.clashOutline))
             addView(item, ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,

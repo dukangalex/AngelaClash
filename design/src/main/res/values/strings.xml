@@ -407,6 +407,8 @@
     <string name="shortcut_stop_long">Stop the service</string>
 
     <string name="script_display_options">Override script</string>
+    <string name="home_console_label">MIHOMO · NETWORK CONSOLE</string>
+    <string name="script_engine_label">MIHOMO / SCRIPT ENGINE</string>
     <string name="script_page_intro">Control how main(config) overrides the selected profile. Nodes stay unchanged.</string>
     <string name="script_enable">Enable override script</string>
     <string name="script_enable_summary">main() rewrites the profile except nodes. Turn this off and the script is not applied</string>
@@ -422,6 +424,7 @@
     <string name="script_display_angela">Angela Clash script declaration detected.</string>
     <string name="script_display_edit">Edit override script</string>
     <string name="script_display_edit_summary">main() overwrites everything except nodes. Saving reloads a running service</string>
+    <string name="script_editor_mode">LUA · MAIN(CONFIG)</string>
     <string name="script_editor_hint">Open the code editor to inspect or update the override.</string>
     <string name="script_editor_placeholder">Write or paste your main(config) override here.</string>
     <string name="script_editor_empty_state">This override is empty. Write or paste a main(config) script below; saving it empty leaves the configuration unchanged.</string>
