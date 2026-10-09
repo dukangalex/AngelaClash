@@ -227,7 +227,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     private fun paintMode(selected: Int) {
         val primary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         val onPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorOnPrimary)
-        val normal = context.resolveThemedColor(android.R.attr.textColorPrimary)
+        val normal = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val surface = context.resolveThemedColor(com.google.android.material.R.attr.colorSurface)
         val outline = context.resolveThemedColor(R.attr.clashOutline)
         val strokeWidth = (context.resources.displayMetrics.density).toInt().coerceAtLeast(1)

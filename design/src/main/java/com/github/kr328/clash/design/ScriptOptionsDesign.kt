@@ -73,17 +73,20 @@ class ScriptOptionsDesign(
     private fun renderRuleRows(store: ScriptDisplayStore) {
         binding.ruleRows.removeAllViews()
         ruleSwitches.clear()
-        ruleRows.forEach { row ->
-            binding.ruleRows.addView(ruleRow(store, row))
+        ruleRows.forEachIndexed { index, row ->
+            binding.ruleRows.addView(ruleRow(store, row, index))
         }
         updateRuleCount()
     }
 
-    private fun ruleRow(store: ScriptDisplayStore, row: ScriptDisplayStore.Row): View {
-        val primaryText = context.resolveThemedColor(android.R.attr.textColorPrimary)
+    private fun ruleRow(store: ScriptDisplayStore, row: ScriptDisplayStore.Row, index: Int): View {
+        val displayName = row.name.ifBlank {
+            context.getString(R.string.script_option_unnamed, index + 1)
+        }
+        val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
         val title = TextView(context).apply {
-            text = row.name
+            text = displayName
             textSize = 16f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(primaryText)
@@ -112,13 +115,14 @@ class ScriptOptionsDesign(
         val toggle = SwitchCompat(context).apply {
             isChecked = row.on
             contentDescription = buildString {
-                append(row.name)
+                append(displayName)
                 if (!row.summary.isNullOrBlank()) {
                     append(". ")
                     append(row.summary)
                 }
             }
             minHeight = dp(48)
+            isEnabled = row.name.isNotBlank()
             setOnCheckedChangeListener { _, enabled ->
                 store.setOption(ScriptDisplayStore.GROUP_RULE, row.name, enabled)
                 updateRuleCount()
@@ -147,7 +151,7 @@ class ScriptOptionsDesign(
                 Gravity.END or Gravity.CENTER_VERTICAL,
             ).apply { marginEnd = dp(12) })
             setOnClickListener {
-                toggle.isChecked = !toggle.isChecked
+                if (toggle.isEnabled) toggle.isChecked = !toggle.isChecked
             }
         }
 

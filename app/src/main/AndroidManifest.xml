@@ -185,6 +185,12 @@
             android:exported="false"
             android:label="@string/script_display_options" />
         <activity
+            android:name=".ScriptEditorActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/script_display_edit"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".RuleSwitchesActivity"
             android:configChanges="uiMode"
             android:exported="false"

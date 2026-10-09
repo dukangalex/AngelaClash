@@ -428,6 +428,16 @@
     <string name="script_editor_hint">Open the code editor to inspect or update the override.</string>
     <string name="script_editor_placeholder">Write or paste your main(config) override here.</string>
     <string name="script_editor_empty_state">This override is empty. Write or paste a main(config) script below; saving it empty leaves the configuration unchanged.</string>
+    <string name="script_editor_page_hint">Edit main(config) on its own page. Saving reloads a running service immediately.</string>
+    <string name="script_editor_status_saved">Saved</string>
+    <string name="script_editor_status_unsaved">Unsaved changes</string>
+    <string name="script_editor_save_hint">Saving an empty script leaves the configuration unchanged. System options always take priority.</string>
+    <string name="script_editor_saved_toast">Script saved</string>
+    <string name="script_editor_unsaved_title">Discard unsaved changes?</string>
+    <string name="script_editor_unsaved_message">Leaving now discards this edit. The last saved script remains unchanged.</string>
+    <string name="script_editor_discard">Discard changes</string>
+    <string name="keep_editing">Keep editing</string>
+    <string name="script_option_unnamed">Unnamed option %1$d</string>
     <string name="script_display_restore">Restore built-in script</string>
     <string name="script_display_restore_summary">Reset switches to the built-in Angela Clash script</string>
     <string name="script_display_restore_message">The current script and switch overrides will be replaced by the built-in script.</string>
