@@ -1,11 +1,13 @@
 package com.github.kr328.clash.design.util
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.TypedValue
 import androidx.annotation.AttrRes
 import androidx.annotation.StyleRes
+import androidx.core.content.ContextCompat
 import com.github.kr328.clash.common.compat.getDrawableCompat
 import com.github.kr328.clash.design.R
 
@@ -59,9 +61,22 @@ fun Context.resolveClickableAttrs(
 }
 
 fun Context.resolveThemedColor(@AttrRes resId: Int): Int {
-    return TypedValue().apply {
-        theme.resolveAttribute(resId, this, true)
-    }.data
+    val value = TypedValue()
+    theme.resolveAttribute(resId, value, true)
+
+    if (value.type in TypedValue.TYPE_FIRST_COLOR_INT..TypedValue.TYPE_LAST_COLOR_INT) {
+        return value.data
+    }
+
+    if (value.type == TypedValue.TYPE_REFERENCE && value.data != 0) {
+        return try {
+            ContextCompat.getColorStateList(this, value.data)?.defaultColor ?: value.data
+        } catch (_: Resources.NotFoundException) {
+            value.data
+        }
+    }
+
+    return value.data
 }
 
 fun Context.resolveThemedBoolean(@AttrRes resId: Int): Boolean {

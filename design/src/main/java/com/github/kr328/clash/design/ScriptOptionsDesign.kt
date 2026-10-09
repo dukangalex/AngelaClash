@@ -6,7 +6,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
@@ -73,24 +73,27 @@ class ScriptOptionsDesign(
     private fun renderRuleRows(store: ScriptDisplayStore) {
         binding.ruleRows.removeAllViews()
         ruleSwitches.clear()
-        ruleRows.forEach { row ->
-            binding.ruleRows.addView(ruleRow(store, row))
+        ruleRows.forEachIndexed { index, row ->
+            binding.ruleRows.addView(ruleRow(store, row, index))
         }
         updateRuleCount()
     }
 
-    private fun ruleRow(store: ScriptDisplayStore, row: ScriptDisplayStore.Row): View {
-        val primaryText = context.resolveThemedColor(android.R.attr.textColorPrimary)
+    private fun ruleRow(store: ScriptDisplayStore, row: ScriptDisplayStore.Row, index: Int): View {
+        val displayName = row.name.ifBlank {
+            context.getString(R.string.script_option_unnamed, index + 1)
+        }
+        val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
         val title = TextView(context).apply {
-            text = row.name
+            text = displayName
             textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(primaryText)
         }
         val labels = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             addView(title)
 
             row.summary?.takeIf { it.isNotBlank() }?.let { summaryText ->
@@ -109,24 +112,17 @@ class ScriptOptionsDesign(
                 })
             }
         }
-        val icon = ImageView(context).apply {
-            setImageResource(R.drawable.ic_baseline_alt_route)
-            setColorFilter(secondaryText)
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            layoutParams = LinearLayout.LayoutParams(dp(24), dp(24)).apply {
-                marginEnd = dp(16)
-            }
-        }
         val toggle = SwitchCompat(context).apply {
             isChecked = row.on
             contentDescription = buildString {
-                append(row.name)
+                append(displayName)
                 if (!row.summary.isNullOrBlank()) {
                     append(". ")
                     append(row.summary)
                 }
             }
             minHeight = dp(48)
+            isEnabled = row.name.isNotBlank()
             setOnCheckedChangeListener { _, enabled ->
                 store.setOption(ScriptDisplayStore.GROUP_RULE, row.name, enabled)
                 updateRuleCount()
@@ -135,26 +131,36 @@ class ScriptOptionsDesign(
         }
         ruleSwitches += toggle
 
-        val item = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = dp(64)
-            setPadding(dp(16), dp(8), dp(16), dp(8))
-            addView(icon)
-            addView(labels)
-            addView(toggle, LinearLayout.LayoutParams(
+        val item = FrameLayout(context).apply {
+            minimumHeight = dp(72)
+            isClickable = true
+            isFocusable = true
+            addView(labels, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER_VERTICAL,
             ).apply {
-                marginStart = dp(8)
+                marginStart = dp(16)
+                marginEnd = dp(76)
+                topMargin = dp(10)
+                bottomMargin = dp(10)
             })
+            addView(toggle, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.END or Gravity.CENTER_VERTICAL,
+            ).apply { marginEnd = dp(12) })
+            setOnClickListener {
+                if (toggle.isEnabled) toggle.isChecked = !toggle.isChecked
+            }
         }
 
         return MaterialCardView(context).apply {
             radius = dp(16).toFloat()
             cardElevation = 0f
             setCardBackgroundColor(surfaceColor())
-            strokeWidth = 0
+            strokeWidth = dp(1)
+            setStrokeColor(context.resolveThemedColor(R.attr.clashOutline))
             addView(item, ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -163,8 +169,8 @@ class ScriptOptionsDesign(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply {
-                topMargin = dp(4)
-                bottomMargin = dp(4)
+                topMargin = dp(3)
+                bottomMargin = dp(3)
             }
         }
     }
