@@ -42,20 +42,24 @@ Angela Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + 面�
 ## 内核同步
 官方上游：`https://github.com/MetaCubeX/mihomo`
 
-本项目以 Mihomo 已发布的正式标签为同步目标。当前对齐官方 `v1.19.32` @ `88dcbf7f1614a67c3b36b848ee3592dfa92ada36`；客户端子模块指向 fork `chain-dev` 上的 `v1.19.32-chain.1`。不要把正式标签之后的 Alpha 预发布提交自动带入。
+正式 App 只以 Mihomo 已发布的稳定标签为基线。当前官方基线是 `v1.19.32` @ `88dcbf7f1614a67c3b36b848ee3592dfa92ada36`；App 子模块固定在 fork tag `v1.19.32-chain.1` @ `64cf6238976881dbf950f80b96df9d77caa435b2`。fork 的 `chain-dev` 可保留官方 Alpha 在该稳定 tag 之后的 4 个提交（用于开发/测试），但 App 不得指向包含这些提交的分支头。
 
-1. 只把明确选定的官方 Mihomo 正式发布标签 merge 进 `dukangalex/mihomo` 的 `chain-dev`。
-2. 只解决与链式出站覆盖层、`ANGELABOX.md`、`Makefile` 的 `chain-dev` 版本行相关的冲突。
-3. 子模块 `core/src/foss/golang/clash` 指向 `https://github.com/dukangalex/mihomo.git` 的 `chain-dev`。合入内核后同步 `core/src/foss/golang` 与 `core/src/main/golang` 的 `go.mod` / `go.sum`。
-4. `version.properties` 记录 fork 内核 commit SHA 和官方基线标签对应的 commit SHA。
-5. 禁止 merge 上游或本 fork 的 `main`。那条分支不是内核。
+1. 稳定 App 更新从上一个稳定 fork tag 建立独立同步分支，再 merge 明确选定的官方 Mihomo 正式发布 tag；不要从含 Alpha 提交的 `chain-dev` 头创建稳定 App tag。
+2. 只解决与链式出站覆盖层、`ANGELABOX.md`、`Makefile` 版本行相关的冲突；验证后给稳定合并 commit 创建 fork tag。
+3. App 子模块 `core/src/foss/golang/clash` 必须指向 fork 的稳定 tag 与精确 commit SHA，不能跟随 `chain-dev` 分支头。`chain-dev` 可继续保留 Alpha 开发/测试提交；如需集成稳定更新，再将已验证的稳定线合入 `chain-dev`。
+4. 依照 App 子模块的稳定 commit 同步 `core/src/foss/golang` 与 `core/src/main/golang` 的 `go.mod` / `go.sum`。
+5. `version.properties` 记录 fork 稳定 tag、精确 commit SHA 和官方基线 tag 的 commit SHA。
+6. 禁止 merge 上游或本 fork 的 `main`。那条分支不是内核。
 
 ```bash
-git clone -b chain-dev https://github.com/dukangalex/mihomo.git
+git clone https://github.com/dukangalex/mihomo.git
 cd mihomo
 git remote add upstream https://github.com/MetaCubeX/mihomo.git
+git fetch origin refs/tags/v1.19.31-chain.1:refs/tags/v1.19.31-chain.1
+git checkout -b sync/stable-v1.19.32 v1.19.31-chain.1
 git fetch upstream refs/tags/v1.19.32:refs/tags/v1.19.32
 git merge --no-ff v1.19.32
+# 验证稳定合并 commit 后，再创建 v1.19.32-chain.1；不要从 Alpha 分支头打稳定 tag。
 ```
 
 ## App 同步
