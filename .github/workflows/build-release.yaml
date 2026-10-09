@@ -4,18 +4,34 @@ on:
   workflow_dispatch:
     inputs:
       release-tag:
-        description: 'Release Tag (v1.0.x)'
+        description: 'Stable release tag (for example v1.1.0)'
         required: true
 
 jobs:
   BuildRelease:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: dev
+
+      - name: Validate release tag
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use vMAJOR.MINOR.PATCH (for example v1.1.0)." >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Tag $RELEASE_TAG already exists; refusing to move or overwrite it." >&2
+            exit 1
+          fi
       
       - name: Checkout submodules
         run: git submodule update --init --recursive --force
@@ -51,8 +67,10 @@ jobs:
       
       - name: Convert and set version env
         id: process-version
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
         run: |
-          VERSION_TAG=${{ inputs.release-tag }}
+          VERSION_TAG=${RELEASE_TAG}
           VERSION_TAG=${VERSION_TAG#v}                              # remove the 'v' prefix
           IFS='.' read -ra VERSION_PARTS <<< "$VERSION_TAG"         # split into array
           VERSION_CODE=$(( ${VERSION_PARTS[0]} * 10000 + ${VERSION_PARTS[1]} * 100 + ${VERSION_PARTS[2]} ))
@@ -77,9 +95,20 @@ jobs:
             git config --global user.email 'action@github.com'
             git add version.properties
             git commit -am "Bump version to $newVersionName ($newVersionCode)"
-            git tag -f "v$newVersionName"
-            git push -f --follow-tags origin HEAD:dev
+            git push origin HEAD:dev
           fi
+
+      - name: Prepare release notes
+        env:
+          RELEASE_VERSION: ${{ steps.process-version.outputs.versonName }}
+        run: |
+          awk -v version="$RELEASE_VERSION" '
+            $0 == "## " version { found = 1; print; next }
+            found && /^## / { exit }
+            found { print }
+            END { if (!found) exit 1 }
+          ' docs/RELEASE_NOTES.md > release-notes.md
+          test -s release-notes.md
 
       - name: Update CA
         run: |
@@ -137,29 +166,49 @@ jobs:
           path: app/build/outputs/apk/meta/release/*.apk
           if-no-files-found: error
 
-      - name: Tag Repo
-        continue-on-error: true
-        uses: richardsimko/update-tag@v3
-        with:
-          tag_name: ${{ inputs.release-tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload Release
         uses: softprops/action-gh-release@v3
-        continue-on-error: true
         if: ${{ success() }}
         with:
           tag_name: ${{ inputs.release-tag }}
+          name: ${{ steps.process-version.outputs.versonName }}
+          target_commitish: dev
           files: app/build/outputs/apk/meta/release/*
-          generate_release_notes: true
+          body_path: release-notes.md
+          generate_release_notes: false
+          prerelease: false
+          make_latest: true
+          fail_on_unmatched_files: true
 
-      - name: Release Changelog Builder
-        uses: mikepenz/release-changelog-builder-action@v6
-        with:
-          configurationJson: |
-            {
-              "ignore_labels": [
-                "Update"
-              ],
-            }
+      - name: Notify Telegram channel
+        if: ${{ success() }}
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHANNEL_ID: ${{ secrets.TG_CHANNEL_ID }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TG_BOT_TOKEN:-}" ] || [ -z "${TG_CHANNEL_ID:-}" ]; then
+            echo "Telegram secrets not configured; skipping channel notification."
+            exit 0
+          fi
+          TG_CHANNEL_ID="$TG_CHANNEL_ID" RELEASE_TAG="$RELEASE_TAG" python3 <<'EOF' > /tmp/tg_payload.json
+          import html, json, os
+          tag = os.environ["RELEASE_TAG"]
+          chat_id = os.environ["TG_CHANNEL_ID"]
+          notes = open("release-notes.md", encoding="utf-8").read().strip()
+          if len(notes) > 3000:
+              notes = notes[:3000].rstrip() + "\n…"
+          text = (
+              "🎉 <b>Angela Clash " + html.escape(tag) + " 发布</b>\n\n"
+              + html.escape(notes)
+              + '\n\n<a href="https://github.com/dukangalex/AngelaClash/releases/tag/'
+              + html.escape(tag) + '">前往下载</a>'
+          )
+          print(json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML",
+                            "disable_web_page_preview": True}))
+          EOF
+          curl -sS -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            --data @/tmp/tg_payload.json \
+            --fail-with-body
