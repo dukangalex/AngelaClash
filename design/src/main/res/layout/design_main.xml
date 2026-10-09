@@ -135,7 +135,7 @@
                                 android:layout_height="wrap_content"
                                 android:minHeight="48dp"
                                 android:checked="@{clashRunning}"
-                                android:contentDescription="@{clashRunning ? @string/running : @string/tap_to_start}"
+                                android:contentDescription="@{clashRunning ? @string/service_power_control : @string/tap_to_start}"
                                 android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
                         </LinearLayout>
                     </LinearLayout>
@@ -156,7 +156,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/home_now"
+                                android:text="@string/service_status"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="13sp" />
 
@@ -178,7 +178,8 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="@{homeConnected}"
-                                    android:textSize="15sp"
+                                    android:textColor="@{clashRunning ? colorClashStarted : colorClashStopped}"
+                                    android:textSize="18sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
 
@@ -255,7 +256,13 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:minHeight="48dp"
                                 android:onClick="@{() -> self.onAttention()}"
+                                android:paddingHorizontal="8dp"
                                 android:text="@{homeAttention}"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="13sp"
@@ -377,6 +384,79 @@
                                 android:text="@{profileName == null || profileName.length() == 0 ? @string/not_selected : profileName}"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:onClick="@{() -> self.request(Request.OpenChain)}"
+                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="?attr/colorPrimary"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_baseline_swap_vert"
+                                android:tint="?attr/colorPrimary" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/chain_proxy"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:ellipsize="end"
+                                    android:maxLines="2"
+                                    android:text="@{chainSummary}"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:maxLines="2"
+                                    android:text="@string/chain_help"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:importantForAccessibility="no"
+                                android:text="›"
+                                android:textColor="?attr/colorPrimary"
+                                android:textSize="28sp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 

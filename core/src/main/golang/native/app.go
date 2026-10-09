@@ -16,7 +16,9 @@ func openRemoteContent(url string) (int, error) {
 	u := C.CString(url)
 	e := (*C.char)(C.malloc(1024))
 
-	log.Debugln("Open remote url: %s", url)
+	// Never log the raw URL: subscription links often carry tokens in the
+	// query string and logs can be exported from the app.
+	log.Debugln("Open remote url: %s", app.RedactURLForLog(url))
 
 	defer C.free(unsafe.Pointer(e))
 
