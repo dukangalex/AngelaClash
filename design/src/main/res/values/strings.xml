@@ -424,6 +424,7 @@
     <string name="script_display_edit_summary">main() overwrites everything except nodes. Saving reloads a running service</string>
     <string name="script_editor_hint">Open the code editor to inspect or update the override.</string>
     <string name="script_editor_placeholder">Write or paste your main(config) override here.</string>
+    <string name="script_editor_empty_state">This override is empty. Write or paste a main(config) script below; saving it empty leaves the configuration unchanged.</string>
     <string name="script_display_restore">Restore built-in script</string>
     <string name="script_display_restore_summary">Reset switches to the built-in Angela Clash script</string>
     <string name="script_display_restore_message">The current script and switch overrides will be replaced by the built-in script.</string>

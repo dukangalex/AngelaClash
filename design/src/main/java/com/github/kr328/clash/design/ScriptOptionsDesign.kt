@@ -6,7 +6,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
@@ -85,12 +85,12 @@ class ScriptOptionsDesign(
         val title = TextView(context).apply {
             text = row.name
             textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(primaryText)
         }
         val labels = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             addView(title)
 
             row.summary?.takeIf { it.isNotBlank() }?.let { summaryText ->
@@ -107,14 +107,6 @@ class ScriptOptionsDesign(
                         topMargin = dp(3)
                     }
                 })
-            }
-        }
-        val icon = ImageView(context).apply {
-            setImageResource(R.drawable.ic_baseline_alt_route)
-            setColorFilter(secondaryText)
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            layoutParams = LinearLayout.LayoutParams(dp(24), dp(24)).apply {
-                marginEnd = dp(16)
             }
         }
         val toggle = SwitchCompat(context).apply {
@@ -135,19 +127,28 @@ class ScriptOptionsDesign(
         }
         ruleSwitches += toggle
 
-        val item = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = dp(64)
-            setPadding(dp(16), dp(8), dp(16), dp(8))
-            addView(icon)
-            addView(labels)
-            addView(toggle, LinearLayout.LayoutParams(
+        val item = FrameLayout(context).apply {
+            minimumHeight = dp(72)
+            isClickable = true
+            isFocusable = true
+            addView(labels, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER_VERTICAL,
             ).apply {
-                marginStart = dp(8)
+                marginStart = dp(16)
+                marginEnd = dp(76)
+                topMargin = dp(10)
+                bottomMargin = dp(10)
             })
+            addView(toggle, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.END or Gravity.CENTER_VERTICAL,
+            ).apply { marginEnd = dp(12) })
+            setOnClickListener {
+                toggle.isChecked = !toggle.isChecked
+            }
         }
 
         return MaterialCardView(context).apply {
@@ -163,8 +164,8 @@ class ScriptOptionsDesign(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply {
-                topMargin = dp(4)
-                bottomMargin = dp(4)
+                topMargin = dp(3)
+                bottomMargin = dp(3)
             }
         }
     }

@@ -228,13 +228,17 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         val primary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         val onPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorOnPrimary)
         val normal = context.resolveThemedColor(android.R.attr.textColorPrimary)
+        val surface = context.resolveThemedColor(com.google.android.material.R.attr.colorSurface)
+        val outline = context.resolveThemedColor(R.attr.clashOutline)
+        val strokeWidth = (context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
         for (button in listOf(binding.modeRule, binding.modeGlobal, binding.modeDirect)) {
             val on = button.id == selected
             button.backgroundTintList = ColorStateList.valueOf(
-                if (on) primary else android.graphics.Color.TRANSPARENT
+                if (on) primary else surface
             )
             button.setTextColor(if (on) onPrimary else normal)
-            button.strokeWidth = 0
+            button.strokeColor = ColorStateList.valueOf(if (on) primary else outline)
+            button.strokeWidth = strokeWidth
         }
     }
 

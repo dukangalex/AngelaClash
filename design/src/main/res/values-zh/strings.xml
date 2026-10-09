@@ -333,6 +333,7 @@
     <string name="script_display_edit_summary">main() 覆写除节点外的配置。服务运行时保存会立刻重载</string>
     <string name="script_editor_hint">打开代码编辑器，查看或修改覆写脚本</string>
     <string name="script_editor_placeholder">在此编写或粘贴 main(config) 覆写脚本。</string>
+    <string name="script_editor_empty_state">当前没有覆写脚本。可在下方编写或粘贴 main(config) 脚本；留空保存时配置不会被覆写。</string>
     <string name="script_display_restore">恢复内置脚本</string>
     <string name="script_display_restore_summary">用内置 Angela Clash 脚本重置开关</string>
     <string name="script_display_restore_message">当前脚本和已改过的开关会被内置脚本替换。</string>

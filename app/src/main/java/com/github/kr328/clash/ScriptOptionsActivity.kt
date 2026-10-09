@@ -1,12 +1,14 @@
 package com.github.kr328.clash
 
-import android.graphics.Color
 import android.graphics.Typeface
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.ScrollView
-import androidx.core.graphics.ColorUtils
+import androidx.core.widget.addTextChangedListener
 import com.github.kr328.clash.design.R
 import com.github.kr328.clash.design.ScriptOptionsDesign
 import com.github.kr328.clash.design.util.resolveThemedColor
@@ -52,35 +54,64 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
     private fun showEditor(store: ScriptDisplayStore) {
         val density = resources.displayMetrics.density
         fun dp(value: Int) = (value * density).toInt()
+        val script = store.scriptText()
+        val editorHeight = minOf(dp(360), (resources.displayMetrics.heightPixels * 0.42f).toInt())
+            .coerceAtLeast(dp(220))
+
+        val emptyState = android.widget.TextView(this).apply {
+            text = getString(R.string.script_editor_empty_state)
+            textSize = 13f
+            setTextColor(resolveThemedColor(android.R.attr.textColorSecondary))
+            visibility = if (script.isBlank()) View.VISIBLE else View.GONE
+            setPadding(dp(4), 0, dp(4), dp(10))
+        }
 
         val input = EditText(this).apply {
-            setText(store.scriptText())
+            setText(script)
             gravity = Gravity.TOP or Gravity.START
             typeface = Typeface.MONOSPACE
             textSize = 13f
-            hint = this@ScriptOptionsActivity.getString(R.string.script_editor_placeholder)
-            setTextColor(this@ScriptOptionsActivity.resolveThemedColor(android.R.attr.textColorPrimary))
-            setHintTextColor(this@ScriptOptionsActivity.resolveThemedColor(android.R.attr.textColorSecondary))
-            minLines = 14
-            maxHeight = (resources.displayMetrics.heightPixels * 0.52f).toInt()
+            includeFontPadding = false
+            hint = getString(R.string.script_editor_placeholder)
+            setTextColor(resolveThemedColor(android.R.attr.textColorPrimary))
+            setHintTextColor(resolveThemedColor(android.R.attr.textColorSecondary))
+            minLines = 10
             inputType = android.text.InputType.TYPE_CLASS_TEXT or
                 android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or
                 android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-            setHorizontallyScrolling(false)
+            setHorizontallyScrolling(true)
+            isVerticalScrollBarEnabled = true
             setLineSpacing(dp(2).toFloat(), 1f)
             background = null
             setPadding(dp(16), dp(16), dp(16), dp(16))
+            addTextChangedListener { value ->
+                emptyState.visibility = if (value.isNullOrBlank()) View.VISIBLE else View.GONE
+            }
         }
         val editorCard = MaterialCardView(this).apply {
             radius = 16f * density
             cardElevation = 0f
-            val surface = this@ScriptOptionsActivity.resolveThemedColor(com.google.android.material.R.attr.colorSurface)
+            val surface = resolveThemedColor(R.attr.clashSurfaceVariant)
             setCardBackgroundColor(surface)
-            val secondary = this@ScriptOptionsActivity.resolveThemedColor(android.R.attr.textColorSecondary)
-            val alpha = if (ColorUtils.calculateLuminance(surface) < 0.5) 0.25f else 0.45f
-            setStrokeColor(ColorUtils.setAlphaComponent(secondary, (Color.alpha(secondary) * alpha).toInt()))
+            setStrokeColor(resolveThemedColor(R.attr.clashOutline))
             strokeWidth = dp(1)
-            addView(input, ViewGroup.LayoutParams(
+            addView(FrameLayout(this@ScriptOptionsActivity).apply {
+                addView(input, FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                ))
+            }, ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                editorHeight,
+            ))
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(emptyState, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ))
+            addView(editorCard, LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ))
@@ -88,7 +119,7 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
         val scroll = ScrollView(this).apply {
             isFillViewport = true
             setPadding(dp(4), dp(4), dp(4), dp(4))
-            addView(editorCard, ViewGroup.LayoutParams(
+            addView(content, ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ))
