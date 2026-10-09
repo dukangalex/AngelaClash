@@ -179,3 +179,36 @@ jobs:
           prerelease: false
           make_latest: true
           fail_on_unmatched_files: true
+
+      - name: Notify Telegram channel
+        if: ${{ success() }}
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHANNEL_ID: ${{ secrets.TG_CHANNEL_ID }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TG_BOT_TOKEN:-}" ] || [ -z "${TG_CHANNEL_ID:-}" ]; then
+            echo "Telegram secrets not configured; skipping channel notification."
+            exit 0
+          fi
+          TG_CHANNEL_ID="$TG_CHANNEL_ID" RELEASE_TAG="$RELEASE_TAG" python3 <<'EOF' > /tmp/tg_payload.json
+          import html, json, os
+          tag = os.environ["RELEASE_TAG"]
+          chat_id = os.environ["TG_CHANNEL_ID"]
+          notes = open("release-notes.md", encoding="utf-8").read().strip()
+          if len(notes) > 3000:
+              notes = notes[:3000].rstrip() + "\n…"
+          text = (
+              "🎉 <b>Angela Clash " + html.escape(tag) + " 发布</b>\n\n"
+              + html.escape(notes)
+              + '\n\n<a href="https://github.com/dukangalex/AngelaClash/releases/tag/'
+              + html.escape(tag) + '">前往下载</a>'
+          )
+          print(json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML",
+                            "disable_web_page_preview": True}))
+          EOF
+          curl -sS -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            --data @/tmp/tg_payload.json \
+            --fail-with-body
