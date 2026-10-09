@@ -13,12 +13,13 @@
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical"
+        android:minHeight="72dp"
         android:orientation="horizontal"
         android:paddingVertical="@dimen/item_padding_vertical">
 
         <View
-            android:layout_width="@dimen/item_header_component_size"
-            android:layout_height="@dimen/item_header_component_size"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_marginHorizontal="@dimen/item_header_margin"
             android:background="@{provider.icon}" />
 

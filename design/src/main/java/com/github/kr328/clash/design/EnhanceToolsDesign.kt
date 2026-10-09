@@ -47,7 +47,7 @@ class EnhanceToolsDesign(
             val ignoring = pm?.isIgnoringBatteryOptimizations(context.packageName) == true
             clickable(
                 title = R.string.battery_optimization,
-                summary = if (ignoring) R.string.battery_optimization_summary else R.string.battery_optimization_summary,
+                summary = if (ignoring) R.string.battery_optimization_ignored_summary else R.string.battery_optimization_summary,
             ) {
                 clicked {
                     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)

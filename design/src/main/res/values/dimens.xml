@@ -65,7 +65,7 @@
     <dimen name="main_top_banner_height">104dp</dimen>
 
     <!--  Proxy Design -->
-    <dimen name="proxy_layout_padding">6dp</dimen>
+    <dimen name="proxy_layout_padding">4dp</dimen>
     <dimen name="proxy_content_padding">15dp</dimen>
     <dimen name="proxy_content_padding_grid3">12dp</dimen>
     <dimen name="proxy_text_margin">10dp</dimen>
@@ -76,7 +76,7 @@
     <dimen name="proxy_card_offset">0dp</dimen>
 
     <!-- Properties Design -->
-    <dimen name="properties_element_margin_vertical">2.5dp</dimen>
+    <dimen name="properties_element_margin_vertical">4dp</dimen>
 
     <!-- About Design -->
     <dimen name="about_icon_size">50dp</dimen>

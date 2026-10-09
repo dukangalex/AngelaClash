@@ -1,5 +1,6 @@
 package com.github.kr328.clash.design.preference
 
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.LinearLayout.LayoutParams
@@ -55,7 +56,7 @@ fun PreferenceScreen.addElement(preference: Preference) {
             radius = 20 * density
             cardElevation = 0f
             setCardBackgroundColor(
-                root.context.resolveThemedColor(com.google.android.material.R.attr.colorSurface)
+                root.context.resolveThemedColor(com.github.kr328.clash.design.R.attr.clashSurfaceVariant)
             )
             addView(inner, LayoutParams(MATCH_PARENT, WRAP_CONTENT))
         }
@@ -65,5 +66,14 @@ fun PreferenceScreen.addElement(preference: Preference) {
         root.tag = inner
     }
 
+    if (box.childCount > 0) {
+        val divider = View(root.context).apply {
+            setBackgroundColor(root.context.resolveThemedColor(com.github.kr328.clash.design.R.attr.clashOutline))
+        }
+        val dividerParams = LayoutParams(MATCH_PARENT, dp(1)).apply {
+            setMargins(dp(16), 0, dp(16), 0)
+        }
+        box.addView(divider, dividerParams)
+    }
     box.addView(view, LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 }

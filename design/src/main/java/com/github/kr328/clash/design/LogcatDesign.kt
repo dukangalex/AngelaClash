@@ -3,7 +3,6 @@ package com.github.kr328.clash.design
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Typeface
 import android.view.View
 import androidx.core.content.getSystemService
@@ -53,6 +52,7 @@ class LogcatDesign(
         }
         adapter.messages = shown
         adapter.notifyDataSetChanged()
+        binding.emptyView.visibility = if (shown.isEmpty()) View.VISIBLE else View.GONE
         if (scroll && shown.isNotEmpty()) {
             binding.recyclerList.scrollToPosition(shown.lastIndex)
         }
@@ -84,13 +84,17 @@ class LogcatDesign(
             binding.filterError to LogMessage.Level.Error,
         )
         fun paint() {
+            val primary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
+            val onPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorOnPrimary)
+            val secondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
+            val surface = context.resolveThemedColor(R.attr.clashSurfaceVariant)
             for ((view, level) in chips) {
                 val selected = floor == level
                 view.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
-                view.setTextColor(if (selected) Color.WHITE else 0xFF8A93A6.toInt())
+                view.setTextColor(if (selected) onPrimary else secondary)
                 val chip = android.graphics.drawable.GradientDrawable()
                 chip.cornerRadius = 16 * view.resources.displayMetrics.density
-                chip.setColor(if (selected) 0xFF2563EB.toInt() else 0xFF171C24.toInt())
+                chip.setColor(if (selected) primary else surface)
                 view.background = chip
             }
         }
@@ -102,5 +106,6 @@ class LogcatDesign(
             }
         }
         paint()
+        showFiltered(scroll = false)
     }
 }

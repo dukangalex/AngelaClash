@@ -1,19 +1,24 @@
 package com.github.kr328.clash.design
 
 import android.content.Context
+import android.graphics.Color
+import android.text.TextUtils
+import android.view.Gravity
 import android.view.View
-import com.github.kr328.clash.design.databinding.DesignSettingsCommonBinding
-import com.github.kr328.clash.design.preference.OnChangedListener
-import com.github.kr328.clash.design.preference.category
-import com.github.kr328.clash.design.preference.clickable
-import com.github.kr328.clash.design.preference.preferenceScreen
-import com.github.kr328.clash.design.preference.switch
-import com.github.kr328.clash.design.preference.tips
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.graphics.ColorUtils
+import com.github.kr328.clash.design.databinding.DesignScriptOptionsBinding
 import com.github.kr328.clash.design.util.applyFrom
 import com.github.kr328.clash.design.util.bindAppBarElevation
 import com.github.kr328.clash.design.util.layoutInflater
+import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.root
 import com.github.kr328.clash.service.store.ScriptDisplayStore
+import com.google.android.material.card.MaterialCardView
 
 class ScriptOptionsDesign(
     context: Context,
@@ -25,63 +30,173 @@ class ScriptOptionsDesign(
         Reload,
     }
 
-    private class Flag(var on: Boolean)
-
-    private val binding = DesignSettingsCommonBinding
+    private val binding = DesignScriptOptionsBinding
         .inflate(context.layoutInflater, context.root, false)
+    private var ruleRows: List<ScriptDisplayStore.Row> = emptyList()
+    private val ruleSwitches = mutableListOf<SwitchCompat>()
 
     override val root: View
         get() = binding.root
 
     init {
+        binding.self = this
         binding.surface = surface
         binding.activityBarLayout.applyFrom(context)
         binding.scrollRoot.bindAppBarElevation(binding.activityBarLayout)
 
+        styleOutlinedCard(binding.scriptEnableCard, 20)
+        styleOutlinedCard(binding.editorCard, 20)
+        styleOutlinedCard(binding.runtimeNotice, 16, accent = true)
+        binding.runtimeNotice.visibility = if (running) View.VISIBLE else View.GONE
+
         val snap = store.snapshot()
-        val screen = preferenceScreen(context) {
-            val enabled = Flag(snap.scriptEnabled)
-
-            switch(
-                value = enabled::on,
-                title = R.string.script_enable,
-                summary = R.string.script_enable_summary,
-            ) {
-                listener = OnChangedListener {
-                    store.setScriptEnabled(enabled.on)
-                    requests.trySend(Request.Reload)
-                }
-            }
-
-            if (running) {
-                tips(R.string.script_display_running)
-            }
-            tips(R.string.script_page_hint)
-
-            clickable(
-                title = R.string.script_display_edit,
-                summary = R.string.script_display_edit_summary,
-            ) {
-                clicked { requests.trySend(Request.EditScript) }
-            }
-
-            if (snap.sections.isNotEmpty() && snap.sections[0].rows.isNotEmpty()) {
-                category(R.string.script_display_rule)
-                for (row in snap.sections[0].rows) {
-                    val flag = Flag(row.on)
-                    val name = row.name
-                    switch(flag::on) {
-                        title = name
-                        summary = row.summary
-                        listener = OnChangedListener {
-                            store.setOption(ScriptDisplayStore.GROUP_RULE, name, flag.on)
-                            requests.trySend(Request.Reload)
-                        }
-                    }
-                }
-            }
+        binding.scriptEnableSwitch.isChecked = snap.scriptEnabled
+        binding.scriptEnableSwitch.setOnCheckedChangeListener { _, enabled ->
+            store.setScriptEnabled(enabled)
+            requests.trySend(Request.Reload)
+        }
+        binding.scriptEnableRow.setOnClickListener {
+            binding.scriptEnableSwitch.isChecked = !binding.scriptEnableSwitch.isChecked
         }
 
-        binding.content.addView(screen.root)
+        ruleRows = snap.sections.firstOrNull()?.rows.orEmpty()
+        binding.ruleCard.visibility = View.VISIBLE
+        binding.ruleEmpty.visibility = if (ruleRows.isEmpty()) View.VISIBLE else View.GONE
+        binding.ruleCount.visibility = if (ruleRows.isEmpty()) View.GONE else View.VISIBLE
+        renderRuleRows(store)
     }
+
+    fun request(request: Request) {
+        requests.trySend(request)
+    }
+
+    private fun renderRuleRows(store: ScriptDisplayStore) {
+        binding.ruleRows.removeAllViews()
+        ruleSwitches.clear()
+        ruleRows.forEach { row ->
+            binding.ruleRows.addView(ruleRow(store, row))
+        }
+        updateRuleCount()
+    }
+
+    private fun ruleRow(store: ScriptDisplayStore, row: ScriptDisplayStore.Row): View {
+        val primaryText = context.resolveThemedColor(android.R.attr.textColorPrimary)
+        val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
+        val title = TextView(context).apply {
+            text = row.name
+            textSize = 16f
+            setTextColor(primaryText)
+        }
+        val labels = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            addView(title)
+
+            row.summary?.takeIf { it.isNotBlank() }?.let { summaryText ->
+                addView(TextView(context).apply {
+                    text = summaryText
+                    textSize = 13f
+                    setTextColor(secondaryText)
+                    maxLines = 2
+                    ellipsize = TextUtils.TruncateAt.END
+                    layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ).apply {
+                        topMargin = dp(3)
+                    }
+                })
+            }
+        }
+        val icon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_baseline_alt_route)
+            setColorFilter(secondaryText)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            layoutParams = LinearLayout.LayoutParams(dp(24), dp(24)).apply {
+                marginEnd = dp(16)
+            }
+        }
+        val toggle = SwitchCompat(context).apply {
+            isChecked = row.on
+            contentDescription = buildString {
+                append(row.name)
+                if (!row.summary.isNullOrBlank()) {
+                    append(". ")
+                    append(row.summary)
+                }
+            }
+            minHeight = dp(48)
+            setOnCheckedChangeListener { _, enabled ->
+                store.setOption(ScriptDisplayStore.GROUP_RULE, row.name, enabled)
+                updateRuleCount()
+                requests.trySend(Request.Reload)
+            }
+        }
+        ruleSwitches += toggle
+
+        val item = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(64)
+            setPadding(dp(16), dp(8), dp(16), dp(8))
+            addView(icon)
+            addView(labels)
+            addView(toggle, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                marginStart = dp(8)
+            })
+        }
+
+        return MaterialCardView(context).apply {
+            radius = dp(16).toFloat()
+            cardElevation = 0f
+            setCardBackgroundColor(surfaceColor())
+            strokeWidth = 0
+            addView(item, ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                topMargin = dp(4)
+                bottomMargin = dp(4)
+            }
+        }
+    }
+
+    private fun styleOutlinedCard(card: MaterialCardView, radiusDp: Int, accent: Boolean = false) {
+        val surface = surfaceColor()
+        card.setCardBackgroundColor(surface)
+        card.radius = dp(radiusDp).toFloat()
+        card.cardElevation = 0f
+        card.strokeWidth = dp(1)
+        card.setStrokeColor(
+            if (accent) {
+                context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
+            } else {
+                val secondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
+                val alpha = if (ColorUtils.calculateLuminance(surface) < 0.5) 0.25f else 0.45f
+                ColorUtils.setAlphaComponent(secondary, (Color.alpha(secondary) * alpha).toInt())
+            },
+        )
+    }
+
+    private fun surfaceColor(): Int = context.resolveThemedColor(
+        R.attr.clashSurfaceVariant,
+    )
+
+    private fun updateRuleCount() {
+        binding.ruleCount.text = context.getString(
+            R.string.script_rule_count_format,
+            ruleSwitches.count { it.isChecked },
+            ruleRows.size,
+        )
+    }
+
+    private fun dp(value: Int): Int = (value * context.resources.displayMetrics.density).toInt()
 }

@@ -187,7 +187,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             )
             params.topMargin = dp(10)
             layoutParams = params
-            setCardBackgroundColor(context.resolveThemedColor(com.google.android.material.R.attr.colorSurface))
+            setCardBackgroundColor(context.resolveThemedColor(R.attr.clashSurfaceVariant))
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 addView(header)

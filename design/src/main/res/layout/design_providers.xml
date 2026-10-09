@@ -39,8 +39,8 @@
 
                 <ImageView
                     android:id="@+id/update_view"
-                    android:layout_width="@dimen/item_tailing_component_size"
-                    android:layout_height="@dimen/item_tailing_component_size"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
                     android:layout_gravity="end|center_vertical"

@@ -634,6 +634,8 @@
                                 app:subtext="@string/application_page_summary"
                                 app:text="@string/application_page" />
 
+                            <include layout="@layout/component_list_divider" />
+
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -642,6 +644,8 @@
                                 app:subtext="@string/kernel_config_summary"
                                 app:text="@string/kernel_config" />
 
+                            <include layout="@layout/component_list_divider" />
+
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -649,6 +653,8 @@
                                 app:icon="@drawable/ic_baseline_flash_on"
                                 app:subtext="@string/enhance_tools_summary"
                                 app:text="@string/enhance_tools" />
+
+                            <include layout="@layout/component_list_divider" />
 
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
@@ -708,6 +714,8 @@
                                 app:icon="@drawable/ic_baseline_help_center"
                                 app:text="@string/help" />
 
+                            <include layout="@layout/component_list_divider" />
+
                             <com.github.kr328.clash.design.view.LargeActionLabel
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -728,18 +736,18 @@
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="12dp"
             app:cardCornerRadius="28dp"
-            app:cardElevation="6dp">
+            app:cardElevation="2dp">
 
             <com.google.android.material.bottomnavigation.BottomNavigationView
                 android:id="@+id/bottom_nav"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
-                app:itemIconSize="22dp"
+                app:itemIconSize="24dp"
                 app:itemIconTint="@color/nav_item"
                 app:itemPaddingBottom="8dp"
                 app:itemPaddingTop="8dp"
-                app:itemRippleColor="@android:color/transparent"
+                app:itemRippleColor="?attr/clashSelectedSurface"
                 app:itemTextColor="@color/nav_item"
                 app:labelVisibilityMode="selected"
                 app:menu="@menu/menu_main" />

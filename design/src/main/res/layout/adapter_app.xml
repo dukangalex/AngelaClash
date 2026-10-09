@@ -18,13 +18,13 @@
         android:foreground="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:minHeight="@dimen/item_min_height"
+        android:minHeight="72dp"
         android:paddingEnd="@dimen/item_tailing_margin">
 
         <View
             android:id="@+id/icon_view"
-            android:layout_width="@dimen/item_header_component_size"
-            android:layout_height="@dimen/item_header_component_size"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_centerVertical="true"
             android:layout_marginHorizontal="@dimen/item_header_margin"
             android:background="@{app.icon}"
@@ -42,6 +42,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="@{app.label}"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
@@ -49,6 +51,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/item_text_margin"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="@{app.packageName}"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                 android:textColor="?android:attr/textColorSecondary" />

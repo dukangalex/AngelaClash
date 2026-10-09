@@ -5,6 +5,10 @@
     </style>
 
     <style name="AppFullScreenDialogLightBase" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="clashSurfaceVariant">@color/clash_surface_variant_light</item>
+        <item name="clashSelectedSurface">@color/clash_selected_surface_light</item>
+        <item name="clashOutline">@color/clash_outline_light</item>
+        <item name="materialCardViewStyle">@style/Widget.AngelaClash.MaterialCardView</item>
         <item name="android:windowIsFloating">false</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowNoTitle">true</item>
@@ -28,6 +32,10 @@
     </style>
 
     <style name="AppFullScreenDialogDarkBase" parent="Theme.MaterialComponents.Dialog">
+        <item name="clashSurfaceVariant">@color/clash_surface_variant_dark</item>
+        <item name="clashSelectedSurface">@color/clash_selected_surface_dark</item>
+        <item name="clashOutline">@color/clash_outline_dark</item>
+        <item name="materialCardViewStyle">@style/Widget.AngelaClash.MaterialCardView</item>
         <item name="android:windowIsFloating">false</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowNoTitle">true</item>
@@ -61,6 +69,10 @@
     </style>
 
     <style name="AppBottomSheetDialogLightBase" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+        <item name="clashSurfaceVariant">@color/clash_surface_variant_light</item>
+        <item name="clashSelectedSurface">@color/clash_selected_surface_light</item>
+        <item name="clashOutline">@color/clash_outline_light</item>
+        <item name="materialCardViewStyle">@style/Widget.AngelaClash.MaterialCardView</item>
         <item name="android:windowIsFloating">false</item>
         <item name="paddingRightSystemWindowInsets">false</item>
         <item name="paddingBottomSystemWindowInsets">false</item>
@@ -82,6 +94,10 @@
     </style>
 
     <style name="AppBottomSheetDialogDarkBase" parent="Theme.MaterialComponents.BottomSheetDialog">
+        <item name="clashSurfaceVariant">@color/clash_surface_variant_dark</item>
+        <item name="clashSelectedSurface">@color/clash_selected_surface_dark</item>
+        <item name="clashOutline">@color/clash_outline_dark</item>
+        <item name="materialCardViewStyle">@style/Widget.AngelaClash.MaterialCardView</item>
         <item name="android:windowIsFloating">false</item>
         <item name="paddingRightSystemWindowInsets">false</item>
         <item name="paddingBottomSystemWindowInsets">false</item>
@@ -113,6 +129,10 @@
     </style>
 
     <style name="AppThemeLightBase" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="clashSurfaceVariant">@color/clash_surface_variant_light</item>
+        <item name="clashSelectedSurface">@color/clash_selected_surface_light</item>
+        <item name="clashOutline">@color/clash_outline_light</item>
+        <item name="materialCardViewStyle">@style/Widget.AngelaClash.MaterialCardView</item>
         <item name="android:windowBackground">@color/color_light_background</item>
         <item name="android:ambientShadowAlpha">0.08</item>
         <item name="android:spotShadowAlpha">0.08</item>
@@ -135,6 +155,10 @@
     </style>
 
     <style name="AppThemeDarkBase" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="clashSurfaceVariant">@color/clash_surface_variant_dark</item>
+        <item name="clashSelectedSurface">@color/clash_selected_surface_dark</item>
+        <item name="clashOutline">@color/clash_outline_dark</item>
+        <item name="materialCardViewStyle">@style/Widget.AngelaClash.MaterialCardView</item>
         <item name="android:windowBackground">@color/color_dark_background</item>
         <item name="android:ambientShadowAlpha">0.08</item>
         <item name="android:spotShadowAlpha">0.08</item>
@@ -165,5 +189,11 @@
     <style name="AppThemeDark" parent="AppThemeDarkBase">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Widget.AngelaClash.MaterialCardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">?attr/clashSurfaceVariant</item>
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">0dp</item>
     </style>
 </resources>

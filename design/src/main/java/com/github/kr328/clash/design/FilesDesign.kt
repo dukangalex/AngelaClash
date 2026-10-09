@@ -42,6 +42,7 @@ class FilesDesign(context: Context) : Design<FilesDesign.Request>(context) {
         withContext(Dispatchers.Main) {
             adapter.swapDataSet(adapter::files, files)
             binding.currentInBaseDir = currentInBaseDir
+            binding.emptyView.visibility = if (files.isEmpty()) View.VISIBLE else View.GONE
         }
     }
 

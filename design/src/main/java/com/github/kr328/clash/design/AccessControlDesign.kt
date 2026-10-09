@@ -45,6 +45,9 @@ class AccessControlDesign(
 
     suspend fun patchApps(apps: List<AppInfo>) {
         adapter.swapDataSet(adapter::apps, apps, false)
+        withContext(Dispatchers.Main) {
+            binding.emptyView.visibility = if (apps.isEmpty()) View.VISIBLE else View.GONE
+        }
     }
 
     suspend fun rebindAll() {
@@ -92,6 +95,8 @@ class AccessControlDesign(
 
             binding.surface = dialog.surface
             binding.mainList.applyLinearAdapter(context, adapter)
+            binding.emptyView.text = context.getString(R.string.search_apps_hint)
+            binding.emptyView.visibility = View.VISIBLE
             binding.keywordView.addTextChangedListener {
                 filter.trySend(Unit)
             }
@@ -126,6 +131,10 @@ class AccessControlDesign(
                 }
 
                 adapter.patchDataSet(adapter::apps, apps, false, AppInfo::packageName)
+                binding.emptyView.text = context.getString(
+                    if (keyword.isEmpty()) R.string.search_apps_hint else R.string.search_apps_empty,
+                )
+                binding.emptyView.visibility = if (apps.isEmpty()) View.VISIBLE else View.GONE
 
                 delay(200)
             }

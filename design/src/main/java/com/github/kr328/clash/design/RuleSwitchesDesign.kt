@@ -1,9 +1,9 @@
 package com.github.kr328.clash.design
 
 import android.content.Context
-import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
@@ -48,8 +48,10 @@ class RuleSwitchesDesign(
         val rows = store.snapshot().sections.firstOrNull()?.rows.orEmpty()
         if (rows.isEmpty()) {
             host.addView(TextView(context).apply {
-                text = context.getString(R.string.script_display_hint)
-                setPadding(dp(4), dp(12), dp(4), 0)
+                text = context.getString(R.string.rule_switches_empty)
+                setTextColor(context.resolveThemedColor(android.R.attr.textColorSecondary))
+                textSize = 14f
+                setPadding(dp(4), dp(16), dp(4), 0)
             })
         }
         for (row in rows) {
@@ -70,12 +72,11 @@ class RuleSwitchesDesign(
             textSize = 16f
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
-        val mark = TextView(context).apply {
-            text = name.take(1)
-            gravity = Gravity.CENTER
-            textSize = 14f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary))
+        val mark = ImageView(context).apply {
+            setImageResource(R.drawable.ic_rule_switches)
+            setColorFilter(context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary))
+            scaleType = ImageView.ScaleType.CENTER
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             layoutParams = LinearLayout.LayoutParams(dp(36), dp(36)).apply {
                 marginEnd = dp(12)
             }
@@ -98,7 +99,7 @@ class RuleSwitchesDesign(
         return MaterialCardView(context).apply {
             radius = 18f * context.resources.displayMetrics.density
             cardElevation = 0f
-            setCardBackgroundColor(context.resolveThemedColor(com.google.android.material.R.attr.colorSurface))
+            setCardBackgroundColor(context.resolveThemedColor(R.attr.clashSurfaceVariant))
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT,

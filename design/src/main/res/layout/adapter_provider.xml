@@ -40,6 +40,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="@{provider.name}"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
 
@@ -80,8 +82,8 @@
                 android:layout_height="@dimen/item_tailing_component_size"
                 android:layout_gravity="center"
                 android:layout_margin="@dimen/item_tailing_margin"
-                android:contentDescription="@string/more"
-                android:src="@drawable/ic_baseline_swap_vert"
+                android:contentDescription="@string/update"
+                android:src="@drawable/ic_baseline_sync"
                 android:visibility="@{state.updating ? View.GONE : View.VISIBLE}" />
 
             <ProgressBar

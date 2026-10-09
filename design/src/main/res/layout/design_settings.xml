@@ -60,6 +60,8 @@
                             app:subtext="@string/kernel_general_summary"
                             app:text="@string/general" />
 
+                        <include layout="@layout/component_list_divider" />
+
                         <com.github.kr328.clash.design.view.LargeActionLabel
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -67,6 +69,8 @@
                             app:icon="@drawable/ic_baseline_vpn_lock"
                             app:subtext="@string/kernel_network_summary"
                             app:text="@string/network" />
+
+                        <include layout="@layout/component_list_divider" />
 
                         <com.github.kr328.clash.design.view.LargeActionLabel
                             android:layout_width="match_parent"
@@ -76,6 +80,8 @@
                             app:subtext="@string/kernel_dns_summary"
                             app:text="@string/dns" />
 
+                        <include layout="@layout/component_list_divider" />
+
                         <com.github.kr328.clash.design.view.LargeActionLabel
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -83,6 +89,8 @@
                             app:icon="@drawable/ic_baseline_view_list"
                             app:subtext="@string/kernel_hosts_summary"
                             app:text="@string/hosts" />
+
+                        <include layout="@layout/component_list_divider" />
 
                         <com.github.kr328.clash.design.view.LargeActionLabel
                             android:layout_width="match_parent"

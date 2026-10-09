@@ -407,6 +407,7 @@
     <string name="shortcut_stop_long">Stop the service</string>
 
     <string name="script_display_options">Override script</string>
+    <string name="script_page_intro">Control how main(config) overrides the selected profile. Nodes stay unchanged.</string>
     <string name="script_enable">Enable override script</string>
     <string name="script_enable_summary">main() rewrites the profile except nodes. Turn this off and the script is not applied</string>
     <string name="script_page_hint">System options win when they disagree with the script or the subscription.</string>
@@ -421,10 +422,13 @@
     <string name="script_display_angela">Angela Clash script declaration detected.</string>
     <string name="script_display_edit">Edit override script</string>
     <string name="script_display_edit_summary">main() overwrites everything except nodes. Saving reloads a running service</string>
+    <string name="script_editor_hint">Open the code editor to inspect or update the override.</string>
+    <string name="script_editor_placeholder">Write or paste your main(config) override here.</string>
     <string name="script_display_restore">Restore built-in script</string>
     <string name="script_display_restore_summary">Reset switches to the built-in Angela Clash script</string>
     <string name="script_display_restore_message">The current script and switch overrides will be replaced by the built-in script.</string>
     <string name="script_display_rule">Rule options</string>
+    <string name="script_rule_count_format">%1$d of %2$d enabled</string>
     <string name="script_display_leak">Leak protection</string>
     <string name="script_display_cn">China direct</string>
     <string name="script_display_strict">Strict routing</string>
@@ -497,4 +501,13 @@
     <string name="script_entry_summary">Global override script</string>
     <string name="providers_summary">View and sync providers</string>
     <string name="access_summary">Choose which apps use the VPN</string>
+    <string name="files_empty">This folder is empty</string>
+    <string name="logs_empty">No log history yet</string>
+    <string name="logcat_empty">No logs match this filter</string>
+    <string name="access_control_empty">No apps are available to manage</string>
+    <string name="search_apps_hint">Enter an app name or package name</string>
+    <string name="search_apps_empty">No matching apps</string>
+    <string name="rule_switches_empty">No rule options are available for this profile</string>
+    <string name="script_rule_empty">This profile has no rule options to display</string>
+    <string name="battery_optimization_ignored_summary">Battery optimization is already ignored for this app</string>
 </resources>

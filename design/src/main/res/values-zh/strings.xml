@@ -316,6 +316,7 @@
     <string name="shortcut_stop_long">停止服务</string>
 
     <string name="script_display_options">覆写脚本</string>
+    <string name="script_page_intro">控制 main(config) 如何覆写当前配置；节点保持不变。</string>
     <string name="script_enable">启用覆写脚本</string>
     <string name="script_enable_summary">main() 覆写除节点外的配置。关闭后不再执行脚本</string>
     <string name="script_page_hint">和脚本或订阅冲突时，以系统显式选项为准。</string>
@@ -330,10 +331,13 @@
     <string name="script_display_angela">已识别本应用的脚本声明。</string>
     <string name="script_display_edit">编辑覆写脚本</string>
     <string name="script_display_edit_summary">main() 覆写除节点外的配置。服务运行时保存会立刻重载</string>
+    <string name="script_editor_hint">打开代码编辑器，查看或修改覆写脚本</string>
+    <string name="script_editor_placeholder">在此编写或粘贴 main(config) 覆写脚本。</string>
     <string name="script_display_restore">恢复内置脚本</string>
     <string name="script_display_restore_summary">用内置 Angela Clash 脚本重置开关</string>
     <string name="script_display_restore_message">当前脚本和已改过的开关会被内置脚本替换。</string>
     <string name="script_display_rule">分流显示选项</string>
+    <string name="script_rule_count_format">%1$d/%2$d 已启用</string>
     <string name="script_display_leak">防泄漏</string>
     <string name="script_display_cn">中国直连</string>
     <string name="script_display_strict">严格路由</string>
@@ -406,4 +410,13 @@
     <string name="script_entry_summary">配置全局覆写脚本</string>
     <string name="providers_summary">查看和同步外部资源</string>
     <string name="access_summary">配置应用访问名单</string>
+    <string name="files_empty">此目录暂无文件</string>
+    <string name="logs_empty">暂无历史日志</string>
+    <string name="logcat_empty">暂无符合条件的日志</string>
+    <string name="access_control_empty">没有可管理的应用</string>
+    <string name="search_apps_hint">输入应用名称或包名进行搜索</string>
+    <string name="search_apps_empty">没有匹配的应用</string>
+    <string name="rule_switches_empty">当前配置没有可显示的规则选项</string>
+    <string name="script_rule_empty">当前配置没有可显示的规则选项</string>
+    <string name="battery_optimization_ignored_summary">系统已忽略此应用的电池优化</string>
 </resources>
