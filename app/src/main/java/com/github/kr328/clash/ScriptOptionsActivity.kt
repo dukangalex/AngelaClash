@@ -119,7 +119,7 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
         val scroll = ScrollView(this).apply {
             isFillViewport = true
             setPadding(dp(4), dp(4), dp(4), dp(4))
-            addView(content, ScrollView.LayoutParams(
+            addView(content, FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ))
