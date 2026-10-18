@@ -146,7 +146,9 @@
                                 android:minHeight="48dp"
                                 android:checked="@{clashRunning}"
                                 android:contentDescription="@{clashRunning ? @string/service_power_control : @string/tap_to_start}"
-                                android:onClick="@{() -> self.request(Request.ToggleStatus)}" />
+                                android:onClick="@{() -> self.request(Request.ToggleStatus)}">
+                                <requestFocus />
+                            </androidx.appcompat.widget.SwitchCompat>
                         </LinearLayout>
                     </LinearLayout>
 
