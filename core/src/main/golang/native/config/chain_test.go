@@ -140,6 +140,33 @@ func TestChainRejectsDirectOnlyLanding(t *testing.T) {
 	}
 }
 
+func TestChainRejectsInvalidLandingProfilePath(t *testing.T) {
+	profileDir := t.TempDir()
+	outsideDir := path.Join(path.Dir(profileDir), "outside-profile")
+	if err := os.MkdirAll(outsideDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path.Join(outsideDir, "config.yaml"), []byte(`proxies:
+  - name: landing-node
+    type: socks5
+    server: 8.8.8.8
+    port: 443
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "entry-node", "type": "socks5"}},
+		Rule:  []string{"MATCH,entry-node"},
+	}
+	if err := osWrite(profileDir, chainFileName, `{"entry":"entry-node","landingProfile":"../outside-profile","landing":"landing-node"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, profileDir); err == nil {
+		t.Fatal("expected invalid landing profile identifier to be rejected")
+	}
+}
+
 func osWrite(dir, name, body string) error {
 	return os.WriteFile(path.Join(dir, name), []byte(body), 0o600)
 }
