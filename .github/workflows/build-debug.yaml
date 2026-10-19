@@ -37,6 +37,10 @@ jobs:
           cd $(go env GOROOT)
           for p in $GITHUB_WORKSPACE/.github/patch/*.patch; do patch --verbose -p 1 < "$p"; done
 
+      - name: Test native config package
+        working-directory: core/src/main/golang
+        run: go test ./native/config
+
       - uses: actions/cache@v5
         with:
           path: |
