@@ -535,23 +535,27 @@
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="13sp" />
 
-                            <com.google.android.material.button.MaterialButtonToggleGroup
+                            <LinearLayout
                                 android:id="@+id/mode_group"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
-                                app:selectionRequired="true"
-                                app:singleSelection="true">
+                                android:orientation="horizontal">
 
                                 <com.google.android.material.button.MaterialButton
                                     android:id="@+id/mode_rule"
                                     style="@style/Widget.MaterialComponents.Button.TextButton"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
                                     android:layout_weight="1"
-                                    android:minHeight="48dp"
                                     android:insetTop="0dp"
                                     android:insetBottom="0dp"
+                                    android:insetLeft="0dp"
+                                    android:insetRight="0dp"
+                                    android:minWidth="0dp"
+                                    android:minHeight="48dp"
+                                    android:paddingHorizontal="4dp"
                                     android:text="@string/rule_mode"
                                     app:cornerRadius="14dp" />
 
@@ -560,10 +564,15 @@
                                     style="@style/Widget.MaterialComponents.Button.TextButton"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
                                     android:layout_weight="1"
-                                    android:minHeight="48dp"
                                     android:insetTop="0dp"
                                     android:insetBottom="0dp"
+                                    android:insetLeft="0dp"
+                                    android:insetRight="0dp"
+                                    android:minWidth="0dp"
+                                    android:minHeight="48dp"
+                                    android:paddingHorizontal="4dp"
                                     android:text="@string/global_mode"
                                     app:cornerRadius="14dp" />
 
@@ -573,12 +582,16 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:minHeight="48dp"
                                     android:insetTop="0dp"
                                     android:insetBottom="0dp"
+                                    android:insetLeft="0dp"
+                                    android:insetRight="0dp"
+                                    android:minWidth="0dp"
+                                    android:minHeight="48dp"
+                                    android:paddingHorizontal="4dp"
                                     android:text="@string/direct_mode"
                                     app:cornerRadius="14dp" />
-                            </com.google.android.material.button.MaterialButtonToggleGroup>
+                            </LinearLayout>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>

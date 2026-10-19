@@ -48,7 +48,6 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     private val binding = DesignMainBinding
         .inflate(context.layoutInflater, context.root, false)
 
-    private var suppressMode = false
     private var attentionAction: Request? = null
 
     fun onAttention() {
@@ -212,15 +211,12 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
     suspend fun setMode(mode: TunnelState.Mode) {
         withContext(Dispatchers.Main) {
-            suppressMode = true
             val id = when (mode) {
                 TunnelState.Mode.Direct -> R.id.mode_direct
                 TunnelState.Mode.Global -> R.id.mode_global
                 else -> R.id.mode_rule
             }
-            binding.modeGroup.check(id)
             paintMode(id)
-            suppressMode = false
         }
     }
 
@@ -273,13 +269,17 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         binding.colorClashStopped = context.resolveThemedColor(R.attr.colorClashStopped)
         binding.chainSummary = context.getString(R.string.chain_not_set)
 
-        binding.modeGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked || suppressMode) return@addOnButtonCheckedListener
-            when (checkedId) {
-                R.id.mode_global -> request(Request.SetGlobalMode)
-                R.id.mode_direct -> request(Request.SetDirectMode)
-                R.id.mode_rule -> request(Request.SetRuleMode)
-            }
+        binding.modeRule.setOnClickListener {
+            paintMode(R.id.mode_rule)
+            request(Request.SetRuleMode)
+        }
+        binding.modeGlobal.setOnClickListener {
+            paintMode(R.id.mode_global)
+            request(Request.SetGlobalMode)
+        }
+        binding.modeDirect.setOnClickListener {
+            paintMode(R.id.mode_direct)
+            request(Request.SetDirectMode)
         }
 
         binding.bottomNav.setOnItemSelectedListener { item ->

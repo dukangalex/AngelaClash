@@ -131,7 +131,6 @@ class MainActivity : BaseActivity<MainDesign>() {
             queryProviders()
         }
 
-        setMode(state.mode)
         setHasProviders(providers.isNotEmpty())
 
         val active = withProfile { queryActive() }
@@ -140,10 +139,12 @@ class MainActivity : BaseActivity<MainDesign>() {
         setChainSummary(summary)
         // Chaining is a built-in capability, so keep its entry visible before the first binding exists.
         setFeatureVisibility(ScriptDisplayStore(this@MainActivity).scriptEnabled(), true)
+        val shown = shownMode(state.mode)
+        setMode(shown)
         setHome(
             connected = getString(if (clashRunning) DesignR.string.home_connected_on else DesignR.string.home_connected_off),
-            safety = homeSafety(state.mode),
-            policy = homePolicy(active?.name, state.mode),
+            safety = homeSafety(shown),
+            policy = homePolicy(active?.name, shown),
             network = getString(if (clashRunning) DesignR.string.home_network_on else DesignR.string.home_network_off),
             attention = when {
                 active == null || !active.imported -> getString(DesignR.string.home_need_profile)
@@ -192,12 +193,22 @@ class MainActivity : BaseActivity<MainDesign>() {
         }
     }
 
+    private suspend fun shownMode(running: TunnelState.Mode): TunnelState.Mode {
+        val chosen = withClash {
+            queryOverride(Clash.OverrideSlot.Session).mode
+                ?: if (clashRunning) null else queryOverride(Clash.OverrideSlot.Persist).mode
+        }
+        return chosen ?: running
+    }
+
     private suspend fun patchMode(mode: TunnelState.Mode) {
-        if (!clashRunning) return
         withClash {
-            val override = queryOverride(Clash.OverrideSlot.Session)
-            override.mode = mode
-            patchOverride(Clash.OverrideSlot.Session, override)
+            val persist = queryOverride(Clash.OverrideSlot.Persist)
+            persist.mode = mode
+            patchOverride(Clash.OverrideSlot.Persist, persist)
+            val session = queryOverride(Clash.OverrideSlot.Session)
+            session.mode = mode
+            patchOverride(Clash.OverrideSlot.Session, session)
         }
         design?.fetch()
     }

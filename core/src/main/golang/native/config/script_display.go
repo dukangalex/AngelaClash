@@ -358,7 +358,7 @@ func fallbackGroup(cfg *config.RawConfig, disabled map[string]bool) string {
 	if first != "" {
 		return first
 	}
-	return "DIRECT"
+	return "REJECT"
 }
 
 func retargetRules(rules []string, disabled map[string]bool, fallback string) []string {
