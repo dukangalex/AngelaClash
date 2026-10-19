@@ -70,6 +70,9 @@ func patchChain(cfg *config.RawConfig, profileDir string) error {
 	current := P.Base(profileDir)
 	landingName := spec.Landing
 	if spec.LandingProfile != "" && spec.LandingProfile != current {
+		if !isProfileID(spec.LandingProfile) {
+			return fmt.Errorf("落地配置标识无效")
+		}
 		other, err := readRaw(P.Join(P.Dir(profileDir), spec.LandingProfile, "config.yaml"))
 		if err != nil {
 			return fmt.Errorf("落地配置读不出来: %s", err.Error())
@@ -519,6 +522,28 @@ func cloneMap(item map[string]any) map[string]any {
 		return item
 	}
 	return out
+}
+
+// Profile directories are named with canonical UUID-shaped identifiers. Validate
+// the persisted value before joining it to the profile root so a malformed chain.json
+// cannot select a config outside that root.
+func isProfileID(value string) bool {
+	if len(value) != 36 {
+		return false
+	}
+	for i := 0; i < len(value); i++ {
+		if i == 8 || i == 13 || i == 18 || i == 23 {
+			if value[i] != '-' {
+				return false
+			}
+			continue
+		}
+		c := value[i]
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return false
+		}
+	}
+	return true
 }
 
 func isDirectLike(name string) bool {
