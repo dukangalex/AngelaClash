@@ -1,17 +1,11 @@
 package com.github.kr328.clash
 
-import android.content.ComponentName
-import android.content.Context
-import android.content.ServiceConnection
 import android.net.Uri
-import android.os.IBinder
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import com.github.kr328.clash.common.compat.startForegroundServiceCompat
 import com.github.kr328.clash.common.log.Log
 import com.github.kr328.clash.common.util.fileName
 import com.github.kr328.clash.common.util.intent
-import com.github.kr328.clash.common.util.ticker
 import com.github.kr328.clash.core.model.LogMessage
 import com.github.kr328.clash.design.LogcatDesign
 import com.github.kr328.clash.design.dialog.withModelProgressBar
@@ -20,20 +14,20 @@ import com.github.kr328.clash.design.ui.ToastDuration
 import com.github.kr328.clash.design.util.showExceptionToast
 import com.github.kr328.clash.log.LogcatFilter
 import com.github.kr328.clash.log.LogcatReader
+import com.github.kr328.clash.service.remote.ILogObserver
 import com.github.kr328.clash.util.logsDir
+import com.github.kr328.clash.util.withClash
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import com.github.kr328.clash.design.R
 
 class LogcatActivity : BaseActivity<LogcatDesign>() {
-    private var conn: ServiceConnection? = null
-
     override suspend fun main() {
+        stopService(LogcatService::class.intent)
         val fileName = intent?.fileName
 
         if (fileName != null) {
@@ -93,67 +87,39 @@ class LogcatActivity : BaseActivity<LogcatDesign>() {
 
     private suspend fun mainStreaming() {
         val design = LogcatDesign(this, true)
-
         setContentDesign(design)
 
-        startForegroundServiceCompat(LogcatService::class.intent)
-
-        val logcat = bindLogcatService()
-        val ticker = ticker(500)
-
-        var initial = true
-
-        while (isActive) {
-            select<Unit> {
-                events.onReceive {
-
+        val messages = ArrayDeque<LogMessage>()
+        val incoming = Channel<LogMessage>(128)
+        withClash {
+            setLogObserver(object : ILogObserver {
+                override fun newItem(log: LogMessage) {
+                    incoming.trySend(log)
                 }
-                design.requests.onReceive {
-                    when (it) {
-                        LogcatDesign.Request.Close -> {
-                            stopService(LogcatService::class.intent)
-                            startActivity(LogsActivity::class.intent)
-                            finish()
+            })
+        }
+
+        try {
+            while (isActive) {
+                select<Unit> {
+                    events.onReceive { }
+                    design.requests.onReceive {
+                        when (it) {
+                            LogcatDesign.Request.Close -> finish()
+                            LogcatDesign.Request.History ->
+                                startActivity(LogsActivity::class.intent)
+                            else -> Unit
                         }
-                        LogcatDesign.Request.History ->
-                            startActivity(LogsActivity::class.intent)
-                        else -> Unit
                     }
-                }
-                if (activityStarted) {
-                    ticker.onReceive {
-                        val snapshot = logcat.snapshot(initial) ?: return@onReceive
-
-                        design.patchMessages(snapshot.messages, snapshot.removed, snapshot.appended)
-
-                        initial = false
+                    incoming.onReceive { message ->
+                        messages.addLast(message)
+                        while (messages.size > 500) messages.removeFirst()
+                        design.patchMessages(messages.toList(), 0, messages.size)
                     }
                 }
             }
-        }
-    }
-
-    override fun onDestroy() {
-        conn?.apply(this::unbindService)
-
-        super.onDestroy()
-    }
-
-    private suspend fun bindLogcatService(): LogcatService {
-        return suspendCoroutine { ctx ->
-            bindService(LogcatService::class.intent, object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                    val srv = service!!.queryLocalInterface("") as LogcatService
-
-                    ctx.resume(srv)
-
-                    conn = this
-                }
-
-                override fun onServiceDisconnected(name: ComponentName?) {
-                    conn = null
-                }
-            }, Context.BIND_AUTO_CREATE)
+        } finally {
+            withClash { setLogObserver(null) }
         }
     }
 

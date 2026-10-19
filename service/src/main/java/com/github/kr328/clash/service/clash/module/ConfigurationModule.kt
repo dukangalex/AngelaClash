@@ -61,7 +61,9 @@ class ConfigurationModule(service: Service) : Module<ConfigurationModule.LoadExc
 
                 val activeDir = service.importedDir.resolve(active.uuid.toString())
                 ChainStore.write(activeDir, ChainStore(service).get(active.uuid))
-                ScriptDisplayStore(service).ensureScript()
+                val scripts = ScriptDisplayStore(service)
+                scripts.ensureScript()
+                scripts.writeProfileFlag(activeDir, active.uuid)
 
                 Clash.load(activeDir).await()
 

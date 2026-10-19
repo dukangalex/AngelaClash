@@ -10,6 +10,8 @@ import com.github.kr328.clash.common.util.ticker
 import com.github.kr328.clash.design.ProfilesDesign
 import com.github.kr328.clash.design.ui.ToastDuration
 import com.github.kr328.clash.service.model.Profile
+import com.github.kr328.clash.service.store.ScriptDisplayStore
+import com.github.kr328.clash.service.util.sendProfileChanged
 import com.github.kr328.clash.util.withProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -22,7 +24,8 @@ import com.github.kr328.clash.design.R
 
 class ProfilesActivity : BaseActivity<ProfilesDesign>() {
     override suspend fun main() {
-        val design = ProfilesDesign(this)
+        val scripts = ScriptDisplayStore(this)
+        val design = ProfilesDesign(this) { scripts.profileScriptEnabled(it) }
 
         setContentDesign(design)
 
@@ -77,6 +80,13 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                         }
                         is ProfilesDesign.Request.ShareQrCode ->
                             design.showProfileQrCode(it.profile)
+                        is ProfilesDesign.Request.SetScript -> {
+                            scripts.setProfileScriptEnabled(it.profile.uuid, it.enabled)
+                            val active = withProfile { queryActive() }
+                            if (active?.uuid == it.profile.uuid) {
+                                sendProfileChanged(it.profile.uuid)
+                            }
+                        }
                     }
                 }
                 if (activityStarted) {

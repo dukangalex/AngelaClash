@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.appcompat.widget.SwitchCompat
 import com.github.kr328.clash.design.adapter.ProfileAdapter
 import com.github.kr328.clash.design.databinding.DesignProfilesBinding
 import com.github.kr328.clash.design.databinding.DialogProfilesMenuBinding
@@ -16,6 +17,7 @@ import com.github.kr328.clash.design.dialog.AppBottomSheetDialog
 import com.github.kr328.clash.design.ui.ToastDuration
 import com.github.kr328.clash.design.util.*
 import com.github.kr328.clash.service.model.Profile
+import java.util.UUID
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -26,7 +28,10 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
-class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context) {
+class ProfilesDesign(
+    context: Context,
+    private val scriptOn: (UUID) -> Boolean = { false },
+) : Design<ProfilesDesign.Request>(context) {
     sealed class Request {
         object UpdateAll : Request()
         object Create : Request()
@@ -35,6 +40,7 @@ class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context)
         data class Edit(val profile: Profile) : Request()
         data class Duplicate(val profile: Profile) : Request()
         data class ShareQrCode(val profile: Profile) : Request()
+        data class SetScript(val profile: Profile, val enabled: Boolean) : Request()
         data class Delete(val profile: Profile) : Request()
     }
 
@@ -98,6 +104,7 @@ class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context)
         binding.master = this
         binding.self = dialog
         binding.profile = profile
+        binding.scriptOn = scriptOn(profile.uuid)
 
         dialog.setContentView(binding.root)
         dialog.show()
@@ -132,6 +139,12 @@ class ProfilesDesign(context: Context) : Design<ProfilesDesign.Request>(context)
         requests.trySend(Request.Edit(profile))
 
         dialog.dismiss()
+    }
+
+    fun requestToggleScript(switch: SwitchCompat, profile: Profile) {
+        val enabled = !switch.isChecked
+        switch.isChecked = enabled
+        requests.trySend(Request.SetScript(profile, enabled))
     }
 
     fun requestDuplicate(dialog: Dialog, profile: Profile) {

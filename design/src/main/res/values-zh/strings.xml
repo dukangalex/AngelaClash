@@ -11,7 +11,7 @@
     <string name="bypass_private_network">绕过私有网络</string>
     <string name="bypass_private_network_summary">绕过私有网络地址</string>
     <string name="cancel">取消</string>
-    <string name="clash_logcat">Clash 日志捕捉工具</string>
+    <string name="clash_logcat">实时日志</string>
     <string name="create_profile">创建配置</string>
     <string name="dark_mode">暗黑模式</string>
     <string name="default_">默认</string>
@@ -319,8 +319,8 @@
 
     <string name="script_display_options">覆写脚本</string>
     <string name="script_page_intro">控制 main(config) 如何覆写当前配置；节点保持不变。</string>
-    <string name="script_enable">启用覆写脚本</string>
-    <string name="script_enable_summary">main() 覆写除节点外的配置。关闭后不再执行脚本</string>
+    <string name="script_enable">覆写脚本按配置打开</string>
+    <string name="script_enable_summary">这里只维护脚本内容。要不要用，在每份配置的菜单里单独选，默认关闭。</string>
     <string name="script_page_hint">和脚本或订阅冲突时，以系统显式选项为准。</string>
     <string name="script_credit"></string>
     <string name="system_options">系统显式</string>
@@ -380,7 +380,9 @@
     <string name="rule_switches_summary">关闭后移除此策略组，规则回到主组。系统显式选项仍然优先。</string>
     <string name="section_view">查看</string>
     <string name="section_other">其他</string>
-    <string name="logs_summary">实时日志</string>
+    <string name="logs_summary">在应用里查看</string>
+    <string name="profile_script">覆写脚本</string>
+    <string name="profile_script_summary">只作用于这份配置</string>
     <string name="dashboard_speed">网络速度</string>
     <string name="dashboard_up_label">上传</string>
     <string name="dashboard_down_label">下载</string>
@@ -438,7 +440,7 @@
     <string name="high_priority_notification_summary">提高状态通知的优先级</string>
     <string name="battery_optimization">电池优化</string>
     <string name="battery_optimization_summary">请求系统忽略电池优化</string>
-    <string name="script_entry_summary">配置全局覆写脚本</string>
+    <string name="script_entry_summary">维护脚本。每份配置单独开关</string>
     <string name="providers_summary">查看和同步外部资源</string>
     <string name="access_summary">配置应用访问名单</string>
     <string name="files_empty">此目录暂无文件</string>

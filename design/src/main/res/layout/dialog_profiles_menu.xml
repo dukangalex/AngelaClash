@@ -11,6 +11,9 @@
         <variable
             name="profile"
             type="com.github.kr328.clash.service.model.Profile" />
+        <variable
+            name="scriptOn"
+            type="boolean" />
 
         <import type="com.github.kr328.clash.service.model.Profile.Type" />
         <import type="android.view.View" />
@@ -37,6 +40,48 @@
             android:padding="@dimen/bottom_sheet_menu_items_padding"
             app:icon="@drawable/ic_baseline_edit"
             app:text="@string/edit" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="64dp"
+            android:onClick="@{() -> master.requestToggleScript(scriptSwitch, profile)}"
+            android:orientation="horizontal"
+            android:padding="@dimen/bottom_sheet_menu_items_padding">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_script"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profile_script_summary"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+                    android:textColor="?android:attr/textColorSecondary" />
+            </LinearLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/script_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:checked="@{scriptOn}"
+                android:minHeight="48dp" />
+        </LinearLayout>
 
         <com.github.kr328.clash.design.view.LargeActionLabel
             android:layout_width="match_parent"

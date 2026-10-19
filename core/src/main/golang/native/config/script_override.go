@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	P "path"
 	"strings"
 
 	"github.com/dop251/goja"
@@ -12,8 +13,8 @@ import (
 	"github.com/metacubex/mihomo/log"
 )
 
-func patchScriptOverride(cfg *config.RawConfig, _ string) error {
-	if !scriptOverrideEnabled() {
+func patchScriptOverride(cfg *config.RawConfig, profileDir string) error {
+	if _, err := os.Stat(P.Join(profileDir, "script.on")); err != nil {
 		return nil
 	}
 	path := C.Path.Resolve("script.js")
@@ -25,14 +26,6 @@ func patchScriptOverride(cfg *config.RawConfig, _ string) error {
 		return err
 	}
 	return nil
-}
-
-func scriptOverrideEnabled() bool {
-	opts, ok := readScriptOptions()
-	if !ok || opts.ScriptEnabled == nil {
-		return true
-	}
-	return *opts.ScriptEnabled
 }
 
 func applyScriptText(cfg *config.RawConfig, src string) error {

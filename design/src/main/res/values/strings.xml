@@ -412,8 +412,8 @@
     <string name="home_console_label">MIHOMO · NETWORK CONSOLE</string>
     <string name="script_engine_label">MIHOMO / SCRIPT ENGINE</string>
     <string name="script_page_intro">Control how main(config) overrides the selected profile. Nodes stay unchanged.</string>
-    <string name="script_enable">Enable override script</string>
-    <string name="script_enable_summary">main() rewrites the profile except nodes. Turn this off and the script is not applied</string>
+    <string name="script_enable">Turn the script on per profile</string>
+    <string name="script_enable_summary">This page keeps the script. Each profile chooses whether to use it. Off by default.</string>
     <string name="script_page_hint">System options win when they disagree with the script or the subscription.</string>
     <string name="script_credit"></string>
     <string name="system_options">System options</string>
@@ -471,7 +471,9 @@
     <string name="rule_switches_summary">Turning one off removes that group and sends its rules back to the main group. System options still win.</string>
     <string name="section_view">View</string>
     <string name="section_other">Other</string>
-    <string name="logs_summary">Live log</string>
+    <string name="logs_summary">Inside the app</string>
+    <string name="profile_script">Override script</string>
+    <string name="profile_script_summary">Applies only to this profile</string>
     <string name="dashboard_speed">Network speed</string>
     <string name="dashboard_up_label">Upload</string>
     <string name="dashboard_down_label">Download</string>
@@ -529,7 +531,7 @@
     <string name="high_priority_notification_summary">Raise the status notification</string>
     <string name="battery_optimization">Battery optimization</string>
     <string name="battery_optimization_summary">Ask the system to ignore battery optimization</string>
-    <string name="script_entry_summary">Global override script</string>
+    <string name="script_entry_summary">Keep the script. Each profile has its own switch</string>
     <string name="providers_summary">View and sync providers</string>
     <string name="access_summary">Choose which apps use the VPN</string>
     <string name="files_empty">This folder is empty</string>

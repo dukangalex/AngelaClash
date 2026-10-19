@@ -4,6 +4,7 @@ import android.content.Context
 import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
+import java.util.UUID
 
 /**
  * Script display options. The script only declares switches.
@@ -63,6 +64,26 @@ class ScriptDisplayStore(private val context: Context) {
     fun setSource(url: String) {
         val current = readPersisted()
         writePersisted(current.scriptEnabled, current.values, url.trim(), if (url.isBlank()) 0L else current.syncedAt)
+    }
+
+    fun profileScriptEnabled(uuid: UUID): Boolean {
+        return readPersisted().profiles[uuid.toString()] == true
+    }
+
+    fun setProfileScriptEnabled(uuid: UUID, enabled: Boolean) {
+        val current = readPersisted()
+        val profiles = LinkedHashMap(current.profiles)
+        if (enabled) profiles[uuid.toString()] = true else profiles.remove(uuid.toString())
+        writePersisted(current.scriptEnabled, current.values, current.source, current.syncedAt, profiles)
+    }
+
+    fun writeProfileFlag(dir: File, uuid: UUID) {
+        val flag = dir.resolve(SCRIPT_FLAG)
+        if (profileScriptEnabled(uuid)) {
+            flag.writeText("1")
+        } else if (flag.exists()) {
+            flag.delete()
+        }
     }
 
     fun restoreDefault() {
@@ -167,10 +188,11 @@ class ScriptDisplayStore(private val context: Context) {
         val values: LinkedHashMap<String, Boolean>,
         val source: String,
         val syncedAt: Long,
+        val profiles: LinkedHashMap<String, Boolean>,
     )
 
     private fun readPersisted(): Persisted {
-        if (!optionFile.exists()) return Persisted(true, linkedMapOf(), "", 0L)
+        if (!optionFile.exists()) return Persisted(true, linkedMapOf(), "", 0L, linkedMapOf())
         return try {
             val root = JSONObject(optionFile.readText())
             val values = linkedMapOf<String, Boolean>()
@@ -182,14 +204,24 @@ class ScriptDisplayStore(private val context: Context) {
                     values[k] = obj.optBoolean(k, false)
                 }
             }
+            val profiles = linkedMapOf<String, Boolean>()
+            val savedProfiles = root.optJSONObject("profiles")
+            if (savedProfiles != null) {
+                val keys = savedProfiles.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    if (savedProfiles.optBoolean(k, false)) profiles[k] = true
+                }
+            }
             Persisted(
                 root.optBoolean("scriptEnabled", true),
                 values,
                 root.optString("source", ""),
                 root.optLong("syncedAt", 0L),
+                profiles,
             )
         } catch (_: Exception) {
-            Persisted(true, linkedMapOf(), "", 0L)
+            Persisted(true, linkedMapOf(), "", 0L, linkedMapOf())
         }
     }
 
@@ -198,6 +230,7 @@ class ScriptDisplayStore(private val context: Context) {
         values: Map<String, Boolean>,
         source: String? = null,
         syncedAt: Long? = null,
+        profiles: Map<String, Boolean>? = null,
     ) {
         val current = readPersisted()
         val obj = JSONObject()
@@ -208,12 +241,16 @@ class ScriptDisplayStore(private val context: Context) {
         val map = JSONObject()
         for ((k, v) in values) map.put(k, v)
         obj.put("values", map)
+        val chosen = JSONObject()
+        for ((k, v) in (profiles ?: current.profiles)) if (v) chosen.put(k, true)
+        obj.put("profiles", chosen)
         writeAtomic(optionFile, obj.toString())
     }
 
     companion object {
         const val OPTIONS = "script-options.json"
         const val SCRIPT = "script.js"
+        const val SCRIPT_FLAG = "script.on"
         private const val BUNDLED_SHA = "5644b4612054640018fb2f298cc72231311ac7da171e6c4bff15229fc09e3bbb"
         const val GROUP_RULE = "rule"
         const val GROUP_LEAK = "leak"

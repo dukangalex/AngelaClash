@@ -52,7 +52,6 @@ class ScriptOptionsDesign(
         styleOutlinedCard(binding.editorCard, 20)
         styleOutlinedCard(binding.runtimeNotice, 16, accent = true)
         binding.runtimeNotice.visibility = if (running) View.VISIBLE else View.GONE
-        bindEnable(store)
         showRules(store)
         showSource(store.sourceUrl(), store.syncedAt(), false)
     }
@@ -84,22 +83,8 @@ class ScriptOptionsDesign(
     }
 
     fun reload(store: ScriptDisplayStore) {
-        bindEnable(store)
         showRules(store)
         showSource(store.sourceUrl(), store.syncedAt(), false)
-    }
-
-    private fun bindEnable(store: ScriptDisplayStore) {
-        val snap = store.snapshot()
-        binding.scriptEnableSwitch.setOnCheckedChangeListener(null)
-        binding.scriptEnableSwitch.isChecked = snap.scriptEnabled
-        binding.scriptEnableSwitch.setOnCheckedChangeListener { _, enabled ->
-            store.setScriptEnabled(enabled)
-            requests.trySend(Request.Reload)
-        }
-        binding.scriptEnableRow.setOnClickListener {
-            binding.scriptEnableSwitch.isChecked = !binding.scriptEnableSwitch.isChecked
-        }
     }
 
     private fun showRules(store: ScriptDisplayStore) {
