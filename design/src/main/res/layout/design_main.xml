@@ -179,6 +179,11 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:minHeight="48dp"
+                                android:onClick="@{() -> self.showHomeDetail(@string/home_connected_label, homeConnected)}"
                                 android:orientation="horizontal">
 
                                 <TextView
@@ -204,6 +209,11 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:minHeight="48dp"
+                                android:onClick="@{() -> self.showHomeDetail(@string/home_safety_label, homeSafety)}"
                                 android:orientation="horizontal">
 
                                 <TextView
@@ -231,7 +241,8 @@
                                 android:background="?attr/selectableItemBackground"
                                 android:clickable="true"
                                 android:focusable="true"
-                                android:onClick="@{() -> self.request(Request.OpenProfiles)}"
+                                android:minHeight="48dp"
+                                android:onClick="@{() -> self.showHomeDetail(@string/home_policy_label, homePolicy)}"
                                 android:orientation="horizontal">
 
                                 <TextView
@@ -256,6 +267,11 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="10dp"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:minHeight="48dp"
+                                android:onClick="@{() -> self.showHomeDetail(@string/home_network_label, homeNetwork)}"
                                 android:orientation="horizontal">
 
                                 <TextView
