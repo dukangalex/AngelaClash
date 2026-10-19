@@ -141,8 +141,12 @@ func TestChainRejectsDirectOnlyLanding(t *testing.T) {
 }
 
 func TestChainRejectsInvalidLandingProfilePath(t *testing.T) {
-	profileDir := t.TempDir()
-	outsideDir := path.Join(path.Dir(profileDir), "outside-profile")
+	baseDir := t.TempDir()
+	profileDir := path.Join(baseDir, "profiles", "current")
+	if err := os.MkdirAll(profileDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	outsideDir := path.Join(baseDir, "outside-profile")
 	if err := os.MkdirAll(outsideDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
