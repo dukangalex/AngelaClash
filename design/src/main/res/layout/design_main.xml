@@ -126,7 +126,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="@string/nav_dashboard"
-                                    android:textSize="28sp"
+                                    android:textSize="26sp"
                                     android:textStyle="bold" />
 
                                 <TextView
@@ -155,9 +155,9 @@
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="8dp"
                         app:cardBackgroundColor="?attr/clashSelectedSurface"
-                        app:cardCornerRadius="24dp"
+                        app:cardCornerRadius="20dp"
                         app:cardElevation="0dp"
                         app:strokeColor="?attr/clashOutline"
                         app:strokeWidth="1dp">
@@ -166,7 +166,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="14dp">
+                            android:padding="12dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -208,7 +208,7 @@
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
+                                android:layout_marginTop="8dp"
                                 android:background="?attr/selectableItemBackground"
                                 android:clickable="true"
                                 android:focusable="true"
@@ -237,7 +237,7 @@
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
+                                android:layout_marginTop="8dp"
                                 android:background="?attr/selectableItemBackground"
                                 android:clickable="true"
                                 android:focusable="true"
@@ -266,7 +266,7 @@
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
+                                android:layout_marginTop="8dp"
                                 android:background="?attr/selectableItemBackground"
                                 android:clickable="true"
                                 android:focusable="true"
@@ -431,7 +431,7 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:onClick="@{() -> self.request(Request.OpenProfiles)}"
-                        app:cardCornerRadius="24dp"
+                        app:cardCornerRadius="20dp"
                         app:cardElevation="0dp"
                         app:strokeColor="?attr/clashOutline"
                         app:strokeWidth="1dp">
@@ -440,7 +440,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="16dp">
+                            android:padding="14dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
