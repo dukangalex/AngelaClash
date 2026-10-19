@@ -3,6 +3,7 @@ package com.github.kr328.clash.design
 import android.content.Context
 import android.graphics.Color
 import android.text.TextUtils
+import android.text.format.DateFormat
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,8 @@ class ScriptOptionsDesign(
 ) : Design<ScriptOptionsDesign.Request>(context) {
     enum class Request {
         EditScript,
+        ImportLink,
+        Sync,
         Reload,
     }
 
@@ -45,11 +48,50 @@ class ScriptOptionsDesign(
         binding.scrollRoot.bindAppBarElevation(binding.activityBarLayout)
 
         styleOutlinedCard(binding.scriptEnableCard, 20)
+        styleOutlinedCard(binding.sourceCard, 20)
         styleOutlinedCard(binding.editorCard, 20)
         styleOutlinedCard(binding.runtimeNotice, 16, accent = true)
         binding.runtimeNotice.visibility = if (running) View.VISIBLE else View.GONE
+        bindEnable(store)
+        showRules(store)
+        showSource(store.sourceUrl(), store.syncedAt(), false)
+    }
 
+    fun request(request: Request) {
+        requests.trySend(request)
+    }
+
+    fun showSource(url: String, syncedAt: Long, busy: Boolean) {
+        binding.sourceUrl.text = if (url.isBlank()) {
+            context.getString(R.string.script_source_empty)
+        } else {
+            url
+        }
+        val status = when {
+            busy -> context.getString(R.string.script_syncing)
+            syncedAt > 0L -> context.getString(
+                R.string.script_synced_at,
+                DateFormat.getMediumDateFormat(context).format(java.util.Date(syncedAt)) + " " +
+                    DateFormat.getTimeFormat(context).format(java.util.Date(syncedAt)),
+            )
+            url.isNotBlank() -> context.getString(R.string.script_source_pending)
+            else -> ""
+        }
+        binding.sourceStatus.text = status
+        binding.sourceStatus.visibility = if (status.isBlank()) View.GONE else View.VISIBLE
+        binding.importLink.isEnabled = !busy
+        binding.syncScript.isEnabled = !busy
+    }
+
+    fun reload(store: ScriptDisplayStore) {
+        bindEnable(store)
+        showRules(store)
+        showSource(store.sourceUrl(), store.syncedAt(), false)
+    }
+
+    private fun bindEnable(store: ScriptDisplayStore) {
         val snap = store.snapshot()
+        binding.scriptEnableSwitch.setOnCheckedChangeListener(null)
         binding.scriptEnableSwitch.isChecked = snap.scriptEnabled
         binding.scriptEnableSwitch.setOnCheckedChangeListener { _, enabled ->
             store.setScriptEnabled(enabled)
@@ -58,16 +100,15 @@ class ScriptOptionsDesign(
         binding.scriptEnableRow.setOnClickListener {
             binding.scriptEnableSwitch.isChecked = !binding.scriptEnableSwitch.isChecked
         }
+    }
 
+    private fun showRules(store: ScriptDisplayStore) {
+        val snap = store.snapshot()
         ruleRows = snap.sections.firstOrNull()?.rows.orEmpty()
         binding.ruleCard.visibility = View.VISIBLE
         binding.ruleEmpty.visibility = if (ruleRows.isEmpty()) View.VISIBLE else View.GONE
         binding.ruleCount.visibility = if (ruleRows.isEmpty()) View.GONE else View.VISIBLE
         renderRuleRows(store)
-    }
-
-    fun request(request: Request) {
-        requests.trySend(request)
     }
 
     private fun renderRuleRows(store: ScriptDisplayStore) {

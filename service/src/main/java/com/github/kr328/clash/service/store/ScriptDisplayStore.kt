@@ -46,13 +46,28 @@ class ScriptDisplayStore(private val context: Context) {
 
     fun writeScript(text: String) {
         writeAtomic(scriptFile, text)
-        val enabled = readPersisted().scriptEnabled
-        writePersisted(enabled, effectiveValues())
+        val current = readPersisted()
+        writePersisted(current.scriptEnabled, effectiveValues())
+    }
+
+    fun writeFetched(text: String, url: String) {
+        writeAtomic(scriptFile, text)
+        val current = readPersisted()
+        writePersisted(current.scriptEnabled, effectiveValues(), url, System.currentTimeMillis())
+    }
+
+    fun sourceUrl(): String = readPersisted().source
+
+    fun syncedAt(): Long = readPersisted().syncedAt
+
+    fun setSource(url: String) {
+        val current = readPersisted()
+        writePersisted(current.scriptEnabled, current.values, url.trim(), if (url.isBlank()) 0L else current.syncedAt)
     }
 
     fun restoreDefault() {
         writeAtomic(scriptFile, "")
-        writePersisted(false, linkedMapOf())
+        writePersisted(false, linkedMapOf(), "", 0L)
     }
 
     fun snapshot(): Snapshot {
@@ -147,10 +162,15 @@ class ScriptDisplayStore(private val context: Context) {
         return digest.joinToString("") { "%02x".format(it) }
     }
 
-    private data class Persisted(val scriptEnabled: Boolean, val values: LinkedHashMap<String, Boolean>)
+    private data class Persisted(
+        val scriptEnabled: Boolean,
+        val values: LinkedHashMap<String, Boolean>,
+        val source: String,
+        val syncedAt: Long,
+    )
 
     private fun readPersisted(): Persisted {
-        if (!optionFile.exists()) return Persisted(true, linkedMapOf())
+        if (!optionFile.exists()) return Persisted(true, linkedMapOf(), "", 0L)
         return try {
             val root = JSONObject(optionFile.readText())
             val values = linkedMapOf<String, Boolean>()
@@ -162,16 +182,29 @@ class ScriptDisplayStore(private val context: Context) {
                     values[k] = obj.optBoolean(k, false)
                 }
             }
-            Persisted(root.optBoolean("scriptEnabled", true), values)
+            Persisted(
+                root.optBoolean("scriptEnabled", true),
+                values,
+                root.optString("source", ""),
+                root.optLong("syncedAt", 0L),
+            )
         } catch (_: Exception) {
-            Persisted(true, linkedMapOf())
+            Persisted(true, linkedMapOf(), "", 0L)
         }
     }
 
-    private fun writePersisted(scriptEnabled: Boolean, values: Map<String, Boolean>) {
+    private fun writePersisted(
+        scriptEnabled: Boolean,
+        values: Map<String, Boolean>,
+        source: String? = null,
+        syncedAt: Long? = null,
+    ) {
+        val current = readPersisted()
         val obj = JSONObject()
         obj.put("scriptEnabled", scriptEnabled)
         obj.put("enabled", true)
+        obj.put("source", source ?: current.source)
+        obj.put("syncedAt", syncedAt ?: current.syncedAt)
         val map = JSONObject()
         for ((k, v) in values) map.put(k, v)
         obj.put("values", map)
