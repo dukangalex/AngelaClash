@@ -54,6 +54,14 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         attentionAction?.let(::request)
     }
 
+    fun showHomeDetail(title: String, value: String) {
+        AlertDialog.Builder(context)
+            .setTitle(title)
+            .setMessage(value.ifBlank { context.getString(R.string.not_selected) })
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
     suspend fun setHome(
         connected: String,
         safety: String,
