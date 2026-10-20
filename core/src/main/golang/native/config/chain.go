@@ -50,6 +50,14 @@ func patchChain(cfg *config.RawConfig, profileDir string) error {
 	if cfg == nil {
 		return fmt.Errorf("链式代理配置为空")
 	}
+	// Preserve the original no-chain fast path without cloning or normalizing
+	// configuration values when there is nothing to patch.
+	if _, err := os.Stat(P.Join(profileDir, chainFileName)); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
 	// Work on isolated copies of every field chain processing may mutate. A
 	// failed validation must not leave a partially rewritten live configuration.
 	working := *cfg
@@ -105,15 +113,43 @@ func cloneProviderMapStrict(items map[string]map[string]any) (map[string]map[str
 }
 
 func cloneMapStrict(item map[string]any) (map[string]any, error) {
-	buf, err := json.Marshal(item)
-	if err != nil {
-		return nil, err
+	if item == nil {
+		return nil, nil
 	}
-	var out map[string]any
-	if err := json.Unmarshal(buf, &out); err != nil {
-		return nil, err
+	out := make(map[string]any, len(item))
+	for key, value := range item {
+		cloned, err := cloneConfigValue(value)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", key, err)
+		}
+		out[key] = cloned
 	}
 	return out, nil
+}
+
+func cloneConfigValue(value any) (any, error) {
+	switch v := value.(type) {
+	case map[string]any:
+		return cloneMapStrict(v)
+	case []any:
+		out := make([]any, len(v))
+		for i, item := range v {
+			cloned, err := cloneConfigValue(item)
+			if err != nil {
+				return nil, fmt.Errorf("索引 %d: %w", i, err)
+			}
+			out[i] = cloned
+		}
+		return out, nil
+	case []string:
+		return append([]string(nil), v...), nil
+	case []map[string]any:
+		return cloneMapSliceStrict(v)
+	default:
+		// Preserve scalar types (notably integer values) instead of JSON
+		// round-tripping them into different Go representations.
+		return value, nil
+	}
 }
 
 func patchChainInPlace(cfg *config.RawConfig, profileDir string) error {
