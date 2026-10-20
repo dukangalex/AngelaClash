@@ -58,6 +58,39 @@ func TestChainRewritesRulesAndDialer(t *testing.T) {
 	}
 }
 
+func TestChainFailureDoesNotMutateConfig(t *testing.T) {
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{
+			{"name": "entry-node", "type": "socks5", "dialer-proxy": "old-entry"},
+			{"name": "landing-node", "type": "socks5", "dialer-proxy": "old-landing"},
+		},
+		ProxyGroup: []map[string]any{
+			{"name": "入口组", "type": "select", "proxies": []any{"entry-node", "DIRECT", "missing-node"}},
+			{"name": "落地组", "type": "select", "proxies": []any{"landing-node"}},
+		},
+		Rule: []string{"MATCH,入口组"},
+	}
+	dir := t.TempDir()
+	if err := osWrite(dir, chainFileName, `{"entry":"入口组","landing":"落地组"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, dir); err == nil {
+		t.Fatal("expected missing nested member to fail")
+	}
+	if got := mapStrings(cfg.ProxyGroup[0], "proxies"); len(got) != 3 || got[0] != "entry-node" || got[1] != "DIRECT" || got[2] != "missing-node" {
+		t.Fatalf("entry group mutated after failure: %v", got)
+	}
+	if got := cfg.Proxy[0]["dialer-proxy"]; got != "old-entry" {
+		t.Fatalf("entry dialer changed after failure: %v", got)
+	}
+	if got := cfg.Proxy[1]["dialer-proxy"]; got != "old-landing" {
+		t.Fatalf("landing dialer changed after failure: %v", got)
+	}
+	if len(cfg.Rule) != 1 || cfg.Rule[0] != "MATCH,入口组" {
+		t.Fatalf("rules changed after failure: %v", cfg.Rule)
+	}
+}
+
 func TestChainRejectsSameNode(t *testing.T) {
 	cfg := &config.RawConfig{
 		Proxy: []map[string]any{

@@ -47,6 +47,76 @@ func Outline(profilePath string) (string, error) {
 }
 
 func patchChain(cfg *config.RawConfig, profileDir string) error {
+	if cfg == nil {
+		return fmt.Errorf("链式代理配置为空")
+	}
+	// Work on isolated copies of every field chain processing may mutate. A
+	// failed validation must not leave a partially rewritten live configuration.
+	working := *cfg
+	var err error
+	if working.Proxy, err = cloneMapSliceStrict(cfg.Proxy); err != nil {
+		return fmt.Errorf("复制代理配置失败: %w", err)
+	}
+	if working.ProxyGroup, err = cloneMapSliceStrict(cfg.ProxyGroup); err != nil {
+		return fmt.Errorf("复制代理组配置失败: %w", err)
+	}
+	if working.ProxyProvider, err = cloneProviderMapStrict(cfg.ProxyProvider); err != nil {
+		return fmt.Errorf("复制代理订阅配置失败: %w", err)
+	}
+	working.Rule = append([]string(nil), cfg.Rule...)
+	if err := patchChainInPlace(&working, profileDir); err != nil {
+		return err
+	}
+	cfg.Proxy = working.Proxy
+	cfg.ProxyGroup = working.ProxyGroup
+	cfg.ProxyProvider = working.ProxyProvider
+	cfg.Rule = working.Rule
+	return nil
+}
+
+func cloneMapSliceStrict(items []map[string]any) ([]map[string]any, error) {
+	if items == nil {
+		return nil, nil
+	}
+	out := make([]map[string]any, len(items))
+	for i, item := range items {
+		cloned, err := cloneMapStrict(item)
+		if err != nil {
+			return nil, fmt.Errorf("第 %d 项: %w", i, err)
+		}
+		out[i] = cloned
+	}
+	return out, nil
+}
+
+func cloneProviderMapStrict(items map[string]map[string]any) (map[string]map[string]any, error) {
+	if items == nil {
+		return nil, nil
+	}
+	out := make(map[string]map[string]any, len(items))
+	for name, item := range items {
+		cloned, err := cloneMapStrict(item)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", name, err)
+		}
+		out[name] = cloned
+	}
+	return out, nil
+}
+
+func cloneMapStrict(item map[string]any) (map[string]any, error) {
+	buf, err := json.Marshal(item)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if err := json.Unmarshal(buf, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func patchChainInPlace(cfg *config.RawConfig, profileDir string) error {
 	buf, err := os.ReadFile(P.Join(profileDir, chainFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
