@@ -284,7 +284,7 @@ func TestMergeLandingRenamesDialerReferences(t *testing.T) {
 			"external-reference": {"type": "http", "url": "https://example.invalid/external.yaml", "dialer-proxy": "not-in-imported-profile"},
 		},
 		ProxyGroup: []map[string]any{
-			{"name": "landing-group", "type": "select", "proxies": []any{"dependent-node"}},
+			{"name": "landing-group", "type": "select", "proxies": []any{"dependent-node", "external-node"}, "use": []any{"base-provider", "external-provider"}},
 		},
 	}
 	mergeLanding(dst, src, "profile-id", "landing-group")
@@ -297,6 +297,13 @@ func TestMergeLandingRenamesDialerReferences(t *testing.T) {
 	}
 	if got := mapString(dst.ProxyProvider["chain-landing-profile-id-external-reference"], "dialer-proxy"); got != "not-in-imported-profile" {
 		t.Fatalf("external dialer reference changed unexpectedly: %q", got)
+	}
+	group := findGroup(dst, "chain-landing-profile-id-landing-group")
+	if got := mapStrings(group, "proxies"); len(got) != 2 || got[0] != "chain-landing-profile-id-dependent-node" || got[1] != "external-node" {
+		t.Fatalf("imported group proxy references = %v, want renamed internal and unchanged external references", got)
+	}
+	if got := mapStrings(group, "use"); len(got) != 2 || got[0] != "chain-landing-profile-id-base-provider" || got[1] != "external-provider" {
+		t.Fatalf("imported group provider references = %v, want renamed internal and unchanged external references", got)
 	}
 }
 

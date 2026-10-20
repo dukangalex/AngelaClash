@@ -188,8 +188,8 @@ func mergeLanding(dst, src *config.RawConfig, profileID, landing string) string 
 		if name := mapString(cloned, "name"); name != "" {
 			cloned["name"] = rename(name)
 		}
-		cloned["proxies"] = renameList(mapStrings(cloned, "proxies"), rename)
-		cloned["use"] = renameList(mapStrings(cloned, "use"), rename)
+		cloned["proxies"] = renameList(mapStrings(cloned, "proxies"), renameReference)
+		cloned["use"] = renameList(mapStrings(cloned, "use"), renameReference)
 		dst.ProxyGroup = append(dst.ProxyGroup, cloned)
 	}
 	return rename(landing)
