@@ -37,9 +37,9 @@ jobs:
           cd $(go env GOROOT)
           for p in $GITHUB_WORKSPACE/.github/patch/*.patch; do patch --verbose -p 1 < "$p"; done
 
-      - name: Compile native config tests for Android
+      - name: Test chain config logic
         working-directory: core/src/main/golang
-        run: GOOS=android GOARCH=arm64 go test -c ./native/config -o /tmp/native-config.test
+        run: go test native/config/chain.go native/config/chain_test.go
 
       - uses: actions/cache@v5
         with:
