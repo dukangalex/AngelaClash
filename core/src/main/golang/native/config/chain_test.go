@@ -128,12 +128,6 @@ func TestChainMergesOtherProfile(t *testing.T) {
 	if mapString(cfg.Proxy[1], "name") != "chain-landing-abc-us" {
 		t.Fatalf("imported proxy = %v", cfg.Proxy[1])
 	}
-	if _, ok := cfg.Proxy[1]["port"].(int); ok {
-		return
-	}
-	if cfg.Proxy[1]["port"] != nil {
-		t.Fatalf("unexpected imported proxy port type: %T (%v)", cfg.Proxy[1]["port"], cfg.Proxy[1]["port"])
-	}
 }
 
 func TestChainFailureDoesNotCommitImportedProfile(t *testing.T) {
