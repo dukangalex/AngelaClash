@@ -244,6 +244,35 @@ rules:
 	}
 }
 
+func TestMergeLandingRenamesDialerReferences(t *testing.T) {
+	dst := &config.RawConfig{}
+	src := &config.RawConfig{
+		Proxy: []map[string]any{
+			{"name": "base-node", "type": "socks5"},
+			{"name": "dependent-node", "type": "socks5", "dialer-proxy": "base-node"},
+		},
+		ProxyProvider: map[string]map[string]any{
+			"base-provider": {"type": "http", "url": "https://example.invalid/provider.yaml"},
+			"dependent-provider": {"type": "http", "url": "https://example.invalid/other.yaml", "dialer-proxy": "base-node"},
+			"external-reference": {"type": "http", "url": "https://example.invalid/external.yaml", "dialer-proxy": "not-in-imported-profile"},
+		},
+		ProxyGroup: []map[string]any{
+			{"name": "landing-group", "type": "select", "proxies": []any{"dependent-node"}},
+		},
+	}
+	mergeLanding(dst, src, "profile-id", "landing-group")
+
+	if got := mapString(findProxy(dst, "chain-landing-profile-id-dependent-node"), "dialer-proxy"); got != "chain-landing-profile-id-base-node" {
+		t.Fatalf("imported proxy dialer = %q, want renamed base node", got)
+	}
+	if got := mapString(dst.ProxyProvider["chain-landing-profile-id-dependent-provider"], "dialer-proxy"); got != "chain-landing-profile-id-base-node" {
+		t.Fatalf("imported provider dialer = %q, want renamed base node", got)
+	}
+	if got := mapString(dst.ProxyProvider["chain-landing-profile-id-external-reference"], "dialer-proxy"); got != "not-in-imported-profile" {
+		t.Fatalf("external dialer reference changed unexpectedly: %q", got)
+	}
+}
+
 func osWrite(dir, name, body string) error {
 	return os.WriteFile(path.Join(dir, name), []byte(body), 0o600)
 }

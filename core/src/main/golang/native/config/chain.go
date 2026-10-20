@@ -140,10 +140,35 @@ func mergeLanding(dst, src *config.RawConfig, profileID, landing string) string 
 	rename := func(name string) string {
 		return "chain-landing-" + profileID + "-" + name
 	}
+	// Only rewrite dialer references that resolve inside the imported profile.
+	// References outside this profile must not be accidentally redirected.
+	sourceNames := map[string]struct{}{}
+	for _, item := range src.Proxy {
+		if name := mapString(item, "name"); name != "" {
+			sourceNames[name] = struct{}{}
+		}
+	}
+	for _, item := range src.ProxyGroup {
+		if name := mapString(item, "name"); name != "" {
+			sourceNames[name] = struct{}{}
+		}
+	}
+	for name := range src.ProxyProvider {
+		sourceNames[name] = struct{}{}
+	}
+	renameReference := func(name string) string {
+		if _, ok := sourceNames[name]; ok {
+			return rename(name)
+		}
+		return name
+	}
 	for _, item := range src.Proxy {
 		cloned := cloneMap(item)
 		if name := mapString(cloned, "name"); name != "" {
 			cloned["name"] = rename(name)
+		}
+		if dialer := mapString(cloned, "dialer-proxy"); dialer != "" {
+			cloned["dialer-proxy"] = renameReference(dialer)
 		}
 		dst.Proxy = append(dst.Proxy, cloned)
 	}
@@ -151,7 +176,11 @@ func mergeLanding(dst, src *config.RawConfig, profileID, landing string) string 
 		dst.ProxyProvider = map[string]map[string]any{}
 	}
 	for name, item := range src.ProxyProvider {
-		dst.ProxyProvider[rename(name)] = cloneMap(item)
+		cloned := cloneMap(item)
+		if dialer := mapString(cloned, "dialer-proxy"); dialer != "" {
+			cloned["dialer-proxy"] = renameReference(dialer)
+		}
+		dst.ProxyProvider[rename(name)] = cloned
 	}
 	for _, item := range src.ProxyGroup {
 		cloned := cloneMap(item)
