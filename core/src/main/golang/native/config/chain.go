@@ -705,12 +705,10 @@ func renameList(items []string, rename func(string) string) []any {
 }
 
 func cloneMap(item map[string]any) map[string]any {
-	buf, err := json.Marshal(item)
+	// Keep imported YAML scalar types intact; JSON round-tripping converts
+	// integers to float64 and can subtly change the configuration handed to mihomo.
+	out, err := cloneMapStrict(item)
 	if err != nil {
-		return item
-	}
-	var out map[string]any
-	if json.Unmarshal(buf, &out) != nil {
 		return item
 	}
 	return out

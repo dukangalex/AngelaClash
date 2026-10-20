@@ -128,6 +128,12 @@ func TestChainMergesOtherProfile(t *testing.T) {
 	if mapString(cfg.Proxy[1], "name") != "chain-landing-abc-us" {
 		t.Fatalf("imported proxy = %v", cfg.Proxy[1])
 	}
+	if _, ok := cfg.Proxy[1]["port"].(int); ok {
+		return
+	}
+	if cfg.Proxy[1]["port"] != nil {
+		t.Fatalf("unexpected imported proxy port type: %T (%v)", cfg.Proxy[1]["port"], cfg.Proxy[1]["port"])
+	}
 }
 
 func TestChainFailureDoesNotCommitImportedProfile(t *testing.T) {
@@ -348,6 +354,30 @@ func TestIsPrivateCIDR(t *testing.T) {
 				t.Fatalf("isPrivateCIDR(%q) = %v, want %v", tt.value, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCloneMapPreservesScalarTypes(t *testing.T) {
+	original := map[string]any{
+		"name": "typed-node",
+		"port": 443,
+		"nested": map[string]any{"enabled": true, "weight": 7},
+		"members": []any{"one", "two"},
+	}
+	cloned := cloneMap(original)
+	if _, ok := cloned["port"].(int); !ok {
+		t.Fatalf("integer port type changed: %T (%v)", cloned["port"], cloned["port"])
+	}
+	nested, ok := cloned["nested"].(map[string]any)
+	if !ok {
+		t.Fatalf("nested map type = %T", cloned["nested"])
+	}
+	if _, ok := nested["weight"].(int); !ok {
+		t.Fatalf("nested integer type changed: %T", nested["weight"])
+	}
+	nested["enabled"] = false
+	if original["nested"].(map[string]any)["enabled"] != true {
+		t.Fatal("clone shares nested map with original")
 	}
 }
 
