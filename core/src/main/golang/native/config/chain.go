@@ -78,6 +78,9 @@ func patchChain(cfg *config.RawConfig, profileDir string) error {
 		if err != nil {
 			return fmt.Errorf("落地配置读不出来: %s", err.Error())
 		}
+		if !hasName(other, spec.Landing) {
+			return fmt.Errorf("落地「%s」不在所选配置里", spec.Landing)
+		}
 		landingName, err = mergeLanding(cfg, other, spec.LandingProfile, spec.Landing)
 		if err != nil {
 			return fmt.Errorf("落地配置合并失败: %w", err)
