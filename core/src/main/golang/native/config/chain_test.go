@@ -130,6 +130,47 @@ func TestChainMergesOtherProfile(t *testing.T) {
 	}
 }
 
+func TestChainFailureDoesNotCommitImportedProfile(t *testing.T) {
+	baseDir := t.TempDir()
+	currentID := "11111111-1111-4111-8111-111111111111"
+	landingID := "22222222-2222-4222-8222-222222222222"
+	profilesDir := path.Join(baseDir, "profiles")
+	profileDir := path.Join(profilesDir, currentID)
+	landingDir := path.Join(profilesDir, landingID)
+	for _, dir := range []string{profileDir, landingDir} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(path.Join(landingDir, "config.yaml"), []byte(`proxies:
+  - name: imported-landing
+    type: socks5
+    server: 8.8.8.8
+    port: 443
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "existing-node", "type": "socks5", "port": 1234}},
+		Rule:  []string{"MATCH,existing-node"},
+	}
+	if err := osWrite(profileDir, chainFileName, `{"entry":"missing-entry","landingProfile":"22222222-2222-4222-8222-222222222222","landing":"imported-landing"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, profileDir); err == nil {
+		t.Fatal("expected invalid entry to fail")
+	}
+	if len(cfg.Proxy) != 1 || mapString(cfg.Proxy[0], "name") != "existing-node" {
+		t.Fatalf("imported profile was committed after failure: %#v", cfg.Proxy)
+	}
+	if cfg.Proxy[0]["port"] != 1234 {
+		t.Fatalf("existing proxy scalar type/value changed: %#v", cfg.Proxy[0]["port"])
+	}
+	if len(cfg.Rule) != 1 || cfg.Rule[0] != "MATCH,existing-node" {
+		t.Fatalf("rules changed after failure: %v", cfg.Rule)
+	}
+}
+
 func TestChainStripsDirectMember(t *testing.T) {
 	cfg := &config.RawConfig{
 		Proxy: []map[string]any{
