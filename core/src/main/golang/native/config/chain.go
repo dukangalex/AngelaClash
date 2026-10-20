@@ -409,15 +409,45 @@ func isBypassRule(rule string) bool {
 
 func isPrivateCIDR(raw string) bool {
 	raw = strings.TrimSpace(raw)
-	ip, _, err := net.ParseCIDR(raw)
+	_, network, err := net.ParseCIDR(raw)
 	if err != nil {
 		// Keep support for a bare IP address in rule payloads.
-		ip = net.ParseIP(raw)
+		ip := net.ParseIP(raw)
 		if ip == nil {
 			return false
 		}
+		if ipv4 := ip.To4(); ipv4 != nil {
+			network = &net.IPNet{IP: ipv4, Mask: net.CIDRMask(32, 32)}
+		} else {
+			network = &net.IPNet{IP: ip, Mask: net.CIDRMask(128, 128)}
+		}
 	}
-	return ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsUnspecified()
+	prefix, bits := network.Mask.Size()
+	// A broad CIDR must not be classified as private merely because its
+	// network address is private (for example, 0.0.0.0/0 or 10.0.0.0/7).
+	privateRanges := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"127.0.0.0/8",
+		"169.254.0.0/16",
+		"0.0.0.0/32",
+		"fc00::/7",
+		"fe80::/10",
+		"::1/128",
+		"::/128",
+	}
+	for _, rawRange := range privateRanges {
+		_, allowed, err := net.ParseCIDR(rawRange)
+		if err != nil {
+			continue
+		}
+		allowedPrefix, allowedBits := allowed.Mask.Size()
+		if bits == allowedBits && prefix >= allowedPrefix && allowed.Contains(network.IP) {
+			return true
+		}
+	}
+	return false
 }
 
 func ruleTarget(rule string) (int, string, bool) {
