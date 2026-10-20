@@ -142,7 +142,12 @@ func cloneConfigValue(value any) (any, error) {
 		}
 		return out, nil
 	case []string:
-		return append([]string(nil), v...), nil
+		if v == nil {
+			return []string(nil), nil
+		}
+		out := make([]string, len(v))
+		copy(out, v)
+		return out, nil
 	case []map[string]any:
 		return cloneMapSliceStrict(v)
 	default:

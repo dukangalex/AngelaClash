@@ -404,6 +404,24 @@ func TestMergeLandingRejectsNameCollisionWithoutMutation(t *testing.T) {
 	}
 }
 
+func TestCloneConfigValuePreservesEmptySlice(t *testing.T) {
+	clonedNil, err := cloneConfigValue([]string(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := clonedNil.([]string); !ok || got != nil {
+		t.Fatalf("nil slice changed during clone: %#v", clonedNil)
+	}
+
+	clonedEmpty, err := cloneConfigValue([]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := clonedEmpty.([]string); !ok || got == nil || len(got) != 0 {
+		t.Fatalf("non-nil empty slice changed during clone: %#v", clonedEmpty)
+	}
+}
+
 func osWrite(dir, name, body string) error {
 	return os.WriteFile(path.Join(dir, name), []byte(body), 0o600)
 }
