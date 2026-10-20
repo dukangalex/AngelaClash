@@ -244,6 +244,33 @@ rules:
 	}
 }
 
+func TestIsPrivateCIDR(t *testing.T) {
+	tests := []struct {
+		value string
+		want  bool
+	}{
+		{"10.0.0.0/8", true},
+		{"192.168.1.0/24", true},
+		{"172.31.0.0/16", true},
+		{"127.0.0.1/32", true},
+		{"169.254.1.0/24", true},
+		{"fc00::/7", true},
+		{"fe90::/10", true},
+		{"::1/128", true},
+		{"0.0.0.0/0", true},
+		{"8.8.8.0/24", false},
+		{"2001:4860::/32", false},
+		{"not-a-cidr", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.value, func(t *testing.T) {
+			if got := isPrivateCIDR(tt.value); got != tt.want {
+				t.Fatalf("isPrivateCIDR(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMergeLandingRenamesDialerReferences(t *testing.T) {
 	dst := &config.RawConfig{}
 	src := &config.RawConfig{

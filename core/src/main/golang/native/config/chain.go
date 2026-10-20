@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	P "path"
 	"sort"
@@ -258,33 +259,16 @@ func isBypassRule(rule string) bool {
 }
 
 func isPrivateCIDR(raw string) bool {
-	ip := strings.TrimSpace(strings.Split(raw, "/")[0])
-	switch {
-	case ip == "::1" || ip == "::":
-		return true
-	case strings.HasPrefix(strings.ToLower(ip), "fc"), strings.HasPrefix(strings.ToLower(ip), "fd"), strings.HasPrefix(strings.ToLower(ip), "fe80"):
-		return true
-	}
-	parts := strings.Split(ip, ".")
-	if len(parts) != 4 {
-		return false
-	}
-	n := make([]int, 4)
-	for i, part := range parts {
-		v := 0
-		for _, c := range part {
-			if c < '0' || c > '9' {
-				return false
-			}
-			v = v*10 + int(c-'0')
-		}
-		if v > 255 {
+	raw = strings.TrimSpace(raw)
+	ip, _, err := net.ParseCIDR(raw)
+	if err != nil {
+		// Keep support for a bare IP address in rule payloads.
+		ip = net.ParseIP(raw)
+		if ip == nil {
 			return false
 		}
-		n[i] = v
 	}
-	a, b := n[0], n[1]
-	return a == 10 || a == 127 || a == 0 || (a == 192 && b == 168) || (a == 172 && b >= 16 && b <= 31) || (a == 169 && b == 254)
+	return ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsUnspecified()
 }
 
 func ruleTarget(rule string) (int, string, bool) {
