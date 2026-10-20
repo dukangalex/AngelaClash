@@ -78,7 +78,10 @@ func patchChain(cfg *config.RawConfig, profileDir string) error {
 		if err != nil {
 			return fmt.Errorf("落地配置读不出来: %s", err.Error())
 		}
-		landingName = mergeLanding(cfg, other, spec.LandingProfile, spec.Landing)
+		landingName, err = mergeLanding(cfg, other, spec.LandingProfile, spec.Landing)
+		if err != nil {
+			return fmt.Errorf("落地配置合并失败: %w", err)
+		}
 	}
 
 	if spec.Entry == landingName {
@@ -137,9 +140,41 @@ func readRaw(path string) (*config.RawConfig, error) {
 	return config.UnmarshalRawConfig(buf)
 }
 
-func mergeLanding(dst, src *config.RawConfig, profileID, landing string) string {
+func mergeLanding(dst, src *config.RawConfig, profileID, landing string) (string, error) {
 	rename := func(name string) string {
 		return "chain-landing-" + profileID + "-" + name
+	}
+	// Validate every imported name before mutating dst, so a collision cannot
+	// leave a partially merged configuration or silently shadow an existing item.
+	existingNames := map[string]struct{}{}
+	for _, item := range dst.Proxy {
+		if name := mapString(item, "name"); name != "" { existingNames[name] = struct{}{} }
+	}
+	for _, item := range dst.ProxyGroup {
+		if name := mapString(item, "name"); name != "" { existingNames[name] = struct{}{} }
+	}
+	for name := range dst.ProxyProvider { existingNames[name] = struct{}{} }
+	importedNames := map[string]struct{}{}
+	checkName := func(name string) error {
+		if name == "" { return nil }
+		newName := rename(name)
+		if _, ok := existingNames[newName]; ok {
+			return fmt.Errorf("导入名称冲突：%s", newName)
+		}
+		if _, ok := importedNames[newName]; ok {
+			return fmt.Errorf("导入配置内存在重复名称：%s", newName)
+		}
+		importedNames[newName] = struct{}{}
+		return nil
+	}
+	for _, item := range src.Proxy {
+		if err := checkName(mapString(item, "name")); err != nil { return "", err }
+	}
+	for _, item := range src.ProxyGroup {
+		if err := checkName(mapString(item, "name")); err != nil { return "", err }
+	}
+	for name := range src.ProxyProvider {
+		if err := checkName(name); err != nil { return "", err }
 	}
 	// Only rewrite dialer references that resolve inside the imported profile.
 	// References outside this profile must not be accidentally redirected.
@@ -192,7 +227,7 @@ func mergeLanding(dst, src *config.RawConfig, profileID, landing string) string 
 		cloned["use"] = renameList(mapStrings(cloned, "use"), renameReference)
 		dst.ProxyGroup = append(dst.ProxyGroup, cloned)
 	}
-	return rename(landing)
+	return rename(landing), nil
 }
 
 func rewriteRules(cfg *config.RawConfig, landing string) {

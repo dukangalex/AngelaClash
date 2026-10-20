@@ -87,7 +87,8 @@ func TestChainMergesOtherProfile(t *testing.T) {
 			{"name": "落地组", "type": "select", "proxies": []any{"us"}},
 		},
 	}
-	merged := mergeLanding(cfg, landing, "abc", "落地组")
+	merged, err := mergeLanding(cfg, landing, "abc", "落地组")
+	if err != nil { t.Fatal(err) }
 	if merged != "chain-landing-abc-落地组" {
 		t.Fatalf("merged name = %s", merged)
 	}
@@ -287,7 +288,7 @@ func TestMergeLandingRenamesDialerReferences(t *testing.T) {
 			{"name": "landing-group", "type": "select", "proxies": []any{"dependent-node", "external-node"}, "use": []any{"base-provider", "external-provider"}},
 		},
 	}
-	mergeLanding(dst, src, "profile-id", "landing-group")
+	if _, err := mergeLanding(dst, src, "profile-id", "landing-group"); err != nil { t.Fatal(err) }
 
 	if got := mapString(findProxy(dst, "chain-landing-profile-id-dependent-node"), "dialer-proxy"); got != "chain-landing-profile-id-base-node" {
 		t.Fatalf("imported proxy dialer = %q, want renamed base node", got)
@@ -304,6 +305,28 @@ func TestMergeLandingRenamesDialerReferences(t *testing.T) {
 	}
 	if got := mapStrings(group, "use"); len(got) != 2 || got[0] != "chain-landing-profile-id-base-provider" || got[1] != "external-provider" {
 		t.Fatalf("imported group provider references = %v, want renamed internal and unchanged external references", got)
+	}
+}
+
+func TestMergeLandingRejectsNameCollisionWithoutMutation(t *testing.T) {
+	profileID := "profile-id"
+	collidingName := "chain-landing-" + profileID + "-base-node"
+	dst := &config.RawConfig{
+		Proxy: []map[string]any{{"name": collidingName, "type": "socks5"}},
+		Rule: []string{"MATCH,existing"},
+	}
+	src := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "base-node", "type": "socks5"}},
+		ProxyGroup: []map[string]any{{"name": "landing-group", "type": "select", "proxies": []any{"base-node"}}},
+	}
+	if _, err := mergeLanding(dst, src, profileID, "landing-group"); err == nil {
+		t.Fatal("expected imported name collision to be rejected")
+	}
+	if len(dst.Proxy) != 1 || mapString(dst.Proxy[0], "name") != collidingName {
+		t.Fatalf("destination proxies changed after rejected merge: %#v", dst.Proxy)
+	}
+	if len(dst.ProxyGroup) != 0 {
+		t.Fatalf("destination groups changed after rejected merge: %#v", dst.ProxyGroup)
 	}
 }
 
