@@ -162,13 +162,22 @@ jobs:
         if: success()
         run: ./gradlew --no-daemon app:assembleMetaRelease
 
+      - name: Install pinned APK verification tools
+        if: success()
+        run: |
+          set -euo pipefail
+          if [ ! -x "${ANDROID_HOME:?}/build-tools/35.0.0/apksigner" ]; then
+            "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" 'build-tools;35.0.0'
+          fi
+
       - name: Verify every release APK against the existing signing certificate
         if: success()
         run: |
           set -euo pipefail
           EXPECTED_CERT=82d0db007c5eafc37e126b4fdc16660d7cf2434c7a15e610f4b43fd6426943dc
-          APKSIGNER=$(find "${ANDROID_HOME:?}/build-tools" -mindepth 2 -maxdepth 2 -name apksigner -type f | sort -V | tail -n 1)
-          test -n "$APKSIGNER"
+          # Keep the certificate output schema stable; newer tools may rename Signer #1 to V2 Signer.
+          APKSIGNER="${ANDROID_HOME:?}/build-tools/35.0.0/apksigner"
+          test -x "$APKSIGNER"
           shopt -s nullglob
           APKS=(app/build/outputs/apk/meta/release/*.apk)
           test "${#APKS[@]}" -gt 0
