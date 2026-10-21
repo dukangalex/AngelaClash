@@ -62,6 +62,15 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             .show()
     }
 
+    fun showHomePolicyDetail(title: String, value: String) {
+        AlertDialog.Builder(context)
+            .setTitle(title)
+            .setMessage(value.ifBlank { context.getString(R.string.not_selected) })
+            .setNeutralButton(R.string.profiles) { _, _ -> request(Request.OpenProfiles) }
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
     suspend fun setHome(
         connected: String,
         safety: String,
