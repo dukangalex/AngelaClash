@@ -14,6 +14,10 @@ import android.widget.Toast
 import com.github.kr328.clash.design.R as DesignR
 import com.github.kr328.clash.common.compat.registerReceiverCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -70,12 +74,15 @@ class AppUpdate(private val activity: BaseActivity<*>) {
             .setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, name)
         var id = -1L
         var registered = false
+        var observer: DefaultLifecycleObserver? = null
         lateinit var receiver: BroadcastReceiver
         fun unregister() {
             if (registered) {
                 activity.unregisterReceiver(receiver)
                 registered = false
             }
+            observer?.let { activity.lifecycle.removeObserver(it) }
+            observer = null
         }
         fun handleCompletion() {
             val status = manager.query(DownloadManager.Query().setFilterById(id))?.use { cursor ->
@@ -85,7 +92,15 @@ class AppUpdate(private val activity: BaseActivity<*>) {
             when (UpdateDownloadResult.outcome(status, apk)) {
                 UpdateDownloadResult.Outcome.INSTALL -> {
                     unregister()
-                    install(apk)
+                    activity.launch {
+                        try {
+                            install(apk, release.version)
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            activity.toast(DesignR.string.check_update_failed)
+                        }
+                    }
                 }
                 UpdateDownloadResult.Outcome.FAILED -> {
                     unregister()
@@ -109,6 +124,9 @@ class AppUpdate(private val activity: BaseActivity<*>) {
         runCatching {
             activity.registerReceiverCompat(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
             registered = true
+            observer = object : DefaultLifecycleObserver {
+                override fun onDestroy(owner: LifecycleOwner) { unregister() }
+            }.also { activity.lifecycle.addObserver(it) }
             id = manager.enqueue(request)
             activity.toast(DesignR.string.check_update_downloading)
             // Also cover completion before the receiver registration/enqueue has returned.
@@ -119,14 +137,33 @@ class AppUpdate(private val activity: BaseActivity<*>) {
         }
     }
 
-    private fun install(apk: java.io.File) {
-        if (!apk.isFile) return
-        val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.update", apk)
-        val intent = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, "application/vnd.android.package-archive")
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        activity.startActivity(intent)
+    private suspend fun install(apk: java.io.File, releaseVersion: String) {
+        // DownloadManager writes external storage. Copy first, then verify and expose ONLY the
+        // app-private snapshot, so replacement of the original cannot change what is installed.
+        var staged: java.io.File? = null
+        var handedToInstaller = false
+        try {
+            val verified = withContext(Dispatchers.IO) {
+                val directory = java.io.File(activity.filesDir, "updates").apply { mkdirs() }
+                directory.listFiles()?.filter {
+                    it.isFile && System.currentTimeMillis() - it.lastModified() > 7 * 24 * 60 * 60 * 1000L
+                }?.forEach { it.delete() }
+                val snapshot = java.io.File.createTempFile("verified-", ".apk", directory)
+                staged = snapshot
+                apk.inputStream().use { input -> snapshot.outputStream().use { input.copyTo(it) } }
+                UpdateApkVerifier.verify(activity, snapshot, releaseVersion)
+                snapshot
+            }
+            val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.update", verified)
+            val intent = Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            activity.startActivity(intent)
+            handedToInstaller = true
+        } finally {
+            if (!handedToInstaller) staged?.delete()
+        }
     }
 
     private fun Context.toast(res: Int) {

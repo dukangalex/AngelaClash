@@ -12,6 +12,8 @@ plugins {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    implementation("com.android.tools.build:apksig:8.8.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 
     compileOnly(project(":hideapi"))
 
@@ -104,4 +106,9 @@ afterEvaluate {
 
 tasks.getByName("clean", type = Delete::class) {
     delete(file(geoFilesDownloadDir))
+}
+
+// apksig uses Java 8 APIs; retain API 21 support through core-library desugaring.
+android {
+    compileOptions { isCoreLibraryDesugaringEnabled = true }
 }
