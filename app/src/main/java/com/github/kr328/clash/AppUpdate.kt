@@ -68,21 +68,55 @@ class AppUpdate(private val activity: BaseActivity<*>) {
             .setMimeType("application/vnd.android.package-archive")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, name)
-        val id = manager.enqueue(request)
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val finished = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) ?: return
-                if (finished != id) return
-                activity.unregisterReceiver(this)
-                val apk = java.io.File(activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), name)
-                install(apk)
+        var id = -1L
+        var registered = false
+        lateinit var receiver: BroadcastReceiver
+        fun unregister() {
+            if (registered) {
+                activity.unregisterReceiver(receiver)
+                registered = false
             }
         }
-        activity.registerReceiverCompat(
-            receiver,
-            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        )
-        activity.toast(DesignR.string.check_update_downloading)
+        fun handleCompletion() {
+            val status = manager.query(DownloadManager.Query().setFilterById(id))?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                else null
+            }
+            when (UpdateDownloadResult.outcome(status, apk)) {
+                UpdateDownloadResult.Outcome.INSTALL -> {
+                    unregister()
+                    install(apk)
+                }
+                UpdateDownloadResult.Outcome.FAILED -> {
+                    unregister()
+                    activity.toast(DesignR.string.check_update_failed)
+                }
+                UpdateDownloadResult.Outcome.WAIT -> Unit
+            }
+        }
+
+        receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action != DownloadManager.ACTION_DOWNLOAD_COMPLETE) return
+                val finished = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                if (finished != id || id == -1L) return
+                runCatching { handleCompletion() }.onFailure {
+                    unregister()
+                    activity.toast(DesignR.string.check_update_failed)
+                }
+            }
+        }
+        runCatching {
+            activity.registerReceiverCompat(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+            registered = true
+            id = manager.enqueue(request)
+            activity.toast(DesignR.string.check_update_downloading)
+            // Also cover completion before the receiver registration/enqueue has returned.
+            handleCompletion()
+        }.onFailure {
+            unregister()
+            activity.toast(DesignR.string.check_update_failed)
+        }
     }
 
     private fun install(apk: java.io.File) {
@@ -109,29 +143,19 @@ class AppUpdate(private val activity: BaseActivity<*>) {
             connectTimeout = 15000
             readTimeout = 20000
         }
-        connection.inputStream.use { input ->
+        return UpdateReleaseRequest.read(connection) { input ->
             val json = JSONObject(input.bufferedReader().readText())
             val tag = json.getString("tag_name")
             val assets = json.getJSONArray("assets")
-            var chosenUrl = ""
-            var chosenName = ""
-            for (i in 0 until assets.length()) {
-                val asset = assets.getJSONObject(i)
-                val name = asset.getString("name")
-                if (!name.endsWith(".apk")) continue
-                val url = asset.getString("browser_download_url")
-                if (name.contains("universal")) {
-                    chosenUrl = url
-                    chosenName = name
-                    break
-                }
-                if (chosenUrl.isEmpty()) {
-                    chosenUrl = url
-                    chosenName = name
-                }
+            val candidates = (0 until assets.length()).map { index ->
+                val asset = assets.getJSONObject(index)
+                UpdateReleaseAssets.Asset(
+                    asset.getString("name"), asset.getString("browser_download_url")
+                )
             }
-            if (chosenUrl.isEmpty()) error("no apk")
-            return Release(tag, chosenUrl, chosenName)
+            val chosen = UpdateReleaseAssets.select(candidates, Build.SUPPORTED_ABIS.toList())
+                ?: error("No compatible APK in release")
+            Release(tag, chosen.url, chosen.name)
         }
     }
 
