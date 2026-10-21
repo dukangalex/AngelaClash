@@ -16,6 +16,7 @@ import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
+import java.io.ByteArrayOutputStream
 import java.net.URL
 import kotlin.coroutines.resume
 
@@ -149,21 +150,22 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
                     throw IllegalStateException("HTTP $code")
                 }
 
-                val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { reader ->
-                    val out = StringBuilder()
-                    val buffer = CharArray(4096)
+                val bytes = connection.inputStream.use { input ->
+                    val out = ByteArrayOutputStream()
+                    val buffer = ByteArray(4096)
                     var total = 0
                     while (true) {
-                        val count = reader.read(buffer)
+                        val count = input.read(buffer)
                         if (count < 0) break
                         total += count
                         if (total > MAX_SCRIPT) {
                             throw IllegalArgumentException(getString(R.string.script_import_large))
                         }
-                        out.append(buffer, 0, count)
+                        out.write(buffer, 0, count)
                     }
-                    out.toString().removePrefix("\uFEFF")
+                    out.toByteArray()
                 }
+                val text = bytes.toString(Charsets.UTF_8).removePrefix("\uFEFF")
                 val head = text.trimStart()
                 if (head.isEmpty()) {
                     throw IllegalArgumentException(getString(R.string.script_import_empty))
