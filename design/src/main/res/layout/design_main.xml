@@ -242,7 +242,7 @@
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:minHeight="48dp"
-                                android:onClick="@{() -> self.showHomeDetail(@string/home_policy_label, homePolicy)}"
+                                android:onClick="@{() -> self.showHomePolicyDetail(@string/home_policy_label, homePolicy)}"
                                 android:orientation="horizontal">
 
                                 <TextView
