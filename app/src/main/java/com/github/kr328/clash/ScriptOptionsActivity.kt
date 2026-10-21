@@ -15,8 +15,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import java.net.HttpURLConnection
 import java.io.ByteArrayOutputStream
+import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.coroutines.resume
 
