@@ -27,3 +27,13 @@ CLI version. The reproduced parser bug therefore does not establish the actual
 new APK certificate, nor prove that the remote job selected build-tools 37. Never
 infer a changed signing key from that message. After reviewing this repair,
 a future authorized build must still verify every new APK before publication.
+
+## Complete release identity gate
+
+Before upload/publication the release workflow also runs the 47 updater unit tests
+and a full MetaRelease build, then requires exactly the universal plus four named
+ABI APKs. `scripts/verify-release-apks.py` checks package `io.chainbox.clash`, the
+requested release version/code, declared and actual native ABI sets, and each
+native core. `scripts/test-release-apk-metadata.py` provides 13 fail-closed regression
+tests. This supplements, never replaces, the existing production certificate gate.
+It does not establish device runtime or installer acceptance.
