@@ -58,6 +58,39 @@ func TestChainRewritesRulesAndDialer(t *testing.T) {
 	}
 }
 
+func TestChainFailureDoesNotMutateConfig(t *testing.T) {
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{
+			{"name": "entry-node", "type": "socks5", "dialer-proxy": "old-entry"},
+			{"name": "landing-node", "type": "socks5", "dialer-proxy": "old-landing"},
+		},
+		ProxyGroup: []map[string]any{
+			{"name": "入口组", "type": "select", "proxies": []any{"entry-node", "DIRECT", "missing-node"}},
+			{"name": "落地组", "type": "select", "proxies": []any{"landing-node"}},
+		},
+		Rule: []string{"MATCH,入口组"},
+	}
+	dir := t.TempDir()
+	if err := osWrite(dir, chainFileName, `{"entry":"入口组","landing":"落地组"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, dir); err == nil {
+		t.Fatal("expected missing nested member to fail")
+	}
+	if got := mapStrings(cfg.ProxyGroup[0], "proxies"); len(got) != 3 || got[0] != "entry-node" || got[1] != "DIRECT" || got[2] != "missing-node" {
+		t.Fatalf("entry group mutated after failure: %v", got)
+	}
+	if got := cfg.Proxy[0]["dialer-proxy"]; got != "old-entry" {
+		t.Fatalf("entry dialer changed after failure: %v", got)
+	}
+	if got := cfg.Proxy[1]["dialer-proxy"]; got != "old-landing" {
+		t.Fatalf("landing dialer changed after failure: %v", got)
+	}
+	if len(cfg.Rule) != 1 || cfg.Rule[0] != "MATCH,入口组" {
+		t.Fatalf("rules changed after failure: %v", cfg.Rule)
+	}
+}
+
 func TestChainRejectsSameNode(t *testing.T) {
 	cfg := &config.RawConfig{
 		Proxy: []map[string]any{
@@ -87,12 +120,54 @@ func TestChainMergesOtherProfile(t *testing.T) {
 			{"name": "落地组", "type": "select", "proxies": []any{"us"}},
 		},
 	}
-	merged := mergeLanding(cfg, landing, "abc", "落地组")
+	merged, err := mergeLanding(cfg, landing, "abc", "落地组")
+	if err != nil { t.Fatal(err) }
 	if merged != "chain-landing-abc-落地组" {
 		t.Fatalf("merged name = %s", merged)
 	}
 	if mapString(cfg.Proxy[1], "name") != "chain-landing-abc-us" {
 		t.Fatalf("imported proxy = %v", cfg.Proxy[1])
+	}
+}
+
+func TestChainFailureDoesNotCommitImportedProfile(t *testing.T) {
+	baseDir := t.TempDir()
+	currentID := "11111111-1111-4111-8111-111111111111"
+	landingID := "22222222-2222-4222-8222-222222222222"
+	profilesDir := path.Join(baseDir, "profiles")
+	profileDir := path.Join(profilesDir, currentID)
+	landingDir := path.Join(profilesDir, landingID)
+	for _, dir := range []string{profileDir, landingDir} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(path.Join(landingDir, "config.yaml"), []byte(`proxies:
+  - name: imported-landing
+    type: socks5
+    server: 8.8.8.8
+    port: 443
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "existing-node", "type": "socks5", "port": 1234}},
+		Rule:  []string{"MATCH,existing-node"},
+	}
+	if err := osWrite(profileDir, chainFileName, `{"entry":"missing-entry","landingProfile":"22222222-2222-4222-8222-222222222222","landing":"imported-landing"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, profileDir); err == nil {
+		t.Fatal("expected invalid entry to fail")
+	}
+	if len(cfg.Proxy) != 1 || mapString(cfg.Proxy[0], "name") != "existing-node" {
+		t.Fatalf("imported profile was committed after failure: %#v", cfg.Proxy)
+	}
+	if cfg.Proxy[0]["port"] != 1234 {
+		t.Fatalf("existing proxy scalar type/value changed: %#v", cfg.Proxy[0]["port"])
+	}
+	if len(cfg.Rule) != 1 || cfg.Rule[0] != "MATCH,existing-node" {
+		t.Fatalf("rules changed after failure: %v", cfg.Rule)
 	}
 }
 
@@ -137,6 +212,242 @@ func TestChainRejectsDirectOnlyLanding(t *testing.T) {
 	}
 	if err := patchChain(cfg, dir); err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestChainRejectsInvalidLandingProfilePath(t *testing.T) {
+	baseDir := t.TempDir()
+	profileDir := path.Join(baseDir, "profiles", "current")
+	if err := os.MkdirAll(profileDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	outsideDir := path.Join(baseDir, "outside-profile")
+	if err := os.MkdirAll(outsideDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path.Join(outsideDir, "config.yaml"), []byte(`proxies:
+  - name: landing-node
+    type: socks5
+    server: 8.8.8.8
+    port: 443
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "entry-node", "type": "socks5"}},
+		Rule:  []string{"MATCH,entry-node"},
+	}
+	if err := osWrite(profileDir, chainFileName, `{"entry":"entry-node","landingProfile":"../outside-profile","landing":"landing-node"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, profileDir); err == nil {
+		t.Fatal("expected invalid landing profile identifier to be rejected")
+	}
+}
+
+
+func TestIsProfileID(t *testing.T) {
+	tests := []struct {
+		value string
+		want  bool
+	}{
+		{"11111111-1111-4111-8111-111111111111", true},
+		{"ABCDEF12-3456-7890-abcd-ef1234567890", true},
+		{"", false},
+		{"../outside-profile", false},
+		{"11111111/1111/4111/8111/111111111111", false},
+		{"11111111111141118111111111111111", false},
+		{"11111111-1111-4111-8111-11111111111g", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.value, func(t *testing.T) {
+			if got := isProfileID(tt.value); got != tt.want {
+				t.Fatalf("isProfileID(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestChainLoadsLandingFromValidOtherProfile(t *testing.T) {
+	baseDir := t.TempDir()
+	currentID := "11111111-1111-4111-8111-111111111111"
+	landingID := "22222222-2222-4222-8222-222222222222"
+	profilesDir := path.Join(baseDir, "profiles")
+	profileDir := path.Join(profilesDir, currentID)
+	landingDir := path.Join(profilesDir, landingID)
+	for _, dir := range []string{profileDir, landingDir} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(path.Join(landingDir, "config.yaml"), []byte(`proxies:
+  - name: landing-node
+    type: socks5
+    server: 8.8.8.8
+    port: 443
+proxy-groups:
+  - name: landing-group
+    type: select
+    proxies:
+      - landing-node
+rules:
+  - MATCH,landing-group
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "entry-node", "type": "socks5", "server": "1.1.1.1", "port": 443}},
+		ProxyGroup: []map[string]any{
+			{"name": "entry-group", "type": "select", "proxies": []any{"entry-node"}},
+		},
+		Rule: []string{"MATCH,entry-group"},
+	}
+	if err := osWrite(profileDir, chainFileName, `{"entry":"entry-group","landingProfile":"22222222-2222-4222-8222-222222222222","landing":"landing-group"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, profileDir); err != nil {
+		t.Fatalf("valid cross-profile chain was rejected: %v", err)
+	}
+	renamedLanding := "chain-landing-" + landingID + "-landing-node"
+	if got := findProxy(cfg, renamedLanding)["dialer-proxy"]; got != "entry-group" {
+		t.Fatalf("landing dialer = %v, want entry-group", got)
+	}
+	if cfg.Rule[0] != "MATCH,chain-landing-"+landingID+"-landing-group" {
+		t.Fatalf("rule = %s", cfg.Rule[0])
+	}
+}
+
+func TestIsPrivateCIDR(t *testing.T) {
+	tests := []struct {
+		value string
+		want  bool
+	}{
+		{"10.0.0.0/8", true},
+		{"192.168.1.0/24", true},
+		{"172.31.0.0/16", true},
+		{"127.0.0.1/32", true},
+		{"169.254.1.0/24", true},
+		{"fc00::/7", true},
+		{"fe90::/10", true},
+		{"::1/128", true},
+		{"0.0.0.0/0", false},
+		{"0.0.0.0/32", true},
+		{"10.0.0.0/7", false},
+		{"127.0.0.0/7", false},
+		{"fc00::/6", false},
+		{"::/128", true},
+		{"8.8.8.0/24", false},
+		{"2001:4860::/32", false},
+		{"not-a-cidr", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.value, func(t *testing.T) {
+			if got := isPrivateCIDR(tt.value); got != tt.want {
+				t.Fatalf("isPrivateCIDR(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCloneMapPreservesScalarTypes(t *testing.T) {
+	original := map[string]any{
+		"name": "typed-node",
+		"port": 443,
+		"nested": map[string]any{"enabled": true, "weight": 7},
+		"members": []any{"one", "two"},
+	}
+	cloned := cloneMap(original)
+	if _, ok := cloned["port"].(int); !ok {
+		t.Fatalf("integer port type changed: %T (%v)", cloned["port"], cloned["port"])
+	}
+	nested, ok := cloned["nested"].(map[string]any)
+	if !ok {
+		t.Fatalf("nested map type = %T", cloned["nested"])
+	}
+	if _, ok := nested["weight"].(int); !ok {
+		t.Fatalf("nested integer type changed: %T", nested["weight"])
+	}
+	nested["enabled"] = false
+	if original["nested"].(map[string]any)["enabled"] != true {
+		t.Fatal("clone shares nested map with original")
+	}
+}
+
+func TestMergeLandingRenamesDialerReferences(t *testing.T) {
+	dst := &config.RawConfig{}
+	src := &config.RawConfig{
+		Proxy: []map[string]any{
+			{"name": "base-node", "type": "socks5"},
+			{"name": "dependent-node", "type": "socks5", "dialer-proxy": "base-node"},
+		},
+		ProxyProvider: map[string]map[string]any{
+			"base-provider": {"type": "http", "url": "https://example.invalid/provider.yaml"},
+			"dependent-provider": {"type": "http", "url": "https://example.invalid/other.yaml", "dialer-proxy": "base-node"},
+			"external-reference": {"type": "http", "url": "https://example.invalid/external.yaml", "dialer-proxy": "not-in-imported-profile"},
+		},
+		ProxyGroup: []map[string]any{
+			{"name": "landing-group", "type": "select", "proxies": []any{"dependent-node", "external-node"}, "use": []any{"base-provider", "external-provider"}},
+		},
+	}
+	if _, err := mergeLanding(dst, src, "profile-id", "landing-group"); err != nil { t.Fatal(err) }
+
+	if got := mapString(findProxy(dst, "chain-landing-profile-id-dependent-node"), "dialer-proxy"); got != "chain-landing-profile-id-base-node" {
+		t.Fatalf("imported proxy dialer = %q, want renamed base node", got)
+	}
+	if got := mapString(dst.ProxyProvider["chain-landing-profile-id-dependent-provider"], "dialer-proxy"); got != "chain-landing-profile-id-base-node" {
+		t.Fatalf("imported provider dialer = %q, want renamed base node", got)
+	}
+	if got := mapString(dst.ProxyProvider["chain-landing-profile-id-external-reference"], "dialer-proxy"); got != "not-in-imported-profile" {
+		t.Fatalf("external dialer reference changed unexpectedly: %q", got)
+	}
+	group := findGroup(dst, "chain-landing-profile-id-landing-group")
+	if got := mapStrings(group, "proxies"); len(got) != 2 || got[0] != "chain-landing-profile-id-dependent-node" || got[1] != "external-node" {
+		t.Fatalf("imported group proxy references = %v, want renamed internal and unchanged external references", got)
+	}
+	if got := mapStrings(group, "use"); len(got) != 2 || got[0] != "chain-landing-profile-id-base-provider" || got[1] != "external-provider" {
+		t.Fatalf("imported group provider references = %v, want renamed internal and unchanged external references", got)
+	}
+}
+
+func TestMergeLandingRejectsNameCollisionWithoutMutation(t *testing.T) {
+	profileID := "profile-id"
+	collidingName := "chain-landing-" + profileID + "-base-node"
+	dst := &config.RawConfig{
+		Proxy: []map[string]any{{"name": collidingName, "type": "socks5"}},
+		Rule: []string{"MATCH,existing"},
+	}
+	src := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "base-node", "type": "socks5"}},
+		ProxyGroup: []map[string]any{{"name": "landing-group", "type": "select", "proxies": []any{"base-node"}}},
+	}
+	if _, err := mergeLanding(dst, src, profileID, "landing-group"); err == nil {
+		t.Fatal("expected imported name collision to be rejected")
+	}
+	if len(dst.Proxy) != 1 || mapString(dst.Proxy[0], "name") != collidingName {
+		t.Fatalf("destination proxies changed after rejected merge: %#v", dst.Proxy)
+	}
+	if len(dst.ProxyGroup) != 0 {
+		t.Fatalf("destination groups changed after rejected merge: %#v", dst.ProxyGroup)
+	}
+}
+
+func TestCloneConfigValuePreservesEmptySlice(t *testing.T) {
+	clonedNil, err := cloneConfigValue([]string(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := clonedNil.([]string); !ok || got != nil {
+		t.Fatalf("nil slice changed during clone: %#v", clonedNil)
+	}
+
+	clonedEmpty, err := cloneConfigValue([]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := clonedEmpty.([]string); !ok || got == nil || len(got) != 0 {
+		t.Fatalf("non-nil empty slice changed during clone: %#v", clonedEmpty)
 	}
 }
 

@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	P "path"
 	"sort"
@@ -46,6 +47,117 @@ func Outline(profilePath string) (string, error) {
 }
 
 func patchChain(cfg *config.RawConfig, profileDir string) error {
+	if cfg == nil {
+		return fmt.Errorf("链式代理配置为空")
+	}
+	// Preserve the original no-chain fast path without cloning or normalizing
+	// configuration values when there is nothing to patch.
+	if _, err := os.Stat(P.Join(profileDir, chainFileName)); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	// Work on isolated copies of every field chain processing may mutate. A
+	// failed validation must not leave a partially rewritten live configuration.
+	working := *cfg
+	var err error
+	if working.Proxy, err = cloneMapSliceStrict(cfg.Proxy); err != nil {
+		return fmt.Errorf("复制代理配置失败: %w", err)
+	}
+	if working.ProxyGroup, err = cloneMapSliceStrict(cfg.ProxyGroup); err != nil {
+		return fmt.Errorf("复制代理组配置失败: %w", err)
+	}
+	if working.ProxyProvider, err = cloneProviderMapStrict(cfg.ProxyProvider); err != nil {
+		return fmt.Errorf("复制代理订阅配置失败: %w", err)
+	}
+	working.Rule = append([]string(nil), cfg.Rule...)
+	if err := patchChainInPlace(&working, profileDir); err != nil {
+		return err
+	}
+	cfg.Proxy = working.Proxy
+	cfg.ProxyGroup = working.ProxyGroup
+	cfg.ProxyProvider = working.ProxyProvider
+	cfg.Rule = working.Rule
+	return nil
+}
+
+func cloneMapSliceStrict(items []map[string]any) ([]map[string]any, error) {
+	if items == nil {
+		return nil, nil
+	}
+	out := make([]map[string]any, len(items))
+	for i, item := range items {
+		cloned, err := cloneMapStrict(item)
+		if err != nil {
+			return nil, fmt.Errorf("第 %d 项: %w", i, err)
+		}
+		out[i] = cloned
+	}
+	return out, nil
+}
+
+func cloneProviderMapStrict(items map[string]map[string]any) (map[string]map[string]any, error) {
+	if items == nil {
+		return nil, nil
+	}
+	out := make(map[string]map[string]any, len(items))
+	for name, item := range items {
+		cloned, err := cloneMapStrict(item)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", name, err)
+		}
+		out[name] = cloned
+	}
+	return out, nil
+}
+
+func cloneMapStrict(item map[string]any) (map[string]any, error) {
+	if item == nil {
+		return nil, nil
+	}
+	out := make(map[string]any, len(item))
+	for key, value := range item {
+		cloned, err := cloneConfigValue(value)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", key, err)
+		}
+		out[key] = cloned
+	}
+	return out, nil
+}
+
+func cloneConfigValue(value any) (any, error) {
+	switch v := value.(type) {
+	case map[string]any:
+		return cloneMapStrict(v)
+	case []any:
+		out := make([]any, len(v))
+		for i, item := range v {
+			cloned, err := cloneConfigValue(item)
+			if err != nil {
+				return nil, fmt.Errorf("索引 %d: %w", i, err)
+			}
+			out[i] = cloned
+		}
+		return out, nil
+	case []string:
+		if v == nil {
+			return []string(nil), nil
+		}
+		out := make([]string, len(v))
+		copy(out, v)
+		return out, nil
+	case []map[string]any:
+		return cloneMapSliceStrict(v)
+	default:
+		// Preserve scalar types (notably integer values) instead of JSON
+		// round-tripping them into different Go representations.
+		return value, nil
+	}
+}
+
+func patchChainInPlace(cfg *config.RawConfig, profileDir string) error {
 	buf, err := os.ReadFile(P.Join(profileDir, chainFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -70,11 +182,20 @@ func patchChain(cfg *config.RawConfig, profileDir string) error {
 	current := P.Base(profileDir)
 	landingName := spec.Landing
 	if spec.LandingProfile != "" && spec.LandingProfile != current {
+		if !isProfileID(spec.LandingProfile) {
+			return fmt.Errorf("落地配置标识无效")
+		}
 		other, err := readRaw(P.Join(P.Dir(profileDir), spec.LandingProfile, "config.yaml"))
 		if err != nil {
 			return fmt.Errorf("落地配置读不出来: %s", err.Error())
 		}
-		landingName = mergeLanding(cfg, other, spec.LandingProfile, spec.Landing)
+		if !hasName(other, spec.Landing) {
+			return fmt.Errorf("落地「%s」不在所选配置里", spec.Landing)
+		}
+		landingName, err = mergeLanding(cfg, other, spec.LandingProfile, spec.Landing)
+		if err != nil {
+			return fmt.Errorf("落地配置合并失败: %w", err)
+		}
 	}
 
 	if spec.Entry == landingName {
@@ -133,14 +254,71 @@ func readRaw(path string) (*config.RawConfig, error) {
 	return config.UnmarshalRawConfig(buf)
 }
 
-func mergeLanding(dst, src *config.RawConfig, profileID, landing string) string {
+func mergeLanding(dst, src *config.RawConfig, profileID, landing string) (string, error) {
 	rename := func(name string) string {
 		return "chain-landing-" + profileID + "-" + name
+	}
+	// Validate every imported name before mutating dst, so a collision cannot
+	// leave a partially merged configuration or silently shadow an existing item.
+	existingNames := map[string]struct{}{}
+	for _, item := range dst.Proxy {
+		if name := mapString(item, "name"); name != "" { existingNames[name] = struct{}{} }
+	}
+	for _, item := range dst.ProxyGroup {
+		if name := mapString(item, "name"); name != "" { existingNames[name] = struct{}{} }
+	}
+	for name := range dst.ProxyProvider { existingNames[name] = struct{}{} }
+	importedNames := map[string]struct{}{}
+	checkName := func(name string) error {
+		if name == "" { return nil }
+		newName := rename(name)
+		if _, ok := existingNames[newName]; ok {
+			return fmt.Errorf("导入名称冲突：%s", newName)
+		}
+		if _, ok := importedNames[newName]; ok {
+			return fmt.Errorf("导入配置内存在重复名称：%s", newName)
+		}
+		importedNames[newName] = struct{}{}
+		return nil
+	}
+	for _, item := range src.Proxy {
+		if err := checkName(mapString(item, "name")); err != nil { return "", err }
+	}
+	for _, item := range src.ProxyGroup {
+		if err := checkName(mapString(item, "name")); err != nil { return "", err }
+	}
+	for name := range src.ProxyProvider {
+		if err := checkName(name); err != nil { return "", err }
+	}
+	// Only rewrite dialer references that resolve inside the imported profile.
+	// References outside this profile must not be accidentally redirected.
+	sourceNames := map[string]struct{}{}
+	for _, item := range src.Proxy {
+		if name := mapString(item, "name"); name != "" {
+			sourceNames[name] = struct{}{}
+		}
+	}
+	for _, item := range src.ProxyGroup {
+		if name := mapString(item, "name"); name != "" {
+			sourceNames[name] = struct{}{}
+		}
+	}
+	for name := range src.ProxyProvider {
+		sourceNames[name] = struct{}{}
+	}
+	renameReference := func(name string) string {
+		if _, ok := sourceNames[name]; ok {
+			return rename(name)
+		}
+		return name
 	}
 	for _, item := range src.Proxy {
 		cloned := cloneMap(item)
 		if name := mapString(cloned, "name"); name != "" {
 			cloned["name"] = rename(name)
+		}
+		if dialer := mapString(cloned, "dialer-proxy"); dialer != "" {
+			cloned["dialer-proxy"] = renameReference(dialer)
 		}
 		dst.Proxy = append(dst.Proxy, cloned)
 	}
@@ -148,18 +326,22 @@ func mergeLanding(dst, src *config.RawConfig, profileID, landing string) string 
 		dst.ProxyProvider = map[string]map[string]any{}
 	}
 	for name, item := range src.ProxyProvider {
-		dst.ProxyProvider[rename(name)] = cloneMap(item)
+		cloned := cloneMap(item)
+		if dialer := mapString(cloned, "dialer-proxy"); dialer != "" {
+			cloned["dialer-proxy"] = renameReference(dialer)
+		}
+		dst.ProxyProvider[rename(name)] = cloned
 	}
 	for _, item := range src.ProxyGroup {
 		cloned := cloneMap(item)
 		if name := mapString(cloned, "name"); name != "" {
 			cloned["name"] = rename(name)
 		}
-		cloned["proxies"] = renameList(mapStrings(cloned, "proxies"), rename)
-		cloned["use"] = renameList(mapStrings(cloned, "use"), rename)
+		cloned["proxies"] = renameList(mapStrings(cloned, "proxies"), renameReference)
+		cloned["use"] = renameList(mapStrings(cloned, "use"), renameReference)
 		dst.ProxyGroup = append(dst.ProxyGroup, cloned)
 	}
-	return rename(landing)
+	return rename(landing), nil
 }
 
 func rewriteRules(cfg *config.RawConfig, landing string) {
@@ -226,33 +408,46 @@ func isBypassRule(rule string) bool {
 }
 
 func isPrivateCIDR(raw string) bool {
-	ip := strings.TrimSpace(strings.Split(raw, "/")[0])
-	switch {
-	case ip == "::1" || ip == "::":
-		return true
-	case strings.HasPrefix(strings.ToLower(ip), "fc"), strings.HasPrefix(strings.ToLower(ip), "fd"), strings.HasPrefix(strings.ToLower(ip), "fe80"):
-		return true
-	}
-	parts := strings.Split(ip, ".")
-	if len(parts) != 4 {
-		return false
-	}
-	n := make([]int, 4)
-	for i, part := range parts {
-		v := 0
-		for _, c := range part {
-			if c < '0' || c > '9' {
-				return false
-			}
-			v = v*10 + int(c-'0')
-		}
-		if v > 255 {
+	raw = strings.TrimSpace(raw)
+	_, network, err := net.ParseCIDR(raw)
+	if err != nil {
+		// Keep support for a bare IP address in rule payloads.
+		ip := net.ParseIP(raw)
+		if ip == nil {
 			return false
 		}
-		n[i] = v
+		if ipv4 := ip.To4(); ipv4 != nil {
+			network = &net.IPNet{IP: ipv4, Mask: net.CIDRMask(32, 32)}
+		} else {
+			network = &net.IPNet{IP: ip, Mask: net.CIDRMask(128, 128)}
+		}
 	}
-	a, b := n[0], n[1]
-	return a == 10 || a == 127 || a == 0 || (a == 192 && b == 168) || (a == 172 && b >= 16 && b <= 31) || (a == 169 && b == 254)
+	prefix, bits := network.Mask.Size()
+	// A broad CIDR must not be classified as private merely because its
+	// network address is private (for example, 0.0.0.0/0 or 10.0.0.0/7).
+	privateRanges := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"127.0.0.0/8",
+		"169.254.0.0/16",
+		"0.0.0.0/32",
+		"fc00::/7",
+		"fe80::/10",
+		"::1/128",
+		"::/128",
+	}
+	for _, rawRange := range privateRanges {
+		_, allowed, err := net.ParseCIDR(rawRange)
+		if err != nil {
+			continue
+		}
+		allowedPrefix, allowedBits := allowed.Mask.Size()
+		if bits == allowedBits && prefix >= allowedPrefix && allowed.Contains(network.IP) {
+			return true
+		}
+	}
+	return false
 }
 
 func ruleTarget(rule string) (int, string, bool) {
@@ -510,15 +705,35 @@ func renameList(items []string, rename func(string) string) []any {
 }
 
 func cloneMap(item map[string]any) map[string]any {
-	buf, err := json.Marshal(item)
+	// Keep imported YAML scalar types intact; JSON round-tripping converts
+	// integers to float64 and can subtly change the configuration handed to mihomo.
+	out, err := cloneMapStrict(item)
 	if err != nil {
 		return item
 	}
-	var out map[string]any
-	if json.Unmarshal(buf, &out) != nil {
-		return item
-	}
 	return out
+}
+
+// Profile directories are named with canonical UUID-shaped identifiers. Validate
+// the persisted value before joining it to the profile root so a malformed chain.json
+// cannot select a config outside that root.
+func isProfileID(value string) bool {
+	if len(value) != 36 {
+		return false
+	}
+	for i := 0; i < len(value); i++ {
+		if i == 8 || i == 13 || i == 18 || i == 23 {
+			if value[i] != '-' {
+				return false
+			}
+			continue
+		}
+		c := value[i]
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return false
+		}
+	}
+	return true
 }
 
 func isDirectLike(name string) bool {
