@@ -15,6 +15,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.coroutines.resume
@@ -121,42 +122,65 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
     }
 
     private suspend fun fetchScript(raw: String): String = withContext(Dispatchers.IO) {
-        val url = normalize(raw)
-        val connection = (url.openConnection() as HttpURLConnection).apply {
-            instanceFollowRedirects = true
-            connectTimeout = 15_000
-            readTimeout = 20_000
-            setRequestProperty("User-Agent", "AngelaClash")
-            setRequestProperty("Accept", "text/plain, application/javascript, */*")
-        }
-        try {
-            val code = connection.responseCode
-            if (code !in 200..299) {
-                throw IllegalStateException(code.toString())
+        var current = normalize(raw)
+        var redirects = 0
+
+        while (true) {
+            val connection = (current.openConnection() as HttpURLConnection).apply {
+                instanceFollowRedirects = false
+                connectTimeout = 15_000
+                readTimeout = 20_000
+                setRequestProperty("User-Agent", "AngelaClash")
+                setRequestProperty("Accept", "text/plain, application/javascript, */*")
             }
-            val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { reader ->
-                val out = StringBuilder()
-                val buffer = CharArray(4096)
-                var total = 0
-                while (true) {
-                    val count = reader.read(buffer)
-                    if (count < 0) break
-                    total += count
-                    if (total > MAX_SCRIPT) throw IllegalArgumentException(getString(R.string.script_import_large))
-                    out.append(buffer, 0, count)
+
+            try {
+                val code = connection.responseCode
+                if (code in REDIRECT_CODES) {
+                    if (redirects >= MAX_REDIRECTS) {
+                        throw IllegalStateException("Too many redirects")
+                    }
+                    val location = connection.getHeaderField("Location")
+                        ?: throw IllegalStateException("Redirect has no Location")
+                    current = normalize(URL(current, location).toExternalForm())
+                    redirects++
+                    continue
                 }
-                out.toString().removePrefix("\uFEFF")
+                if (code !in 200..299) {
+                    throw IllegalStateException("HTTP $code")
+                }
+
+                val bytes = connection.inputStream.use { input ->
+                    val out = ByteArrayOutputStream()
+                    val buffer = ByteArray(4096)
+                    var total = 0
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        total += count
+                        if (total > MAX_SCRIPT) {
+                            throw IllegalArgumentException(getString(R.string.script_import_large))
+                        }
+                        out.write(buffer, 0, count)
+                    }
+                    out.toByteArray()
+                }
+                val text = bytes.toString(Charsets.UTF_8).removePrefix("\uFEFF")
+                val head = text.trimStart()
+                if (head.isEmpty()) {
+                    throw IllegalArgumentException(getString(R.string.script_import_empty))
+                }
+                val lower = head.take(32).lowercase()
+                if (lower.startsWith("<!doctype") || lower.startsWith("<html") || lower.startsWith("<head")) {
+                    throw IllegalArgumentException(getString(R.string.script_import_not_script))
+                }
+                return@withContext text
+            } finally {
+                connection.disconnect()
             }
-            val head = text.trimStart()
-            if (head.isEmpty()) throw IllegalArgumentException(getString(R.string.script_import_empty))
-            val lower = head.take(32).lowercase()
-            if (lower.startsWith("<!doctype") || lower.startsWith("<html") || lower.startsWith("<head")) {
-                throw IllegalArgumentException(getString(R.string.script_import_not_script))
-            }
-            text
-        } finally {
-            connection.disconnect()
         }
+        @Suppress("UNREACHABLE_CODE")
+        throw IllegalStateException("Unable to fetch script")
     }
 
     private fun normalize(raw: String): URL {
@@ -167,11 +191,15 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
         } catch (_: Exception) {
             throw IllegalArgumentException(getString(R.string.script_import_bad_url))
         }
-        val scheme = url.protocol.lowercase()
-        if (scheme != "https" && scheme != "http") {
+        val uri = try {
+            url.toURI()
+        } catch (_: Exception) {
             throw IllegalArgumentException(getString(R.string.script_import_bad_url))
         }
-        if (url.host.isNullOrBlank()) {
+        if (!url.protocol.equals("https", ignoreCase = true) ||
+            url.host.isNullOrBlank() ||
+            uri.userInfo != null
+        ) {
             throw IllegalArgumentException(getString(R.string.script_import_bad_url))
         }
         return url
@@ -179,5 +207,13 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
 
     companion object {
         private const val MAX_SCRIPT = 512 * 1024
+        private const val MAX_REDIRECTS = 5
+        private val REDIRECT_CODES = setOf(
+            HttpURLConnection.HTTP_MOVED_PERM,
+            HttpURLConnection.HTTP_MOVED_TEMP,
+            HttpURLConnection.HTTP_SEE_OTHER,
+            307,
+            308,
+        )
     }
 }
