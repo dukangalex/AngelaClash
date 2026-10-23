@@ -33,17 +33,17 @@
 
 | 项目 | 值 |
 |------|-----|
-| 官方稳定基线 | [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) 正式 tag `v1.19.32` @ `88dcbf7f1614a67c3b36b848ee3592dfa92ada36` |
-| App 内核锁定 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo) tag `v1.19.32-chain.1` @ `64cf6238976881dbf950f80b96df9d77caa435b2` |
+| 官方稳定基线 | [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) 正式 tag `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8` |
+| App 内核锁定 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo) 稳定基线 `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8` |
 | Alpha 开发/测试线 | fork `chain-dev` 可保留正式版之后的 4 个 Alpha 提交；它们不包含在 App 锁定的稳定 tag 中 |
-| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.1.4**） |
+| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.1.6**） |
 
 本 fork 的 `main` 不是内核。`chain-dev` 是集成/开发线，可包含 Alpha 测试提交；正式 App 必须使用明确的稳定 tag 与 commit SHA，不能跟随可变分支头。
 
 ### 同步更新策略
 
 1. **跟随官方，不替换内核。** 在官方 mihomo 之上提供模块化链式出站与普通用户界面。
-2. **正式 App 基线：** 只同步明确选定的官方稳定 tag；当前基线为 `v1.19.32`。其后的 4 个官方 Alpha 提交可留在 fork `chain-dev` 做开发/测试，但不得进入正式 App 的稳定 tag。禁止 merge `main`。
+2. **正式 App 基线：** 只同步明确选定的官方稳定 tag；当前基线为 `v1.19.33`。其后的 4 个官方 Alpha 提交可留在 fork `chain-dev` 做开发/测试，但不得进入正式 App 的稳定 tag。禁止 merge `main`。
 3. **App：** `git fetch` 官方 `MetaCubeX/ClashMetaForAndroid`，merge 进本仓库 `dev`。冲突以 Angela Clash 为准（包名、显示名、组链、更新检查、发版说明）。
 4. **Fail Closed：** 链路失败必须报错并停止启动，不得静默落到 DIRECT。
 5. **先验证再合入。** 官方新版本发布后，先把链式出站与运行时覆盖做稳，再合入更新的官方提交。

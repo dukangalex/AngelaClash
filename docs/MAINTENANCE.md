@@ -42,7 +42,7 @@ Angela Clash = 官方 mihomo 内核 + **模块化链式出站覆盖层** + 面�
 ## 内核同步
 官方上游：`https://github.com/MetaCubeX/mihomo`
 
-正式 App 只以 Mihomo 已发布的稳定标签为基线。当前官方基线是 `v1.19.32` @ `88dcbf7f1614a67c3b36b848ee3592dfa92ada36`；App 子模块固定在 fork tag `v1.19.32-chain.1` @ `64cf6238976881dbf950f80b96df9d77caa435b2`。fork 的 `chain-dev` 可保留官方 Alpha 在该稳定 tag 之后的 4 个提交（用于开发/测试），但 App 不得指向包含这些提交的分支头。
+正式 App 只以 Mihomo 已发布的稳定标签为基线。当前官方基线是 `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`；App 子模块固定在该稳定提交 `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`。fork 的 `chain-dev` 可保留官方 Alpha 在该稳定 tag 之后的 4 个提交（用于开发/测试），但 App 不得指向包含这些提交的分支头。
 
 1. 稳定 App 更新从上一个稳定 fork tag 建立独立同步分支，再 merge 明确选定的官方 Mihomo 正式发布 tag；不要从含 Alpha 提交的 `chain-dev` 头创建稳定 App tag。
 2. 只解决与链式出站覆盖层、`ANGELABOX.md`、`Makefile` 版本行相关的冲突；验证后给稳定合并 commit 创建 fork tag。
