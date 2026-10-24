@@ -451,6 +451,127 @@ func TestCloneConfigValuePreservesEmptySlice(t *testing.T) {
 	}
 }
 
+func TestChainPrunesUnreachableFromOtherProfile(t *testing.T) {
+	baseDir := t.TempDir()
+	currentID := "11111111-1111-4111-8111-111111111111"
+	landingID := "22222222-2222-4222-8222-222222222222"
+	profilesDir := path.Join(baseDir, "profiles")
+	profileDir := path.Join(profilesDir, currentID)
+	landingDir := path.Join(profilesDir, landingID)
+	for _, dir := range []string{profileDir, landingDir} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(path.Join(landingDir, "config.yaml"), []byte(`proxies:
+  - name: target-landing
+    type: socks5
+    server: 8.8.8.8
+    port: 443
+  - name: unused-node-1
+    type: socks5
+    server: 9.9.9.9
+    port: 443
+  - name: unused-node-2
+    type: socks5
+    server: 1.0.0.1
+    port: 443
+proxy-groups:
+  - name: unused-url-test
+    type: url-test
+    proxies:
+      - unused-node-1
+      - unused-node-2
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{{"name": "entry-node", "type": "socks5", "server": "1.1.1.1", "port": 443}},
+		ProxyGroup: []map[string]any{
+			{"name": "entry-group", "type": "select", "proxies": []any{"entry-node"}},
+		},
+		Rule: []string{"MATCH,entry-group"},
+	}
+	if err := osWrite(profileDir, chainFileName, `{"entry":"entry-group","landingProfile":"22222222-2222-4222-8222-222222222222","landing":"target-landing"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, profileDir); err != nil {
+		t.Fatalf("cross-profile chain failed: %v", err)
+	}
+	if len(cfg.Proxy) != 2 {
+		t.Fatalf("expected only entry-node and target-landing to remain, got %d proxies: %#v", len(cfg.Proxy), cfg.Proxy)
+	}
+	if len(cfg.ProxyGroup) != 1 {
+		t.Fatalf("expected unused-url-test group from landing profile to be pruned, got %#v", cfg.ProxyGroup)
+	}
+}
+
+func TestChainPreservesDirectRulesAndAddsNoResolveToIPRules(t *testing.T) {
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{
+			{"name": "entry-node", "type": "socks5", "server": "1.1.1.1", "port": 443},
+			{"name": "landing-node", "type": "socks5", "server": "8.8.8.8", "port": 443},
+		},
+		Rule: []string{
+			"DOMAIN-SUFFIX,qq.com,DIRECT",
+			"IP-CIDR,223.5.5.5/32,DIRECT,no-resolve",
+			"RULE-SET,direct,DIRECT",
+			"IP-CIDR,91.108.4.0/22,entry-node",
+			"GEOIP,telegram,entry-node",
+			"MATCH,entry-node",
+		},
+	}
+	dir := t.TempDir()
+	if err := osWrite(dir, chainFileName, `{"entry":"entry-node","landing":"landing-node"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, dir); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Rule[0] != "DOMAIN-SUFFIX,qq.com,DIRECT" {
+		t.Fatalf("domestic domain DIRECT rule was overwritten: %s", cfg.Rule[0])
+	}
+	if cfg.Rule[1] != "IP-CIDR,223.5.5.5/32,DIRECT,no-resolve" {
+		t.Fatalf("domestic DNS IP DIRECT rule was overwritten: %s", cfg.Rule[1])
+	}
+	if cfg.Rule[2] != "RULE-SET,direct,DIRECT" {
+		t.Fatalf("direct rule-set was overwritten: %s", cfg.Rule[2])
+	}
+	if cfg.Rule[3] != "IP-CIDR,91.108.4.0/22,landing-node,no-resolve" {
+		t.Fatalf("expected IP-CIDR rule rewritten with no-resolve, got: %s", cfg.Rule[3])
+	}
+	if cfg.Rule[4] != "GEOIP,telegram,landing-node,no-resolve" {
+		t.Fatalf("expected GEOIP rule rewritten with no-resolve, got: %s", cfg.Rule[4])
+	}
+}
+
+func TestChainSupportsIncludeAllEntryAndExcludesLanding(t *testing.T) {
+	cfg := &config.RawConfig{
+		Proxy: []map[string]any{
+			{"name": "hk-entry", "type": "socks5", "server": "1.1.1.1", "port": 443},
+			{"name": "us-landing", "type": "socks5", "server": "8.8.8.8", "port": 443},
+		},
+		ProxyGroup: []map[string]any{
+			{"name": "自动选择", "type": "url-test", "include-all": true},
+		},
+		Rule: []string{"MATCH,自动选择"},
+	}
+	dir := t.TempDir()
+	if err := osWrite(dir, chainFileName, `{"entry":"自动选择","landing":"us-landing"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := patchChain(cfg, dir); err != nil {
+		t.Fatalf("expected include-all entry group to succeed, got: %v", err)
+	}
+	if got := findProxy(cfg, "us-landing")["dialer-proxy"]; got != "自动选择" {
+		t.Fatalf("landing dialer-proxy = %v, want 自动选择", got)
+	}
+	if excl := mapString(findGroup(cfg, "自动选择"), "exclude-filter"); excl == "" {
+		t.Fatalf("expected exclude-filter on 自动选择 to exclude us-landing, got empty")
+	}
+}
+
 func osWrite(dir, name, body string) error {
 	return os.WriteFile(path.Join(dir, name), []byte(body), 0o600)
 }

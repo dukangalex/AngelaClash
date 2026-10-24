@@ -167,10 +167,10 @@ func applyChina(cfg *config.RawConfig, cn map[string]bool) {
 	if on(cn, true, "中国大陆域名直连", "geosite-cn-direct") {
 		front = append(front, "GEOSITE,cn,DIRECT")
 	}
-	if on(cn, true, "中国大陆 IP 直连", "geoip-cn-direct") {
-		front = append(front, "GEOIP,CN,DIRECT")
-	}
 	cfg.Rule = prependMissing(cfg.Rule, front)
+	if on(cn, true, "中国大陆 IP 直连", "geoip-cn-direct") {
+		cfg.Rule = insertBeforeMatch(cfg.Rule, "GEOIP,CN,DIRECT")
+	}
 	if on(cn, true, "国内 DNS", "domestic-dns") {
 		if cfg.DNS.NameServerPolicy == nil {
 			cfg.DNS.NameServerPolicy = orderedmap.New[string, any]()
@@ -180,6 +180,24 @@ func applyChina(cfg *config.RawConfig, cn map[string]bool) {
 	} else if cfg.DNS.NameServerPolicy != nil {
 		cfg.DNS.NameServerPolicy.Delete("geosite:cn")
 	}
+}
+
+func insertBeforeMatch(rules []string, extra string) []string {
+	for _, r := range rules {
+		if r == extra {
+			return rules
+		}
+	}
+	for i, r := range rules {
+		if strings.HasPrefix(strings.ToUpper(strings.TrimSpace(r)), "MATCH,") {
+			out := make([]string, 0, len(rules)+1)
+			out = append(out, rules[:i]...)
+			out = append(out, extra)
+			out = append(out, rules[i:]...)
+			return out
+		}
+	}
+	return append(rules, extra)
 }
 
 func applyPrivacy(cfg *config.RawConfig, privacy map[string]bool) {

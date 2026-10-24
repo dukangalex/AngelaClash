@@ -22,7 +22,11 @@ import com.github.kr328.clash.service.store.ChainStore
 import com.github.kr328.clash.service.util.sendProfileChanged
 import com.github.kr328.clash.util.withProfile
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -30,6 +34,7 @@ import kotlin.coroutines.resume
 import org.json.JSONObject
 import java.io.File
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class ChainActivity : BaseActivity<ChainDesign>() {
     private lateinit var store: ChainStore
@@ -40,7 +45,6 @@ class ChainActivity : BaseActivity<ChainDesign>() {
     private var entry: String? = null
     private var landingProfile: UUID? = null
     private var landing: String? = null
-    private val outlines = HashMap<UUID, Outline>()
 
     override suspend fun main() {
         store = ChainStore(this)
@@ -48,6 +52,7 @@ class ChainActivity : BaseActivity<ChainDesign>() {
         reload()
         chainDesign.render(snapshot())
         setContentDesign(chainDesign)
+        warmUpOutlinesAsync()
 
         while (isActive) {
             select<Unit> {
@@ -62,6 +67,15 @@ class ChainActivity : BaseActivity<ChainDesign>() {
                         ChainDesign.Request.Others -> others()
                     }
                 }
+            }
+        }
+    }
+
+    private fun warmUpOutlinesAsync() {
+        val snapshotProfiles = profiles
+        launch(Dispatchers.IO) {
+            for (profile in snapshotProfiles) {
+                runCatching { getOrLoadOutline(profile) }
             }
         }
     }
@@ -196,11 +210,16 @@ class ChainActivity : BaseActivity<ChainDesign>() {
         }
         val hops = ArrayList<Hop>()
         val ordered = listOf(current) + profiles.filter { it.uuid != current.uuid }
+        val results = coroutineScope {
+            ordered.map { profile ->
+                async {
+                    runCatching { loadHops(profile) }
+                }
+            }.awaitAll()
+        }
         var warned = false
-        for (profile in ordered) {
-            val found = try {
-                loadHops(profile)
-            } catch (e: Exception) {
+        for (result in results) {
+            val found = result.getOrElse { e ->
                 if (!warned) {
                     chainDesign.showToast(e.message ?: getString(R.string.chain_no_hops), ToastDuration.Long)
                     warned = true
@@ -219,32 +238,61 @@ class ChainActivity : BaseActivity<ChainDesign>() {
     }
 
     private suspend fun loadHops(profile: Profile): List<Hop> {
-        val cached = outlines[profile.uuid]
-        val outline = cached ?: withContext(Dispatchers.IO) { readOutline(profile) }.also {
-            if (it.error.isBlank()) outlines[profile.uuid] = it
-        }
+        val outline = withContext(Dispatchers.IO) { getOrLoadOutline(profile) }
         if (outline.error.isNotBlank()) error(outline.error)
-        val hops = ArrayList<Hop>()
-        outline.groups.forEach { hops.add(Hop(profile.uuid, profile.name, it, getString(R.string.chain_group))) }
-        outline.providers.forEach { hops.add(Hop(profile.uuid, profile.name, it, getString(R.string.chain_provider))) }
-        outline.proxies.forEach { hops.add(Hop(profile.uuid, profile.name, it, getString(R.string.chain_node))) }
+        val groupLabel = getString(R.string.chain_group)
+        val providerLabel = getString(R.string.chain_provider)
+        val nodeLabel = getString(R.string.chain_node)
+        val hops = ArrayList<Hop>(outline.groups.size + outline.providers.size + outline.proxies.size)
+        outline.groups.forEach { hops.add(Hop(profile.uuid, profile.name, it, groupLabel)) }
+        outline.providers.forEach { hops.add(Hop(profile.uuid, profile.name, it, providerLabel)) }
+        outline.proxies.forEach { hops.add(Hop(profile.uuid, profile.name, it, nodeLabel)) }
         return hops
     }
 
-    private fun readOutline(profile: Profile): Outline {
+    private fun getOrLoadOutline(profile: Profile): Outline {
+        val directDir = filesDir.resolve("imported/${profile.uuid}")
+        val directConfig = directDir.resolve("config.yaml")
+        val stamp = if (directConfig.isFile) {
+            directConfig.lastModified() xor (directConfig.length() shl 16)
+        } else {
+            profile.updatedAt
+        }
+        val cached = outlineCache[profile.uuid]
+        if (cached != null && cached.first == stamp && cached.second.error.isBlank()) {
+            return cached.second
+        }
+        val loaded = readOutline(profile, directDir.takeIf { directConfig.isFile && directConfig.canRead() })
+        if (loaded.error.isBlank()) {
+            outlineCache[profile.uuid] = stamp to loaded
+        }
+        return loaded
+    }
+
+    private fun readOutline(profile: Profile, directDir: File?): Outline {
         return try {
-            Clash.setAgeSecretKey(profile.ageSecretKey?.takeIf { it.isNotBlank() })
-            val dir = File(cacheDir, "chain-outline/${profile.uuid}").apply { mkdirs() }
-            val target = File(dir, "config.yaml")
-            val uri = FilesClient(this).buildDocumentUri("/${profile.uuid}/config.yaml")
-            contentResolver.openInputStream(uri)?.use { input ->
-                target.outputStream().use { input.copyTo(it) }
-            } ?: return Outline(emptyList(), emptyList(), emptyList(), getString(R.string.chain_no_hops))
-            parseOutline(Clash.queryProfileOutline(dir))
+            val targetDir = if (directDir != null) {
+                directDir
+            } else {
+                val dir = File(cacheDir, "chain-outline/${profile.uuid}").apply { mkdirs() }
+                val target = File(dir, "config.yaml")
+                val uri = FilesClient(this).buildDocumentUri("/${profile.uuid}/config.yaml")
+                contentResolver.openInputStream(uri)?.use { input ->
+                    target.outputStream().use { input.copyTo(it) }
+                } ?: return Outline(emptyList(), emptyList(), emptyList(), getString(R.string.chain_no_hops))
+                dir
+            }
+            val raw = synchronized(outlineLock) {
+                try {
+                    Clash.setAgeSecretKey(profile.ageSecretKey?.takeIf { it.isNotBlank() })
+                    Clash.queryProfileOutline(targetDir)
+                } finally {
+                    Clash.setAgeSecretKey(null)
+                }
+            }
+            parseOutline(raw)
         } catch (e: Exception) {
             Outline(emptyList(), emptyList(), emptyList(), e.message ?: getString(R.string.chain_no_hops))
-        } finally {
-            Clash.setAgeSecretKey(null)
         }
     }
 
@@ -391,6 +439,11 @@ class ChainActivity : BaseActivity<ChainDesign>() {
         val typed = TypedValue()
         theme.resolveAttribute(android.R.attr.textColorPrimary, typed, true)
         return if (typed.resourceId != 0) getColor(typed.resourceId) else typed.data
+    }
+
+    companion object {
+        private val outlineLock = Any()
+        private val outlineCache = ConcurrentHashMap<UUID, Pair<Long, Outline>>()
     }
 }
 

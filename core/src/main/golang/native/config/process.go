@@ -25,9 +25,9 @@ var processors = []processor{
 	patchDns,
 	patchTun,
 	patchListeners,
-	patchChain,
 	patchProviders,
-	patchScriptDisplay, // system options win over the script, profile, and chain
+	patchScriptDisplay, // system options apply routing/DNS/leak rules before chain rewrites
+	patchChain,         // chain proxy rewrites final rules and dialer-proxy hops
 	validConfig,
 }
 

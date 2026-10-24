@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	P "path"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -13,6 +14,29 @@ import (
 )
 
 const chainFileName = "chain.json"
+
+var privateCIDRNets = mustParseCIDRs([]string{
+	"10.0.0.0/8",
+	"172.16.0.0/12",
+	"192.168.0.0/16",
+	"127.0.0.0/8",
+	"169.254.0.0/16",
+	"0.0.0.0/32",
+	"fc00::/7",
+	"fe80::/10",
+	"::1/128",
+	"::/128",
+})
+
+func mustParseCIDRs(rawRanges []string) []*net.IPNet {
+	out := make([]*net.IPNet, 0, len(rawRanges))
+	for _, raw := range rawRanges {
+		if _, network, err := net.ParseCIDR(raw); err == nil && network != nil {
+			out = append(out, network)
+		}
+	}
+	return out
+}
 
 // ChainFile is written beside config.yaml at load time. It is not part of the subscription.
 type ChainFile struct {
@@ -185,13 +209,16 @@ func patchChainInPlace(cfg *config.RawConfig, profileDir string) error {
 		if !isProfileID(spec.LandingProfile) {
 			return fmt.Errorf("落地配置标识无效")
 		}
-		other, err := readRaw(P.Join(P.Dir(profileDir), spec.LandingProfile, "config.yaml"))
+		landingProfileDir := P.Join(P.Dir(profileDir), spec.LandingProfile)
+		other, err := readRaw(P.Join(landingProfileDir, "config.yaml"))
 		if err != nil {
 			return fmt.Errorf("落地配置读不出来: %s", err.Error())
 		}
 		if !hasName(other, spec.Landing) {
 			return fmt.Errorf("落地「%s」不在所选配置里", spec.Landing)
 		}
+		_ = patchProviders(other, landingProfileDir)
+		pruneLandingConfig(other, spec.Landing)
 		landingName, err = mergeLanding(cfg, other, spec.LandingProfile, spec.Landing)
 		if err != nil {
 			return fmt.Errorf("落地配置合并失败: %w", err)
@@ -207,32 +234,47 @@ func patchChainInPlace(cfg *config.RawConfig, profileDir string) error {
 	if !hasName(cfg, landingName) {
 		return fmt.Errorf("落地「%s」不在所选配置里", spec.Landing)
 	}
-	if err := stripDirect(cfg, spec.Entry, map[string]bool{}); err != nil {
+
+	if err := stripDirect(cfg, landingName, map[string]bool{}, nil); err != nil {
 		return err
 	}
-	if err := stripDirect(cfg, landingName, map[string]bool{}); err != nil {
+	landingLeaves := map[string]struct{}{}
+	landingGroups := map[string]bool{}
+	if err := collectLeaves(cfg, landingName, map[string]bool{}, landingLeaves, landingGroups, nil); err != nil {
+		return err
+	}
+	if len(landingLeaves) == 0 {
+		return fmt.Errorf("落地「%s」没有可拨号的节点", spec.Landing)
+	}
+
+	landingProxyNames := map[string]bool{landingName: true}
+	for leaf := range landingLeaves {
+		if kind, name, ok := strings.Cut(leaf, ":"); ok && (kind == "proxy" || kind == "provider") {
+			landingProxyNames[name] = true
+		}
+	}
+
+	if err := stripDirect(cfg, spec.Entry, map[string]bool{}, landingProxyNames); err != nil {
 		return err
 	}
 
 	entryLeaves := map[string]struct{}{}
-	landingLeaves := map[string]struct{}{}
-	if err := collectLeaves(cfg, spec.Entry, map[string]bool{}, entryLeaves); err != nil {
-		return err
-	}
-	if err := collectLeaves(cfg, landingName, map[string]bool{}, landingLeaves); err != nil {
+	entryGroups := map[string]bool{}
+	if err := collectLeaves(cfg, spec.Entry, map[string]bool{}, entryLeaves, entryGroups, landingProxyNames); err != nil {
 		return err
 	}
 	if len(entryLeaves) == 0 {
 		return fmt.Errorf("入口「%s」没有可拨号的节点", spec.Entry)
-	}
-	if len(landingLeaves) == 0 {
-		return fmt.Errorf("落地「%s」没有可拨号的节点", spec.Landing)
 	}
 	for name := range landingLeaves {
 		if _, ok := entryLeaves[name]; ok {
 			return fmt.Errorf("入口和落地包含同一个节点「%s」", name)
 		}
 	}
+
+	// Ensure non-landing include-all groups never absorb landing nodes and
+	// trigger recursive URL-test or dialer-proxy self-loops.
+	excludeLandingFromIncludeAllGroups(cfg, landingProxyNames, landingGroups)
 
 	for name := range entryLeaves {
 		clearDialer(cfg, name)
@@ -246,12 +288,148 @@ func patchChainInPlace(cfg *config.RawConfig, profileDir string) error {
 	return nil
 }
 
+// pruneLandingConfig trims an imported landing profile down to the minimal
+// closure reachable from the selected landing target (including internal
+// dialer-proxy hops) so unused proxies, background url-test groups, and
+// unrelated providers from a large subscription are not merged into the active
+// runtime configuration.
+func pruneLandingConfig(src *config.RawConfig, root string) {
+	if src == nil || root == "" {
+		return
+	}
+	proxyByName := make(map[string]map[string]any, len(src.Proxy))
+	for _, p := range src.Proxy {
+		if name := mapString(p, "name"); name != "" {
+			proxyByName[name] = p
+		}
+	}
+	groupByName := make(map[string]map[string]any, len(src.ProxyGroup))
+	for _, g := range src.ProxyGroup {
+		if name := mapString(g, "name"); name != "" {
+			groupByName[name] = g
+		}
+	}
+
+	keepProxy := map[string]bool{}
+	keepGroup := map[string]bool{}
+	keepProvider := map[string]bool{}
+	visited := map[string]bool{}
+
+	var visit func(name string)
+	visit = func(name string) {
+		name = strings.TrimSpace(name)
+		if name == "" || visited[name] || isDirectLike(name) || isRejectLike(name) {
+			return
+		}
+		visited[name] = true
+		if p, ok := proxyByName[name]; ok {
+			keepProxy[name] = true
+			if dialer := mapString(p, "dialer-proxy"); dialer != "" {
+				visit(dialer)
+			}
+		}
+		if prov, ok := src.ProxyProvider[name]; ok {
+			keepProvider[name] = true
+			if dialer := mapString(prov, "dialer-proxy"); dialer != "" {
+				visit(dialer)
+			}
+		}
+		if g, ok := groupByName[name]; ok {
+			keepGroup[name] = true
+			for _, member := range mapStrings(g, "proxies") {
+				visit(member)
+			}
+			for _, provName := range mapStrings(g, "use") {
+				visit(provName)
+			}
+			if mapBool(g, "include-all") || mapBool(g, "include-all-proxies") {
+				for pName := range proxyByName {
+					visit(pName)
+				}
+			}
+			if mapBool(g, "include-all") || mapBool(g, "include-all-providers") {
+				for provName := range src.ProxyProvider {
+					visit(provName)
+				}
+			}
+		}
+	}
+
+	visit(root)
+
+	if len(src.Proxy) > 0 {
+		prunedProxies := make([]map[string]any, 0, len(keepProxy))
+		for _, p := range src.Proxy {
+			if keepProxy[mapString(p, "name")] {
+				prunedProxies = append(prunedProxies, p)
+			}
+		}
+		src.Proxy = prunedProxies
+	}
+	if len(src.ProxyGroup) > 0 {
+		prunedGroups := make([]map[string]any, 0, len(keepGroup))
+		for _, g := range src.ProxyGroup {
+			if keepGroup[mapString(g, "name")] {
+				prunedGroups = append(prunedGroups, g)
+			}
+		}
+		src.ProxyGroup = prunedGroups
+	}
+	if len(src.ProxyProvider) > 0 {
+		prunedProviders := make(map[string]map[string]any, len(keepProvider))
+		for name, prov := range src.ProxyProvider {
+			if keepProvider[name] {
+				prunedProviders[name] = prov
+			}
+		}
+		src.ProxyProvider = prunedProviders
+	}
+}
+
+func excludeLandingFromIncludeAllGroups(cfg *config.RawConfig, landingNames map[string]bool, landingGroups map[string]bool) {
+	if len(landingNames) == 0 {
+		return
+	}
+	escaped := make([]string, 0, len(landingNames)+1)
+	escaped = append(escaped, `^chain-landing-`)
+	for name := range landingNames {
+		if name != "" && !strings.HasPrefix(name, "chain-landing-") {
+			escaped = append(escaped, `^`+regexp.QuoteMeta(name)+`$`)
+		}
+	}
+	sort.Strings(escaped)
+	pattern := strings.Join(escaped, "|")
+	for _, group := range cfg.ProxyGroup {
+		gName := mapString(group, "name")
+		if landingGroups[gName] {
+			continue
+		}
+		if !mapBool(group, "include-all") && !mapBool(group, "include-all-proxies") {
+			continue
+		}
+		existing := mapString(group, "exclude-filter")
+		if existing == "" {
+			group["exclude-filter"] = pattern
+		} else if !strings.Contains(existing, pattern) {
+			group["exclude-filter"] = "(" + existing + ")|(" + pattern + ")"
+		}
+	}
+}
+
 func readRaw(path string) (*config.RawConfig, error) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return config.UnmarshalRawConfig(buf)
+	raw, err := config.UnmarshalRawConfig(buf)
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		if fixed, ferr := repairConfigYAML(buf); ferr == nil {
+			if next, nerr := config.UnmarshalRawConfig(fixed); nerr == nil {
+				return next, nil
+			}
+		}
+	}
+	return raw, err
 }
 
 func mergeLanding(dst, src *config.RawConfig, profileID, landing string) (string, error) {
@@ -262,15 +440,23 @@ func mergeLanding(dst, src *config.RawConfig, profileID, landing string) (string
 	// leave a partially merged configuration or silently shadow an existing item.
 	existingNames := map[string]struct{}{}
 	for _, item := range dst.Proxy {
-		if name := mapString(item, "name"); name != "" { existingNames[name] = struct{}{} }
+		if name := mapString(item, "name"); name != "" {
+			existingNames[name] = struct{}{}
+		}
 	}
 	for _, item := range dst.ProxyGroup {
-		if name := mapString(item, "name"); name != "" { existingNames[name] = struct{}{} }
+		if name := mapString(item, "name"); name != "" {
+			existingNames[name] = struct{}{}
+		}
 	}
-	for name := range dst.ProxyProvider { existingNames[name] = struct{}{} }
+	for name := range dst.ProxyProvider {
+		existingNames[name] = struct{}{}
+	}
 	importedNames := map[string]struct{}{}
 	checkName := func(name string) error {
-		if name == "" { return nil }
+		if name == "" {
+			return nil
+		}
 		newName := rename(name)
 		if _, ok := existingNames[newName]; ok {
 			return fmt.Errorf("导入名称冲突：%s", newName)
@@ -282,13 +468,19 @@ func mergeLanding(dst, src *config.RawConfig, profileID, landing string) (string
 		return nil
 	}
 	for _, item := range src.Proxy {
-		if err := checkName(mapString(item, "name")); err != nil { return "", err }
+		if err := checkName(mapString(item, "name")); err != nil {
+			return "", err
+		}
 	}
 	for _, item := range src.ProxyGroup {
-		if err := checkName(mapString(item, "name")); err != nil { return "", err }
+		if err := checkName(mapString(item, "name")); err != nil {
+			return "", err
+		}
 	}
 	for name := range src.ProxyProvider {
-		if err := checkName(name); err != nil { return "", err }
+		if err := checkName(name); err != nil {
+			return "", err
+		}
 	}
 	// Only rewrite dialer references that resolve inside the imported profile.
 	// References outside this profile must not be accidentally redirected.
@@ -367,21 +559,45 @@ func rewriteRules(cfg *config.RawConfig, landing string) {
 		if isRejectLike(target) {
 			continue
 		}
-		if isDirectLike(target) && isBypassRule(rule) {
-			continue
-		}
-		if target == landing {
-			changed = true
-			continue
-		}
 		parts := splitRule(rule)
+		kind := ""
+		if len(parts) > 0 {
+			kind = strings.ToUpper(parts[0])
+		}
+		// Preserve all explicit non-MATCH DIRECT bypass rules (such as domestic
+		// domains, domestic DNS IPs, direct rule-sets, and LAN CIDRs) so domestic
+		// traffic and DNS servers are not forced through the 2-hop chain.
+		if isDirectLike(target) && (kind != "MATCH" || isBypassRule(rule)) {
+			continue
+		}
 		parts[idx] = landing
+		if isIPRuleKind(kind) && !hasNoResolve(parts) {
+			parts = append(parts, "no-resolve")
+		}
 		cfg.Rule[i] = strings.Join(parts, ",")
 		changed = true
 	}
 	if !changed {
 		cfg.Rule = append(cfg.Rule, "MATCH,"+landing)
 	}
+}
+
+func isIPRuleKind(kind string) bool {
+	switch kind {
+	case "IP-CIDR", "IP-CIDR6", "GEOIP", "IP-ASN":
+		return true
+	default:
+		return false
+	}
+}
+
+func hasNoResolve(parts []string) bool {
+	for _, p := range parts {
+		if strings.EqualFold(strings.TrimSpace(p), "no-resolve") {
+			return true
+		}
+	}
+	return false
 }
 
 func isBypassRule(rule string) bool {
@@ -395,13 +611,13 @@ func isBypassRule(rule string) bool {
 	case "GEOIP":
 		return payload == "cn" || payload == "private"
 	case "GEOSITE":
-		return payload == "cn" || payload == "geolocation-cn" || strings.Contains(payload, "geolocation-cn")
+		return payload == "cn" || payload == "private" || payload == "geolocation-cn" || strings.Contains(payload, "cn")
 	case "DOMAIN-SUFFIX":
 		return payload == "cn" || strings.HasSuffix(payload, ".cn")
 	case "IP-CIDR", "IP-CIDR6":
 		return isPrivateCIDR(parts[1])
 	case "RULE-SET":
-		return strings.Contains(payload, "cn") || strings.Contains(payload, "private") || strings.Contains(payload, "lan")
+		return strings.Contains(payload, "cn") || strings.Contains(payload, "private") || strings.Contains(payload, "lan") || strings.Contains(payload, "direct")
 	default:
 		return false
 	}
@@ -425,23 +641,7 @@ func isPrivateCIDR(raw string) bool {
 	prefix, bits := network.Mask.Size()
 	// A broad CIDR must not be classified as private merely because its
 	// network address is private (for example, 0.0.0.0/0 or 10.0.0.0/7).
-	privateRanges := []string{
-		"10.0.0.0/8",
-		"172.16.0.0/12",
-		"192.168.0.0/16",
-		"127.0.0.0/8",
-		"169.254.0.0/16",
-		"0.0.0.0/32",
-		"fc00::/7",
-		"fe80::/10",
-		"::1/128",
-		"::/128",
-	}
-	for _, rawRange := range privateRanges {
-		_, allowed, err := net.ParseCIDR(rawRange)
-		if err != nil {
-			continue
-		}
+	for _, allowed := range privateCIDRNets {
 		allowedPrefix, allowedBits := allowed.Mask.Size()
 		if bits == allowedBits && prefix >= allowedPrefix && allowed.Contains(network.IP) {
 			return true
@@ -473,7 +673,14 @@ func splitRule(rule string) []string {
 	return parts
 }
 
-func collectLeaves(cfg *config.RawConfig, name string, stack map[string]bool, out map[string]struct{}) error {
+func collectLeaves(
+	cfg *config.RawConfig,
+	name string,
+	stack map[string]bool,
+	out map[string]struct{},
+	visitedGroups map[string]bool,
+	excludeNames map[string]bool,
+) error {
 	if len(stack) > 24 {
 		return fmt.Errorf("分组嵌套过深：%s", name)
 	}
@@ -495,14 +702,33 @@ func collectLeaves(cfg *config.RawConfig, name string, stack map[string]bool, ou
 	if group == nil {
 		return fmt.Errorf("找不到「%s」", name)
 	}
+	if visitedGroups != nil {
+		visitedGroups[name] = true
+	}
 	stack[name] = true
 	defer delete(stack, name)
 	members := append(mapStrings(group, "proxies"), mapStrings(group, "use")...)
-	if len(members) > 512 {
+	if mapBool(group, "include-all") || mapBool(group, "include-all-proxies") {
+		for _, pName := range proxyNames(cfg) {
+			if excludeNames != nil && (excludeNames[pName] || strings.HasPrefix(pName, "chain-landing-")) {
+				continue
+			}
+			members = append(members, pName)
+		}
+	}
+	if mapBool(group, "include-all") || mapBool(group, "include-all-providers") {
+		for _, provName := range providerNames(cfg) {
+			if excludeNames != nil && (excludeNames[provName] || strings.HasPrefix(provName, "chain-landing-")) {
+				continue
+			}
+			members = append(members, provName)
+		}
+	}
+	if len(members) > 2048 {
 		return fmt.Errorf("分组「%s」节点过多", name)
 	}
 	for _, member := range members {
-		if err := collectLeaves(cfg, member, stack, out); err != nil {
+		if err := collectLeaves(cfg, member, stack, out, visitedGroups, excludeNames); err != nil {
 			return err
 		}
 	}
@@ -550,7 +776,7 @@ func setDialer(cfg *config.RawConfig, leaf, entry string) error {
 	return nil
 }
 
-func stripDirect(cfg *config.RawConfig, name string, stack map[string]bool) error {
+func stripDirect(cfg *config.RawConfig, name string, stack map[string]bool, excludeLanding map[string]bool) error {
 	if isDirectLike(name) || isRejectLike(name) {
 		return nil
 	}
@@ -571,17 +797,30 @@ func stripDirect(cfg *config.RawConfig, name string, stack map[string]bool) erro
 	defer delete(stack, name)
 	proxies := filterDirect(mapStrings(group, "proxies"))
 	use := filterDirect(mapStrings(group, "use"))
-	if len(proxies)+len(use) == 0 {
+	if len(excludeLanding) > 0 {
+		if trimmed := filterExcluded(proxies, excludeLanding); len(trimmed)+len(use) > 0 || mapBool(group, "include-all") || mapBool(group, "include-all-proxies") {
+			proxies = trimmed
+		}
+		if trimmedUse := filterExcluded(use, excludeLanding); len(proxies)+len(trimmedUse) > 0 || mapBool(group, "include-all") || mapBool(group, "include-all-providers") {
+			use = trimmedUse
+		}
+	}
+	includeAll := mapBool(group, "include-all") || mapBool(group, "include-all-proxies") || mapBool(group, "include-all-providers")
+	if len(proxies)+len(use) == 0 && !includeAll {
 		return fmt.Errorf("「%s」去掉直连后没有可用节点", name)
 	}
-	group["proxies"] = toAny(proxies)
+	if len(proxies) > 0 || !includeAll {
+		group["proxies"] = toAny(proxies)
+	} else {
+		delete(group, "proxies")
+	}
 	if len(use) == 0 {
 		delete(group, "use")
 	} else {
 		group["use"] = toAny(use)
 	}
 	for _, member := range append(append([]string{}, proxies...), use...) {
-		if err := stripDirect(cfg, member, stack); err != nil {
+		if err := stripDirect(cfg, member, stack, excludeLanding); err != nil {
 			return err
 		}
 	}
@@ -592,6 +831,20 @@ func filterDirect(items []string) []string {
 	out := make([]string, 0, len(items))
 	for _, item := range items {
 		if isDirectLike(item) {
+			continue
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
+func filterExcluded(items []string, excluded map[string]bool) []string {
+	if len(excluded) == 0 {
+		return items
+	}
+	out := make([]string, 0, len(items))
+	for _, item := range items {
+		if excluded[item] {
 			continue
 		}
 		out = append(out, item)
@@ -664,6 +917,14 @@ func groupNames(cfg *config.RawConfig) []string {
 		out = append(out, name)
 	}
 	return out
+}
+
+func mapBool(item map[string]any, key string) bool {
+	if item == nil {
+		return false
+	}
+	v, _ := item[key].(bool)
+	return v
 }
 
 func mapString(item map[string]any, key string) string {

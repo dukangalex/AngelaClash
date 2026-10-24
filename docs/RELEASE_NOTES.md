@@ -1,5 +1,21 @@
 # Angela Clash 更新说明
 
+## 1.2.1
+
+- 客户端 `1.2.1`（`10201`）
+- 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
+- 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
+- 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
+
+### 这次更新
+
+- **链式代理（`dialer-proxy`）全链路性能与分流速度深度优化，对齐原生配置写入速度**：
+  1. **修正补丁流水线执行顺序（`process.go`）**：将 `patchChain` 调整至 `patchProviders` 与 `patchScriptDisplay` 之后执行，确保分流显示选项注入的 `AI` / `Google` / `YouTube` / `Telegram` / `Netflix` 规则与策略组全部被链式代理正确接管，彻底消除分流规则绕过落地节点或误落入 `DIRECT` 导致的连接超时与卡顿；
+  2. **消除全域名连接前的阻塞式 DNS 远端解析（`chain.go` & `script_display.go`）**：将 `GEOIP,CN,DIRECT` 从规则列表最前端移至 `MATCH` 之前（位于所有 `GEOSITE` / `DOMAIN-SUFFIX` 域名规则之后），并为重写指向落地节点的 `IP-CIDR` / `IP-CIDR6` / `GEOIP` / `IP-ASN` 规则自动追加 `,no-resolve`，避免每次访问境外域名时先触发一轮跨双跳链路的 DoH 远端 DNS 解析；
+  3. **完整保留非 `MATCH` 显式直连（`DIRECT`）规则**：修复此前仅保留 `.cn` 与私有网段而将 `qq.com`、`baidu.com`、`bilibili.com`、`223.5.5.5/32`（国内 DoH DNS）及 `RULE-SET,direct` 等显式直连规则重写进双跳链路的问题；
+  4. **跨配置落地最小可达闭包裁剪（`pruneLandingConfig`）与 `include-all` 防自环隔离**：跨配置选择单个落地节点或分组时，仅导入该落地目标可达的节点、分组与 Provider 闭包（并直接复用源配置已缓存的 Provider 路径），不再将源订阅中上百个无关节点与后台 `url-test` 测速组整包合入运行配置；同时支持选择 `include-all: true` 策略组作为入口，并自动通过 `exclude-filter` 将落地节点从非落地 `include-all` 策略组中排除，彻底杜绝入口组将落地节点纳入 `url-test` 造成的递归自环；
+  5. **链式代理选点弹窗并发预热与跨会话缓存（`ChainActivity`）**：进入链式代理页面即后台异步预热配置大纲，直读本地配置目录并并发加载多配置节点列表，点击「选择入口 / 选择落地」秒开无延迟。
+
 ## 1.2.0
 
 - 客户端 `1.2.0`（`10200`）
