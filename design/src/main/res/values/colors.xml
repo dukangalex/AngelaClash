@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="color_clash_light">#2563EB</color>
-    <color name="color_clash_dark">#6EA8FF</color>
+    <color name="color_clash_dark">#60A5FA</color>
     <color name="color_system_ui_overlay">#50000000</color>
-    <color name="color_light_background">#FFF6F8FB</color>
-    <color name="color_dark_background">#FF0D1117</color>
-    <color name="color_dark_surface">#FF171C24</color>
-    <color name="clash_surface_variant_light">#FFF0F3F7</color>
-    <color name="clash_surface_variant_dark">#FF202833</color>
-    <color name="clash_selected_surface_light">#FFE7EEFC</color>
-    <color name="clash_selected_surface_dark">#FF26364B</color>
-    <color name="clash_outline_light">#1F1C2430</color>
-    <color name="clash_outline_dark">#29FFFFFF</color>
-    <color name="color_light_clash_stopped">#FF7A8494</color>
-    <color name="color_light_control_disabled">#FFD3D3D3</color>
-    <color name="color_dark_control_disabled">#FF808080</color>
-    <color name="color_error">#FFB00020</color>
+    <color name="color_light_background">#FFF4F7FB</color>
+    <color name="color_dark_background">#FF0B0F17</color>
+    <color name="color_dark_surface">#FF111827</color>
+    <color name="clash_surface_variant_light">#FFFFFFFF</color>
+    <color name="clash_surface_variant_dark">#FF161F30</color>
+    <color name="clash_selected_surface_light">#FFE8F0FE</color>
+    <color name="clash_selected_surface_dark">#FF1E3A5F</color>
+    <color name="clash_outline_light">#180F172A</color>
+    <color name="clash_outline_dark">#24FFFFFF</color>
+    <color name="color_light_clash_stopped">#FF64748B</color>
+    <color name="color_light_control_disabled">#FFCBD5E1</color>
+    <color name="color_dark_control_disabled">#FF64748B</color>
+    <color name="color_error">#FFEF4444</color>
 </resources>

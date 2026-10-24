@@ -87,6 +87,13 @@ class ProxyView(
                 Path.Direction.CW,
             )
             drawPath(path, paint)
+
+            paint.style = Paint.Style.STROKE
+            paint.isAntiAlias = true
+            paint.color = if (state.isSelected) state.config.selectedControl else state.config.outlineColor
+            paint.strokeWidth = (if (state.isSelected) 1.6f else 1.0f) * state.config.density
+            drawPath(path, paint)
+
             clipPath(path)
         }
 
@@ -103,7 +110,9 @@ class ProxyView(
         val width = width.toFloat()
         val height = height.toFloat()
 
-        paint.textSize = state.config.textSize
+        val delayTextSize = state.config.textSize * 0.86f
+        paint.textSize = delayTextSize
+        paint.isFakeBoldText = true
 
         // measure delay text bounds
         val delayCount = paint.breakText(
@@ -116,8 +125,11 @@ class ProxyView(
 
         state.paint.getTextBounds(state.delayText, 0, delayCount, state.rect)
 
-        val delayWidth = state.rect.width()
+        val delayPadH = if (delayCount > 0) 6f * state.config.density else 0f
+        val delayPadV = if (delayCount > 0) 3.5f * state.config.density else 0f
+        val delayWidth = if (delayCount > 0) state.rect.width() + delayPadH * 2 else 0f
 
+        paint.textSize = state.config.textSize
         val mainTextWidth = (width -
                 state.config.layoutPadding * 2 -
                 state.config.contentPadding * 2 -
@@ -135,6 +147,8 @@ class ProxyView(
         )
 
         // measure subtitle text bounds
+        paint.textSize = state.config.textSize * 0.86f
+        paint.isFakeBoldText = false
         val subtitleCount = paint.breakText(
             state.subtitle,
             false,
@@ -142,37 +156,62 @@ class ProxyView(
             null,
         )
 
-        // text draw measure
-        val textOffset = (paint.descent() + paint.ascent()) / 2
+        // draw delay pill & text
+        if (delayCount > 0) {
+            paint.reset()
+            paint.isAntiAlias = true
+            paint.textSize = delayTextSize
+            paint.isFakeBoldText = true
+            val delayOffset = (paint.descent() + paint.ascent()) / 2
+            val textX = width - state.config.layoutPadding - state.config.contentPadding - state.rect.width() - delayPadH
+            val textY = height / 2f - delayOffset
 
-        paint.reset()
+            val pillLeft = textX - delayPadH
+            val pillRight = textX + state.rect.width() + delayPadH
+            val pillTop = height / 2f - state.rect.height() / 2f - delayPadV
+            val pillBottom = height / 2f + state.rect.height() / 2f + delayPadV
+            val pillRadius = (pillBottom - pillTop) / 2f
 
-        paint.textSize = state.config.textSize
-        paint.isAntiAlias = true
-        paint.color = state.controls
+            paint.style = Paint.Style.FILL
+            paint.color = android.graphics.Color.argb(
+                30,
+                android.graphics.Color.red(state.delayColor),
+                android.graphics.Color.green(state.delayColor),
+                android.graphics.Color.blue(state.delayColor),
+            )
+            canvas.drawRoundRect(pillLeft, pillTop, pillRight, pillBottom, pillRadius, pillRadius, paint)
 
-        // draw delay
-        canvas.apply {
-            val x = width - state.config.layoutPadding - state.config.contentPadding - delayWidth
-            val y = height / 2f - textOffset
-
-            drawText(state.delayText, 0, delayCount, x, y, paint)
+            paint.color = state.delayColor
+            canvas.drawText(state.delayText, 0, delayCount, textX, textY, paint)
         }
 
         // draw title
+        paint.reset()
+        paint.textSize = state.config.textSize
+        paint.isAntiAlias = true
+        paint.isFakeBoldText = true
+        paint.color = state.controls
+        val titleOffset = (paint.descent() + paint.ascent()) / 2
         canvas.apply {
             val x = state.config.layoutPadding + state.config.contentPadding
             val y = state.config.layoutPadding +
-                    (height - state.config.layoutPadding * 2) / 3f - textOffset
+                    (height - state.config.layoutPadding * 2) * 0.36f - titleOffset
 
             drawText(state.title, 0, titleCount, x, y, paint)
         }
 
         // draw subtitle
+        paint.reset()
+        paint.textSize = state.config.textSize * 0.86f
+        paint.isAntiAlias = true
+        paint.isFakeBoldText = false
+        paint.color = state.controls
+        paint.alpha = if (state.isSelected) 220 else 165
+        val subOffset = (paint.descent() + paint.ascent()) / 2
         canvas.apply {
             val x = state.config.layoutPadding + state.config.contentPadding
             val y = state.config.layoutPadding +
-                    (height - state.config.layoutPadding * 2) / 3f * 2 - textOffset
+                    (height - state.config.layoutPadding * 2) * 0.68f - subOffset
 
             drawText(state.subtitle, 0, subtitleCount, x, y, paint)
         }

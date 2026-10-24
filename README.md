@@ -36,7 +36,7 @@
 | 官方稳定基线 | [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) 正式 tag `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8` |
 | App 内核锁定 | [dukangalex/mihomo](https://github.com/dukangalex/mihomo) 稳定基线 `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8` |
 | Alpha 开发/测试线 | fork `chain-dev` 可保留正式版之后的 4 个 Alpha 提交；它们不包含在 App 锁定的稳定 tag 中 |
-| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.1.6**） |
+| 客户端版本 | 见 `version.properties` 的 `VERSION_NAME`（当前 **1.1.7**） |
 
 本 fork 的 `main` 不是内核。`chain-dev` 是集成/开发线，可包含 Alpha 测试提交；正式 App 必须使用明确的稳定 tag 与 commit SHA，不能跟随可变分支头。
 
@@ -81,8 +81,7 @@ Angela Clash 建立在上游开源工作之上：
 
 - [mihomo](https://github.com/MetaCubeX/mihomo)，由 MetaCubeX 维护的 Clash Meta 内核
 - [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid)，本客户端的上游界面与服务框架
-<<<<<<< HEAD
- 
+
 上述致谢不构成从属、授权或官方认可。
 
 ## 许可

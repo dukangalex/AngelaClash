@@ -22,8 +22,10 @@ class ProxyViewState(
     var title: String = ""
     var subtitle: String = ""
     var delayText: String = ""
+    var delayColor: Int = Color.parseColor("#10B981")
     var background: Int = config.unselectedBackground
     var controls: Int = config.unselectedControl
+    var isSelected: Boolean = false
 
     private var delay: Int = 0
     private var selected: Boolean = false
@@ -45,7 +47,7 @@ class ProxyViewState(
                 if (linkNow !== link.now) {
                     linkNow = link.now
 
-                    subtitle = "%s(%s)".format(
+                    subtitle = "%s · %s".format(
                         proxy.type,
                         link.now.ifEmpty { "*" }
                     )
@@ -58,12 +60,22 @@ class ProxyViewState(
 
         if (delay != proxy.delay) {
             delay = proxy.delay
-            delayText = if (proxy.delay in 0..Short.MAX_VALUE) proxy.delay.toString() else ""
+            if (proxy.delay in 1..Short.MAX_VALUE) {
+                delayText = "${proxy.delay} ms"
+                delayColor = when {
+                    proxy.delay < 200 -> Color.parseColor("#10B981")
+                    proxy.delay < 500 -> Color.parseColor("#F59E0B")
+                    else -> Color.parseColor("#EF4444")
+                }
+            } else {
+                delayText = ""
+            }
         }
 
         if (parentNow !== parent.now) {
             parentNow = parent.now
             selected = proxy.name == parent.now
+            isSelected = selected
         }
 
         controls = if (selected) config.selectedControl else config.unselectedControl

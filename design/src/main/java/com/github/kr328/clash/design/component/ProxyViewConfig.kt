@@ -19,6 +19,9 @@ class ProxyViewConfig(val context: Context, var proxyLine: Int) {
     val unselectedBackground: Int
         get() = colorSurfaceVariant
 
+    val outlineColor = context.resolveThemedColor(R.attr.clashOutline)
+    val density = context.resources.displayMetrics.density
+
     val layoutPadding = context.getPixels(R.dimen.proxy_layout_padding).toFloat()
     val contentPadding
         get() = if (proxyLine==2) context.getPixels(R.dimen.proxy_content_padding).toFloat() else context.getPixels(R.dimen.proxy_content_padding_grid3).toFloat()
