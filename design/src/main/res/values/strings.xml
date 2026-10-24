@@ -543,4 +543,50 @@
     <string name="rule_switches_empty">No rule options are available for this profile</string>
     <string name="script_rule_empty">This profile has no rule options to display</string>
     <string name="battery_optimization_ignored_summary">Battery optimization is already ignored for this app</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="status_pill_running">● Running</string>
+    <string name="status_pill_stopped">● Tap to start</string>
+    <string name="dashboard_speed_badge">Live Throughput</string>
+    <string name="dashboard_down_rate_label">↓ Downlink</string>
+    <string name="dashboard_up_rate_label">↑ Uplink</string>
+    <string name="dashboard_profile_card_title">Active Profile &amp; Traffic</string>
+    <string name="dashboard_profile_active_tag">ACTIVE</string>
+    <string name="dashboard_profile_stack_hint">TUN Mixed · Live Stats</string>
+    <string name="dashboard_mode_persist_hint">Persistent Mode</string>
+    <string name="rule_mode_title">Rule Mode</string>
+    <string name="rule_mode_sub">Smart routing</string>
+    <string name="global_mode_title">Global Mode</string>
+    <string name="global_mode_sub">Proxy all traffic</string>
+    <string name="direct_mode_title">Direct Mode</string>
+    <string name="direct_mode_sub">Bypass proxy</string>
+    <string name="proxy_card_title">Proxy Groups</string>
+    <string name="proxy_ready_badge">Ready</string>
+    <string name="proxy_card_subtitle">PROXY · Concurrent URL-Test &amp; group routing</string>
+    <string name="chain_card_title">Chain Proxy (dialer-proxy)</string>
+    <string name="chain_fail_closed_badge" translatable="false">Fail-Closed</string>
+    <string name="chain_card_subtitle">Device → Entry → Landing → Target (Transactional)</string>
+    <string name="telemetry_core_title">Core Engine &amp; State</string>
+    <string name="telemetry_core_badge" translatable="false">Go 1.26</string>
+    <string name="telemetry_core_sub">3f27ef39 · Zero-copy</string>
+    <string name="telemetry_tun_title">Intranet &amp; TUN Stack</string>
+    <string name="telemetry_tun_badge" translatable="false">TUN</string>
+    <string name="telemetry_tun_value" translatable="false">172.19.0.1 / fe80::/10</string>
+    <string name="telemetry_tun_sub">Mixed Stack · DNS Guard</string>
+    <string name="home_quick_options_title">System Explicit Quick Options</string>
+    <string name="home_quick_options_sub">Outranks override script &amp; subscription (Tap to toggle)</string>
+    <string name="home_quick_options_action">Script &gt;</string>
+    <string name="service_matrix_title">Service Diagnostic Matrix (Tap for details)</string>
+    <string name="service_matrix_badge">2×2 Self-Check</string>
+    <string name="home_connected_card_label">Connection</string>
+    <string name="home_connected_sub">Fail-Closed · fe80::/10 bypass</string>
+    <string name="home_safety_card_label">Safety Guard</string>
+    <string name="home_safety_short_on">Leak Guard ON</string>
+    <string name="home_safety_short_partial">Partial Guard</string>
+    <string name="home_safety_short_direct">Direct Bypass</string>
+    <string name="home_safety_sub">DNS Guard · IPv6 Controlled</string>
+    <string name="home_policy_card_label">Active Policy</string>
+    <string name="home_policy_sub">Persistent · Session Hot-Swap</string>
+    <string name="home_network_card_label">Forwarding</string>
+    <string name="home_network_short_on">Forwarding</string>
+    <string name="home_network_short_off">Not Forwarding</string>
 </resources>

@@ -138,9 +138,14 @@ class MainActivity : BaseActivity<MainDesign>() {
         val summary = active?.let { ChainStore(this@MainActivity).summary(it.uuid) }
         setChainSummary(summary)
         // Chaining is a built-in capability, so keep its entry visible before the first binding exists.
-        setFeatureVisibility(ScriptDisplayStore(this@MainActivity).scriptEnabled(), true)
+        val scriptStore = ScriptDisplayStore(this@MainActivity)
+        setFeatureVisibility(scriptStore.scriptEnabled(), true)
+        mountSystem(scriptStore)
         val shown = shownMode(state.mode)
         setMode(shown)
+        val nativeCore = withContext(Dispatchers.IO) {
+            "Mihomo " + Bridge.nativeCoreVersion().replace("_", "-")
+        }
         setHome(
             connected = getString(if (clashRunning) DesignR.string.home_connected_on else DesignR.string.home_connected_off),
             safety = homeSafety(shown),
@@ -156,6 +161,11 @@ class MainActivity : BaseActivity<MainDesign>() {
                 !clashRunning -> MainDesign.Request.ToggleStatus
                 else -> null
             },
+            safetyShort = homeSafetyShort(shown),
+            networkShort = getString(
+                if (clashRunning) DesignR.string.home_network_short_on else DesignR.string.home_network_short_off
+            ),
+            coreVersion = nativeCore,
         )
     }
 
@@ -167,6 +177,16 @@ class MainActivity : BaseActivity<MainDesign>() {
         val leak = listOf("DNS 走代理", "禁止系统 DNS", "关闭 IPv6", "嗅探防泄漏")
             .all { store.optionOn(ScriptDisplayStore.GROUP_LEAK, it, true) }
         return getString(if (leak) DesignR.string.home_safety_on else DesignR.string.home_safety_partial)
+    }
+
+    private fun homeSafetyShort(mode: TunnelState.Mode): String {
+        if (mode == TunnelState.Mode.Direct) {
+            return getString(DesignR.string.home_safety_short_direct)
+        }
+        val store = ScriptDisplayStore(this)
+        val leak = listOf("DNS 走代理", "禁止系统 DNS", "关闭 IPv6", "嗅探防泄漏")
+            .all { store.optionOn(ScriptDisplayStore.GROUP_LEAK, it, true) }
+        return getString(if (leak) DesignR.string.home_safety_short_on else DesignR.string.home_safety_short_partial)
     }
 
     private fun homePolicy(name: String?, mode: TunnelState.Mode): String {

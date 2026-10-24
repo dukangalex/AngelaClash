@@ -54,7 +54,7 @@
         <item name="colorSecondary">?attr/colorPrimary</item>
         <item name="colorOnSecondary">?attr/colorOnPrimary</item>
         <item name="colorControlActivated">?attr/colorPrimary</item>
-        <item name="colorClashStopped">?attr/colorSurface</item>
+        <item name="colorClashStopped">@color/color_dark_clash_stopped</item>
         <item name="android:textColor">?attr/colorControlNormal</item>
     </style>
 
@@ -112,7 +112,7 @@
         <item name="colorSecondary">?attr/colorPrimary</item>
         <item name="colorOnSecondary">?attr/colorOnPrimary</item>
         <item name="colorControlActivated">?attr/colorPrimary</item>
-        <item name="colorClashStopped">?attr/colorSurface</item>
+        <item name="colorClashStopped">@color/color_dark_clash_stopped</item>
         <item name="android:textColor">?attr/colorControlNormal</item>
 
         <item name="bottomSheetStyle">@style/AppBottomSheetStyle</item>
@@ -173,7 +173,7 @@
         <item name="colorSecondary">?attr/colorPrimary</item>
         <item name="colorOnSecondary">?attr/colorOnPrimary</item>
         <item name="colorControlActivated">?attr/colorPrimary</item>
-        <item name="colorClashStopped">?attr/colorSurface</item>
+        <item name="colorClashStopped">@color/color_dark_clash_stopped</item>
         <item name="colorLogo">?attr/colorControlNormal</item>
         <item name="android:textColor">?attr/colorControlNormal</item>
 
