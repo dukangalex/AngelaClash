@@ -15,6 +15,11 @@ import (
 
 const chainFileName = "chain.json"
 
+var (
+	chainPatchProviders   func(*config.RawConfig, string) error
+	chainRepairConfigYAML func([]byte) ([]byte, error)
+)
+
 var privateCIDRNets = mustParseCIDRs([]string{
 	"10.0.0.0/8",
 	"172.16.0.0/12",
@@ -217,7 +222,9 @@ func patchChainInPlace(cfg *config.RawConfig, profileDir string) error {
 		if !hasName(other, spec.Landing) {
 			return fmt.Errorf("落地「%s」不在所选配置里", spec.Landing)
 		}
-		_ = patchProviders(other, landingProfileDir)
+		if chainPatchProviders != nil {
+			_ = chainPatchProviders(other, landingProfileDir)
+		}
 		pruneLandingConfig(other, spec.Landing)
 		landingName, err = mergeLanding(cfg, other, spec.LandingProfile, spec.Landing)
 		if err != nil {
@@ -422,8 +429,8 @@ func readRaw(path string) (*config.RawConfig, error) {
 		return nil, err
 	}
 	raw, err := config.UnmarshalRawConfig(buf)
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		if fixed, ferr := repairConfigYAML(buf); ferr == nil {
+	if err != nil && strings.Contains(err.Error(), "not found") && chainRepairConfigYAML != nil {
+		if fixed, ferr := chainRepairConfigYAML(buf); ferr == nil {
 			if next, nerr := config.UnmarshalRawConfig(fixed); nerr == nil {
 				return next, nil
 			}

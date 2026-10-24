@@ -7,6 +7,10 @@ import (
 	"github.com/metacubex/mihomo/config"
 )
 
+func init() {
+	chainRepairConfigYAML = repairConfigYAML
+}
+
 // repairConfigYAML drops proxy-group members that are not real proxies or
 // groups, so a subscription can be imported instead of failing closed.
 func repairConfigYAML(buf []byte) ([]byte, error) {

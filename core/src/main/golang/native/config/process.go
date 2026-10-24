@@ -33,6 +33,10 @@ var processors = []processor{
 
 type processor func(cfg *config.RawConfig, profileDir string) error
 
+func init() {
+	chainPatchProviders = patchProviders
+}
+
 func patchOverride(cfg *config.RawConfig, _ string) error {
 	if err := json.NewDecoder(strings.NewReader(ReadOverride(OverrideSlotPersist))).Decode(cfg); err != nil {
 		log.Warnln("Apply persist override: %s", err.Error())
