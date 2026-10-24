@@ -44,6 +44,10 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         OpenProviders,
         OpenLogs,
         OpenSettings,
+        OpenNetworkSettings,
+        OpenAccessControl,
+        OpenMetaFeature,
+        OpenRuleSwitches,
         OpenApp,
         OpenEnhance,
         OpenHelp,
@@ -54,6 +58,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         SetGlobalMode,
         SetDirectMode,
         ReloadConfig,
+        RunSelfCheck,
     }
 
     private data class QuickTileSpec(
@@ -69,6 +74,10 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         .inflate(context.layoutInflater, context.root, false)
 
     private var attentionAction: Request? = null
+    private var scriptStoreRef: ScriptDisplayStore? = null
+
+    private var peakDownRaw: Long = 0L
+    private var peakUpRaw: Long = 0L
 
     private val speedPercentages = intArrayOf(
         22, 30, 26, 38, 32, 46, 36, 54, 42, 60, 48, 66, 52, 74, 58, 82
@@ -79,21 +88,224 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         attentionAction?.let(::request)
     }
 
-    fun showHomeDetail(title: String, value: String) {
+    fun showTrafficConsole() {
+        val peakDownStr = (peakDownRaw shl 32).trafficDownload()
+        val peakUpStr = peakUpRaw.trafficUpload()
+        val statusText = if (binding.clashRunning) "运行中 (实时采集中)" else "未连接 (待机)"
+        val message = buildString {
+            appendLine("• 隧道状态：$statusText")
+            appendLine("• 当前下行：${binding.download}")
+            appendLine("• 当前上行：${binding.upload}")
+            appendLine("• 会话峰值：↓ $peakDownStr  /  ↑ $peakUpStr")
+            appendLine("• 累计转发：${binding.forwarded}")
+            appendLine("• 统计栈：${binding.profileStackSummary}")
+        }.trim()
+
         AlertDialog.Builder(context)
-            .setTitle(title)
-            .setMessage(value.ifBlank { context.getString(R.string.not_selected) })
-            .setPositiveButton(android.R.string.ok, null)
+            .setTitle("实时吞吐与流量控制台")
+            .setMessage(message)
+            .setPositiveButton("查看实时日志") { _, _ ->
+                request(Request.OpenLogs)
+            }
+            .setNeutralButton("重置峰值与波形") { _, _ ->
+                peakDownRaw = 0L
+                peakUpRaw = 0L
+                for (i in speedPercentages.indices) {
+                    speedPercentages[i] = 20
+                }
+                renderSpeedBars(binding.clashRunning)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
-    fun showHomePolicyDetail(title: String, value: String) {
+    fun onCoreEngineClick() {
+        val items = arrayOf(
+            "立即热重载内核配置 (Hot Reload)",
+            "内核与 Meta 特性设置 (嗅探 / 测速 / Geo库)",
+            "全局覆写与 DNS 配置 (Override & DNS)",
+            "外部资源同步与管理 (Providers)",
+        )
         AlertDialog.Builder(context)
-            .setTitle(title)
-            .setMessage(value.ifBlank { context.getString(R.string.not_selected) })
-            .setNeutralButton(R.string.profiles) { _, _ -> request(Request.OpenProfiles) }
-            .setPositiveButton(android.R.string.ok, null)
+            .setTitle("${binding.coreVersion} · 内核控制台")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> request(Request.ReloadConfig)
+                    1 -> request(Request.OpenMetaFeature)
+                    2 -> request(Request.OpenSettings)
+                    3 -> request(Request.OpenProviders)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    fun onTunNetworkClick() {
+        val store = scriptStoreRef ?: ScriptDisplayStore(context)
+        val lanOn = store.optionOn(ScriptDisplayStore.GROUP_CN, "局域网直连", true)
+        val strictOn = store.optionOn(ScriptDisplayStore.GROUP_STRICT, "严格路由", false)
+        val items = arrayOf(
+            "打开 VPN 与网络设置 (DNS劫持 / IPv6 / 系统代理)",
+            "配置分应用代理名单 (Access Control)",
+            "${if (lanOn) "关闭" else "开启"}「局域网直连」 (当前: ${if (lanOn) "已开启" else "已关闭"})",
+            "${if (strictOn) "关闭" else "开启"}「严格路由转发」 (当前: ${if (strictOn) "已开启" else "已关闭"})",
+        )
+        AlertDialog.Builder(context)
+            .setTitle("内网与虚拟网卡 (TUN) 控制")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> request(Request.OpenNetworkSettings)
+                    1 -> request(Request.OpenAccessControl)
+                    2 -> {
+                        store.setOption(ScriptDisplayStore.GROUP_CN, "局域网直连", !lanOn)
+                        mountSystem(store)
+                        request(Request.ReloadConfig)
+                    }
+                    3 -> {
+                        store.setOption(ScriptDisplayStore.GROUP_STRICT, "严格路由", !strictOn)
+                        mountSystem(store)
+                        request(Request.ReloadConfig)
+                    }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    fun onConnectionDiagClick() {
+        val running = binding.clashRunning
+        val msg = buildString {
+            appendLine("• 当前状态：${binding.homeConnected}")
+            appendLine("• 链路详情：${binding.homeConnectedSub}")
+            appendLine("• 当前配置：${binding.profileName ?: context.getString(R.string.not_selected)}")
+            appendLine("• 链式代理：${binding.chainSummary}")
+            appendLine("• 内核版本：${binding.coreVersion}")
+        }.trim()
+
+        AlertDialog.Builder(context)
+            .setTitle("连接状态与隧道控制")
+            .setMessage(msg)
+            .setPositiveButton(if (running) "停止 VPN 服务" else "立即启动服务") { _, _ ->
+                request(Request.ToggleStatus)
+            }
+            .setNeutralButton("配置链式代理") { _, _ ->
+                request(Request.OpenChain)
+            }
+            .setNegativeButton("热重载内核") { _, _ ->
+                request(Request.ReloadConfig)
+            }
+            .show()
+    }
+
+    fun onSafetyDiagClick() {
+        val store = scriptStoreRef ?: ScriptDisplayStore(context)
+        val keys = arrayOf("DNS 走代理", "禁止系统 DNS", "关闭 IPv6", "嗅探防泄漏")
+        val labels = arrayOf(
+            "DNS 走代理 (境外 DNS 按规则出站)",
+            "禁止系统 DNS (阻断系统明文 DNS 抢答)",
+            "关闭 IPv6 (阻断 IPv6 旁路泄漏)",
+            "嗅探防泄漏 (开启域名嗅探校正目标)",
+        )
+        val checked = BooleanArray(keys.size) { i ->
+            store.optionOn(ScriptDisplayStore.GROUP_LEAK, keys[i], true)
+        }
+
+        AlertDialog.Builder(context)
+            .setTitle("安全防护实时开关 (${binding.homeSafetyShort})")
+            .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
+            .setPositiveButton("应用并重载") { _, _ ->
+                for (i in keys.indices) {
+                    store.setOption(ScriptDisplayStore.GROUP_LEAK, keys[i], checked[i])
+                }
+                mountSystem(store)
+                request(Request.ReloadConfig)
+            }
+            .setNeutralButton("一键全开防护") { _, _ ->
+                for (key in keys) {
+                    store.setOption(ScriptDisplayStore.GROUP_LEAK, key, true)
+                }
+                mountSystem(store)
+                request(Request.ReloadConfig)
+            }
+            .setNegativeButton("覆写脚本页") { _, _ ->
+                request(Request.OpenScript)
+            }
+            .show()
+    }
+
+    fun onPolicyDiagClick() {
+        val items = arrayOf(
+            "切换出站模式：规则分流 (Rule Mode)",
+            "切换出站模式：全局代理 (Global Mode)",
+            "切换出站模式：直连模式 (Direct Mode)",
+            "进入代理策略组选路 (${binding.proxyHeadline})",
+            "打开分流规则开关 (Rule Switches)",
+            "管理或切换订阅配置 (Profiles)",
+        )
+        AlertDialog.Builder(context)
+            .setTitle("当前策略与选路控制")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> {
+                        paintMode(R.id.mode_rule)
+                        request(Request.SetRuleMode)
+                    }
+                    1 -> {
+                        paintMode(R.id.mode_global)
+                        request(Request.SetGlobalMode)
+                    }
+                    2 -> {
+                        paintMode(R.id.mode_direct)
+                        request(Request.SetDirectMode)
+                    }
+                    3 -> request(Request.OpenProxy)
+                    4 -> request(Request.OpenRuleSwitches)
+                    5 -> request(Request.OpenProfiles)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    fun onNetworkDiagClick() {
+        val items = arrayOf(
+            "查看实时连接日志 (Logcat)",
+            "打开实时吞吐与峰值统计面板",
+            "打开 VPN 与虚拟网卡设置",
+            "配置分应用代理名单 (Access Control)",
+            "打开增强工具 (商店修复 / 电池优化 / 高优通知)",
+        )
+        AlertDialog.Builder(context)
+            .setTitle("网络转发与诊断工具 (${binding.homeNetworkShort})")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> request(Request.OpenLogs)
+                    1 -> showTrafficConsole()
+                    2 -> request(Request.OpenNetworkSettings)
+                    3 -> request(Request.OpenAccessControl)
+                    4 -> request(Request.OpenEnhance)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    suspend fun showSelfCheckReport(title: String, report: String) {
+        withContext(Dispatchers.Main) {
+            AlertDialog.Builder(context)
+                .setTitle(title)
+                .setMessage(report)
+                .setPositiveButton("代理策略组测速") { _, _ ->
+                    request(Request.OpenProxy)
+                }
+                .setNeutralButton("实时日志") { _, _ ->
+                    request(Request.OpenLogs)
+                }
+                .setNegativeButton(android.R.string.ok, null)
+                .show()
+        }
     }
 
     suspend fun setHome(
@@ -106,6 +318,19 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         safetyShort: String = safety,
         networkShort: String = network,
         coreVersion: String = "Mihomo v1.19.33",
+        coreSubtitle: String = "核心 3f27ef39 · 零拷贝转发",
+        tunHeadline: String = "TUN 混合栈 · IPv6 阻断",
+        tunSubtitle: String = "DNS 劫持 · 局域网直连",
+        profileStackSummary: String = "TUN 混合栈 · 实时统计",
+        proxyBadge: String = "已就绪",
+        proxyHeadline: String = policy,
+        proxySubtitle: String = "点击进入代理策略组选路与延迟测速",
+        chainBadge: String = "Fail-Closed",
+        chainSubtitle: String = "本机 → 入口节点 → 落地节点 → 目标网站",
+        connectedSub: String = "TUN 隧道 · 局域网直连",
+        safetySub: String = "DNS 受控 · IPv6 已阻断",
+        policySub: String = "跨重启记忆 · 点击切换",
+        networkSub: String = "点击查看实时日志与网络设置",
     ) {
         withContext(Dispatchers.Main) {
             this@MainDesign.attentionAction = attentionAction
@@ -118,6 +343,19 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             binding.homeAttention = attention ?: ""
             binding.showAttention = !attention.isNullOrBlank()
             binding.coreVersion = coreVersion
+            binding.coreSubtitle = coreSubtitle
+            binding.tunHeadline = tunHeadline
+            binding.tunSubtitle = tunSubtitle
+            binding.profileStackSummary = profileStackSummary
+            binding.proxyBadge = proxyBadge
+            binding.proxyHeadline = proxyHeadline
+            binding.proxySubtitle = proxySubtitle
+            binding.chainBadge = chainBadge
+            binding.chainSubtitle = chainSubtitle
+            binding.homeConnectedSub = connectedSub
+            binding.homeSafetySub = safetySub
+            binding.homePolicySub = policySub
+            binding.homeNetworkSub = networkSub
         }
     }
 
@@ -132,8 +370,14 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
     suspend fun setChainSummary(summary: String?) {
         withContext(Dispatchers.Main) {
-            binding.showChain = !summary.isNullOrBlank()
+            val hasChain = !summary.isNullOrBlank()
             binding.chainSummary = summary ?: context.getString(R.string.chain_not_set)
+            binding.chainBadge = if (hasChain) "已组链 · Fail-Closed" else "点击组链"
+            binding.chainSubtitle = if (hasChain) {
+                "双跳事务强绑定已生效 · 链路异常直接阻断不回退 DIRECT"
+            } else {
+                context.getString(R.string.chain_card_subtitle)
+            }
         }
     }
 
@@ -143,6 +387,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     }
 
     fun mountSystem(store: ScriptDisplayStore) {
+        scriptStoreRef = store
         store.ensureScript()
         mountHomeQuickGrid(store)
         val host = binding.explicitHost
@@ -298,6 +543,9 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                 card.addView(inner)
 
                 card.setOnClickListener {
+                    if (UiStore(context).hapticFeedback) {
+                        card.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    }
                     val nextState = !store.optionOn(spec.group, spec.keyName, spec.defaultOn)
                     store.setOption(spec.group, spec.keyName, nextState)
                     spec.companionKey?.let { companion ->
@@ -412,11 +660,16 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         withContext(Dispatchers.Main) {
             binding.upload = now.trafficUpload()
             binding.download = now.trafficDownload()
-            binding.forwarded = total.trafficTotal()
+            val totalStr = total.trafficTotal()
+            binding.forwarded = totalStr
+            binding.homeNetworkSub = context.getString(R.string.dashboard_total, totalStr) + " · ↓ " + binding.download
 
             // Compute live throughput bar height from combined instantaneous speed
             val downBytes = (now ushr 32) and 0xFFFFFFFFL
             val upBytes = now and 0xFFFFFFFFL
+            if (downBytes > peakDownRaw) peakDownRaw = downBytes
+            if (upBytes > peakUpRaw) peakUpRaw = upBytes
+
             val combined = (downBytes + upBytes).coerceAtLeast(0L)
             val pct = if (combined <= 0L) {
                 20
@@ -504,7 +757,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         subtitle: String,
         selected: Boolean,
         normalColor: Int,
-        secondaryColor: Int,
+        unselectedSubColor: Int,
     ): CharSequence {
         val sb = SpannableStringBuilder()
         sb.append(title)
@@ -522,9 +775,9 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         val subStart = sb.length
         sb.append(subtitle)
         val subEnd = sb.length
-        sb.setSpan(RelativeSizeSpan(0.76f), subStart, subEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        sb.setSpan(RelativeSizeSpan(0.78f), subStart, subEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         sb.setSpan(
-            ForegroundColorSpan(if (selected) Color.parseColor("#D9FFFFFF") else secondaryColor),
+            ForegroundColorSpan(if (selected) Color.parseColor("#E6FFFFFF") else unselectedSubColor),
             subStart,
             subEnd,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
@@ -535,7 +788,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     private fun paintMode(selected: Int) {
         val royalPrimary = ContextCompat.getColor(context, R.color.color_clash_royal)
         val normal = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
-        val secondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
+        val unselectedSubColor = ContextCompat.getColor(context, R.color.color_dark_clash_stopped)
 
         val specs = listOf(
             Triple(
@@ -561,7 +814,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                 if (on) royalPrimary else Color.TRANSPARENT
             )
             button.strokeWidth = 0
-            button.text = buildModeLabel(title, sub, on, normal, secondary)
+            button.text = buildModeLabel(title, sub, on, normal, unselectedSubColor)
         }
     }
 
@@ -587,17 +840,30 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         binding.self = this
         binding.pageTools = false
         binding.showScript = false
-        binding.showChain = false
+        binding.showChain = true
         binding.upload = "0 B/s"
         binding.download = "0 B/s"
         binding.forwarded = "0 B"
         binding.homeSafetyShort = context.getString(R.string.home_safety_short_on)
         binding.homeNetworkShort = context.getString(R.string.home_network_short_off)
         binding.coreVersion = "Mihomo v1.19.33"
+        binding.coreSubtitle = "核心 3f27ef39 · 零拷贝转发"
+        binding.tunHeadline = "TUN 混合栈 · IPv6 阻断"
+        binding.tunSubtitle = "DNS 劫持 · 局域网直连"
+        binding.profileStackSummary = "TUN 混合栈 · 实时统计"
+        binding.proxyBadge = context.getString(R.string.proxy_ready_badge)
+        binding.proxyHeadline = context.getString(R.string.not_selected)
+        binding.proxySubtitle = context.getString(R.string.proxy_card_subtitle)
+        binding.chainBadge = "点击组链"
+        binding.chainSummary = context.getString(R.string.chain_not_set)
+        binding.chainSubtitle = context.getString(R.string.chain_card_subtitle)
+        binding.homeConnectedSub = context.getString(R.string.home_connected_sub)
+        binding.homeSafetySub = context.getString(R.string.home_safety_sub)
+        binding.homePolicySub = context.getString(R.string.home_policy_sub)
+        binding.homeNetworkSub = "累计 0 B · 点击查看工具"
 
         binding.colorClashStarted = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         binding.colorClashStopped = context.resolveThemedColor(R.attr.colorClashStopped)
-        binding.chainSummary = context.getString(R.string.chain_not_set)
 
         initSpeedBars()
         paintMode(R.id.mode_rule)

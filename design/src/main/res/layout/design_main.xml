@@ -69,6 +69,45 @@
         <variable
             name="coreVersion"
             type="String" />
+        <variable
+            name="coreSubtitle"
+            type="String" />
+        <variable
+            name="tunHeadline"
+            type="String" />
+        <variable
+            name="tunSubtitle"
+            type="String" />
+        <variable
+            name="profileStackSummary"
+            type="String" />
+        <variable
+            name="proxyBadge"
+            type="String" />
+        <variable
+            name="proxyHeadline"
+            type="String" />
+        <variable
+            name="proxySubtitle"
+            type="String" />
+        <variable
+            name="chainBadge"
+            type="String" />
+        <variable
+            name="chainSubtitle"
+            type="String" />
+        <variable
+            name="homeConnectedSub"
+            type="String" />
+        <variable
+            name="homeSafetySub"
+            type="String" />
+        <variable
+            name="homePolicySub"
+            type="String" />
+        <variable
+            name="homeNetworkSub"
+            type="String" />
 
         <import type="android.view.View" />
         <import type="com.github.kr328.clash.design.MainDesign.Request" />
@@ -129,7 +168,7 @@
                                 android:background="?attr/selectableItemBackgroundBorderless"
                                 android:clickable="true"
                                 android:focusable="true"
-                                android:onClick="@{() -> self.showHomeDetail(@string/home_connected_label, homeConnected)}"
+                                android:onClick="@{() -> self.onConnectionDiagClick()}"
                                 android:orientation="vertical">
 
                                 <TextView
@@ -162,6 +201,9 @@
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="8dp"
                                         android:background="@{clashRunning ? @drawable/bg_badge_emerald : @drawable/bg_profile_badge}"
+                                        android:clickable="true"
+                                        android:focusable="true"
+                                        android:onClick="@{() -> self.request(Request.ToggleStatus)}"
                                         android:paddingHorizontal="9dp"
                                         android:paddingVertical="3dp"
                                         android:singleLine="true"
@@ -271,7 +313,7 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground"
-                        android:onClick="@{() -> self.showHomeDetail(@string/home_network_label, homeNetwork)}"
+                        android:onClick="@{() -> self.showTrafficConsole()}"
                         app:cardBackgroundColor="?attr/clashSurfaceVariant"
                         app:cardCornerRadius="22dp"
                         app:cardElevation="0dp"
@@ -505,7 +547,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="@string/dashboard_profile_stack_hint"
+                                    android:text="@{profileStackSummary}"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="11sp" />
                             </LinearLayout>
@@ -555,8 +597,14 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:clickable="true"
                                     android:ellipsize="end"
+                                    android:focusable="true"
                                     android:maxLines="1"
+                                    android:onClick="@{() -> self.request(Request.OpenRuleSwitches)}"
+                                    android:paddingHorizontal="4dp"
+                                    android:paddingVertical="2dp"
                                     android:text="@{homePolicy + ` · ` + @string/dashboard_mode_persist_hint}"
                                     android:textColor="?attr/colorPrimary"
                                     android:textSize="11sp"
@@ -688,7 +736,7 @@
                                     android:background="@drawable/bg_badge_emerald"
                                     android:paddingHorizontal="8dp"
                                     android:paddingVertical="2dp"
-                                    android:text="@{clashRunning ? @string/running : @string/proxy_ready_badge}"
+                                    android:text="@{proxyBadge}"
                                     android:textColor="@color/color_emerald_accent"
                                     android:textSize="10sp"
                                     android:textStyle="bold" />
@@ -707,7 +755,7 @@
                                 android:layout_marginTop="8dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="@{homePolicy}"
+                                android:text="@{proxyHeadline}"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
@@ -717,7 +765,7 @@
                                 android:layout_marginTop="4dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="@string/proxy_card_subtitle"
+                                android:text="@{proxySubtitle}"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -775,7 +823,7 @@
                                     android:background="@drawable/bg_badge_blue"
                                     android:paddingHorizontal="8dp"
                                     android:paddingVertical="2dp"
-                                    android:text="@string/chain_fail_closed_badge"
+                                    android:text="@{chainBadge}"
                                     android:textColor="?attr/colorPrimary"
                                     android:textSize="10sp"
                                     android:textStyle="bold" />
@@ -804,7 +852,7 @@
                                 android:layout_marginTop="4dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="@string/chain_card_subtitle"
+                                android:text="@{chainSubtitle}"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -827,7 +875,7 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground"
-                            android:onClick="@{() -> self.request(Request.OpenSettings)}"
+                            android:onClick="@{() -> self.onCoreEngineClick()}"
                             app:cardBackgroundColor="?attr/clashSurfaceVariant"
                             app:cardCornerRadius="22dp"
                             app:cardElevation="0dp"
@@ -893,7 +941,7 @@
                                     android:layout_marginTop="3dp"
                                     android:ellipsize="end"
                                     android:maxLines="1"
-                                    android:text="@string/telemetry_core_sub"
+                                    android:text="@{coreSubtitle}"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="10sp" />
                             </LinearLayout>
@@ -908,7 +956,7 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground"
-                            android:onClick="@{() -> self.request(Request.OpenLogs)}"
+                            android:onClick="@{() -> self.onTunNetworkClick()}"
                             app:cardBackgroundColor="?attr/clashSurfaceVariant"
                             app:cardCornerRadius="22dp"
                             app:cardElevation="0dp"
@@ -964,7 +1012,7 @@
                                     android:layout_marginTop="8dp"
                                     android:ellipsize="end"
                                     android:maxLines="1"
-                                    android:text="@string/telemetry_tun_value"
+                                    android:text="@{tunHeadline}"
                                     android:textSize="14sp"
                                     android:textStyle="bold" />
 
@@ -974,7 +1022,7 @@
                                     android:layout_marginTop="3dp"
                                     android:ellipsize="end"
                                     android:maxLines="1"
-                                    android:text="@string/telemetry_tun_sub"
+                                    android:text="@{tunSubtitle}"
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="10sp" />
                             </LinearLayout>
@@ -1073,7 +1121,11 @@
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:clickable="true"
+                                android:focusable="true"
                                 android:gravity="center_vertical"
+                                android:onClick="@{() -> self.request(Request.RunSelfCheck)}"
                                 android:orientation="horizontal">
 
                                 <ImageView
@@ -1099,6 +1151,9 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:background="@drawable/bg_badge_blue"
+                                    android:clickable="true"
+                                    android:focusable="true"
+                                    android:onClick="@{() -> self.request(Request.RunSelfCheck)}"
                                     android:paddingHorizontal="8dp"
                                     android:paddingVertical="2dp"
                                     android:text="@string/service_matrix_badge"
@@ -1125,7 +1180,7 @@
                                     android:clickable="true"
                                     android:focusable="true"
                                     android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.showHomeDetail(@string/home_connected_label, homeConnected)}"
+                                    android:onClick="@{() -> self.onConnectionDiagClick()}"
                                     android:orientation="vertical"
                                     android:padding="12dp">
 
@@ -1168,7 +1223,7 @@
                                         android:layout_marginTop="3dp"
                                         android:ellipsize="end"
                                         android:maxLines="1"
-                                        android:text="@string/home_connected_sub"
+                                        android:text="@{homeConnectedSub}"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="10sp" />
                                 </LinearLayout>
@@ -1183,7 +1238,7 @@
                                     android:clickable="true"
                                     android:focusable="true"
                                     android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.showHomeDetail(@string/home_safety_label, homeSafety)}"
+                                    android:onClick="@{() -> self.onSafetyDiagClick()}"
                                     android:orientation="vertical"
                                     android:padding="12dp">
 
@@ -1226,7 +1281,7 @@
                                         android:layout_marginTop="3dp"
                                         android:ellipsize="end"
                                         android:maxLines="1"
-                                        android:text="@string/home_safety_sub"
+                                        android:text="@{homeSafetySub}"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="10sp" />
                                 </LinearLayout>
@@ -1250,7 +1305,7 @@
                                     android:clickable="true"
                                     android:focusable="true"
                                     android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.showHomePolicyDetail(@string/home_policy_label, homePolicy)}"
+                                    android:onClick="@{() -> self.onPolicyDiagClick()}"
                                     android:orientation="vertical"
                                     android:padding="12dp">
 
@@ -1292,7 +1347,7 @@
                                         android:layout_marginTop="3dp"
                                         android:ellipsize="end"
                                         android:maxLines="1"
-                                        android:text="@string/home_policy_sub"
+                                        android:text="@{homePolicySub}"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="10sp" />
                                 </LinearLayout>
@@ -1307,7 +1362,7 @@
                                     android:clickable="true"
                                     android:focusable="true"
                                     android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.showHomeDetail(@string/home_network_label, homeNetwork)}"
+                                    android:onClick="@{() -> self.onNetworkDiagClick()}"
                                     android:orientation="vertical"
                                     android:padding="12dp">
 
@@ -1350,7 +1405,7 @@
                                         android:layout_marginTop="3dp"
                                         android:ellipsize="end"
                                         android:maxLines="1"
-                                        android:text="@{@string/dashboard_total(forwarded)}"
+                                        android:text="@{homeNetworkSub}"
                                         android:textColor="?android:attr/textColorSecondary"
                                         android:textSize="10sp" />
                                 </LinearLayout>

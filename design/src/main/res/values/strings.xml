@@ -575,12 +575,12 @@
     <string name="home_quick_options_title">System Explicit Quick Options</string>
     <string name="home_quick_options_sub">Outranks override script &amp; subscription (Tap to toggle)</string>
     <string name="home_quick_options_action">Script &gt;</string>
-    <string name="service_matrix_title">Service Diagnostic Matrix (Tap for details)</string>
-    <string name="service_matrix_badge">2×2 Self-Check</string>
+    <string name="service_matrix_title">Service Diagnostic Matrix</string>
+    <string name="service_matrix_badge">Self-Check ↻</string>
     <string name="home_connected_card_label">Connection</string>
     <string name="home_connected_sub">Fail-Closed · fe80::/10 bypass</string>
     <string name="home_safety_card_label">Safety Guard</string>
-    <string name="home_safety_short_on">Leak Guard ON</string>
+    <string name="home_safety_short_on">4/4 Guard ON</string>
     <string name="home_safety_short_partial">Partial Guard</string>
     <string name="home_safety_short_direct">Direct Bypass</string>
     <string name="home_safety_sub">DNS Guard · IPv6 Controlled</string>

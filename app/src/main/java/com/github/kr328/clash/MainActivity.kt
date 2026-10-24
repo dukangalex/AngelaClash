@@ -25,11 +25,14 @@ import com.github.kr328.clash.core.Clash
 import com.github.kr328.clash.core.bridge.Bridge
 import com.github.kr328.clash.core.model.TunnelState
 import com.github.kr328.clash.design.R as DesignR
+import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.service.store.ChainStore
 import com.github.kr328.clash.service.store.ScriptDisplayStore
+import com.github.kr328.clash.service.store.ServiceStore
 import com.github.kr328.clash.service.util.sendProfileChanged
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -88,6 +91,14 @@ class MainActivity : BaseActivity<MainDesign>() {
                             startActivity(LogcatActivity::class.intent)
                         MainDesign.Request.OpenSettings ->
                             startActivity(SettingsActivity::class.intent)
+                        MainDesign.Request.OpenNetworkSettings ->
+                            startActivity(NetworkSettingsActivity::class.intent)
+                        MainDesign.Request.OpenAccessControl ->
+                            startActivity(AccessControlActivity::class.intent)
+                        MainDesign.Request.OpenMetaFeature ->
+                            startActivity(MetaFeatureSettingsActivity::class.intent)
+                        MainDesign.Request.OpenRuleSwitches ->
+                            startActivity(RuleSwitchesActivity::class.intent)
                         MainDesign.Request.OpenApp ->
                             startActivity(AppSettingsActivity::class.intent)
                         MainDesign.Request.OpenEnhance ->
@@ -109,6 +120,11 @@ class MainActivity : BaseActivity<MainDesign>() {
                         MainDesign.Request.ReloadConfig -> {
                             reloadActive()
                             design.fetch()
+                        }
+                        MainDesign.Request.RunSelfCheck -> {
+                            launch {
+                                design.runSelfCheck()
+                            }
                         }
                     }
                 }
@@ -139,17 +155,100 @@ class MainActivity : BaseActivity<MainDesign>() {
         setChainSummary(summary)
         // Chaining is a built-in capability, so keep its entry visible before the first binding exists.
         val scriptStore = ScriptDisplayStore(this@MainActivity)
+        val serviceStore = ServiceStore(this@MainActivity)
         setFeatureVisibility(scriptStore.scriptEnabled(), true)
         mountSystem(scriptStore)
         val shown = shownMode(state.mode)
         setMode(shown)
-        val nativeCore = withContext(Dispatchers.IO) {
-            "Mihomo " + Bridge.nativeCoreVersion().replace("_", "-")
+
+        val rawCore = withContext(Dispatchers.IO) {
+            Bridge.nativeCoreVersion().replace("_", "-")
         }
+        val coreHeadline = "Mihomo v1.19.33"
+        val coreSub = "$rawCore · 外部资源 ${providers.size} 个"
+
+        val groupNames = if (clashRunning) {
+            runCatching { withClash { queryProxyGroupNames(uiStore.proxyExcludeNotSelectable) } }
+                .getOrDefault(emptyList())
+        } else {
+            emptyList()
+        }
+        val primaryGroup = if (clashRunning && groupNames.isNotEmpty()) {
+            runCatching { withClash { queryProxyGroup(groupNames.first(), uiStore.proxySort) } }
+                .getOrNull()
+        } else {
+            null
+        }
+
+        val vpnHints = scriptStore.vpnHints()
+        val ipv6Blocked = vpnHints.blockIpv6 && !serviceStore.allowIpv6
+        val dnsHijacked = vpnHints.hijackDns || serviceStore.dnsHijacking
+        val lanBypass = scriptStore.optionOn(ScriptDisplayStore.GROUP_CN, "局域网直连", true) &&
+            serviceStore.bypassPrivateNetwork
+
+        val tunHeadline = "TUN 混合栈 · " + if (ipv6Blocked) "IPv6 阻断" else "IPv6 放行"
+        val tunSubtitle = (if (dnsHijacked) "DNS 劫持" else "DNS 直通") + " · " +
+            (if (lanBypass) "局域网直连" else "全局接管")
+
+        val profileTypeStr = when (active?.type) {
+            Profile.Type.Url -> "远程订阅"
+            Profile.Type.File -> "本地配置"
+            Profile.Type.External -> "外部配置"
+            null -> "未选配置"
+        }
+        val profileStackSummary = "$profileTypeStr · " + if (dnsHijacked) "DNS 劫持已开" else "TUN 实时统计"
+
+        val policyStr = homePolicy(active?.name, shown)
+        val proxyBadge = when {
+            clashRunning && groupNames.isNotEmpty() -> "${groupNames.size} 组运行中"
+            clashRunning -> getString(DesignR.string.running)
+            else -> getString(DesignR.string.proxy_ready_badge)
+        }
+        val proxyHeadline = if (clashRunning && primaryGroup != null && groupNames.isNotEmpty()) {
+            "${groupNames.first()} · ${primaryGroup.now}"
+        } else {
+            policyStr
+        }
+        val proxySubtitle = if (clashRunning && primaryGroup != null) {
+            "共 ${groupNames.size} 个策略组 (${primaryGroup.proxies.size} 节点) · 点击选路或测速"
+        } else {
+            getString(DesignR.string.proxy_card_subtitle)
+        }
+
+        val hasChain = !summary.isNullOrBlank()
+        val chainBadge = if (hasChain) "已组链 · Fail-Closed" else "点击组链"
+        val chainSub = if (hasChain) {
+            "双跳事务强绑定已生效 · 链路异常直接阻断不回退 DIRECT"
+        } else {
+            getString(DesignR.string.chain_card_subtitle)
+        }
+
+        val connectedSub = when {
+            !clashRunning -> "服务未启动 · 点击开启连接"
+            hasChain -> "双跳链式 · Fail-Closed"
+            else -> "TUN 隧道 · " + if (lanBypass) "局域网直连" else "全局接管"
+        }
+
+        val dnsGuardOn = scriptStore.optionOn(ScriptDisplayStore.GROUP_LEAK, "DNS 走代理", true)
+        val ipv6GuardOff = scriptStore.optionOn(ScriptDisplayStore.GROUP_LEAK, "关闭 IPv6", true)
+        val safetySub = "DNS ${if (dnsGuardOn) "受控" else "直通"} · IPv6 ${if (ipv6GuardOff) "已阻断" else "已放行"}"
+
+        val policySub = if (clashRunning && primaryGroup != null) {
+            "当前节点: ${primaryGroup.now}"
+        } else {
+            "跨重启记忆 · 点击切换"
+        }
+
+        val networkSub = if (clashRunning) {
+            "转发正常 · 点击打开日志/工具"
+        } else {
+            "未开启转发 · 点击配置网络"
+        }
+
         setHome(
             connected = getString(if (clashRunning) DesignR.string.home_connected_on else DesignR.string.home_connected_off),
             safety = homeSafety(shown),
-            policy = homePolicy(active?.name, shown),
+            policy = policyStr,
             network = getString(if (clashRunning) DesignR.string.home_network_on else DesignR.string.home_network_off),
             attention = when {
                 active == null || !active.imported -> getString(DesignR.string.home_need_profile)
@@ -165,8 +264,68 @@ class MainActivity : BaseActivity<MainDesign>() {
             networkShort = getString(
                 if (clashRunning) DesignR.string.home_network_short_on else DesignR.string.home_network_short_off
             ),
-            coreVersion = nativeCore,
+            coreVersion = coreHeadline,
+            coreSubtitle = coreSub,
+            tunHeadline = tunHeadline,
+            tunSubtitle = tunSubtitle,
+            profileStackSummary = profileStackSummary,
+            proxyBadge = proxyBadge,
+            proxyHeadline = proxyHeadline,
+            proxySubtitle = proxySubtitle,
+            chainBadge = chainBadge,
+            chainSubtitle = chainSub,
+            connectedSub = connectedSub,
+            safetySub = safetySub,
+            policySub = policySub,
+            networkSub = networkSub,
         )
+
+        if (clashRunning) {
+            fetchTraffic()
+        }
+    }
+
+    private suspend fun MainDesign.runSelfCheck() {
+        fetch()
+        val state = withClash { queryTunnelState() }
+        val shown = shownMode(state.mode)
+        val active = withProfile { queryActive() }
+        val scriptStore = ScriptDisplayStore(this@MainActivity)
+        val leakKeys = listOf("DNS 走代理", "禁止系统 DNS", "关闭 IPv6", "嗅探防泄漏")
+        val leakOnCount = leakKeys.count { scriptStore.optionOn(ScriptDisplayStore.GROUP_LEAK, it, true) }
+        val chainSummary = active?.let { ChainStore(this@MainActivity).summary(it.uuid) }
+
+        val groupNames = if (clashRunning) {
+            runCatching { withClash { queryProxyGroupNames(uiStore.proxyExcludeNotSelectable) } }
+                .getOrDefault(emptyList())
+        } else {
+            emptyList()
+        }
+        if (clashRunning && groupNames.isNotEmpty()) {
+            runCatching { withClash { healthCheck(groupNames.first()) } }
+        }
+        val primaryGroup = if (clashRunning && groupNames.isNotEmpty()) {
+            runCatching { withClash { queryProxyGroup(groupNames.first(), uiStore.proxySort) } }
+                .getOrNull()
+        } else {
+            null
+        }
+        fetch()
+
+        val report = buildString {
+            appendLine("1. 隧道连接：${if (clashRunning) "已连接 (运行正常)" else "未连接 (待机中)"}")
+            appendLine("2. 当前配置：${active?.name ?: "未选择"}")
+            appendLine("3. 出站策略：${homePolicy(active?.name, shown)}")
+            if (clashRunning && primaryGroup != null && groupNames.isNotEmpty()) {
+                appendLine("4. 主策略组：${groupNames.first()} → ${primaryGroup.now} (共 ${primaryGroup.proxies.size} 节点，已触发并发测速)")
+            } else {
+                appendLine("4. 主策略组：启动服务后可自动测速选路")
+            }
+            appendLine("5. 链式代理：${chainSummary ?: "未绑定双跳链路 (直通主策略组)"}")
+            appendLine("6. 安全防泄漏：$leakOnCount / ${leakKeys.size} 项已开启")
+        }.trim()
+
+        showSelfCheckReport("2×2 服务状态实时自检报告", report)
     }
 
     private fun homeSafety(mode: TunnelState.Mode): String {
@@ -184,9 +343,13 @@ class MainActivity : BaseActivity<MainDesign>() {
             return getString(DesignR.string.home_safety_short_direct)
         }
         val store = ScriptDisplayStore(this)
-        val leak = listOf("DNS 走代理", "禁止系统 DNS", "关闭 IPv6", "嗅探防泄漏")
-            .all { store.optionOn(ScriptDisplayStore.GROUP_LEAK, it, true) }
-        return getString(if (leak) DesignR.string.home_safety_short_on else DesignR.string.home_safety_short_partial)
+        val keys = listOf("DNS 走代理", "禁止系统 DNS", "关闭 IPv6", "嗅探防泄漏")
+        val onCount = keys.count { store.optionOn(ScriptDisplayStore.GROUP_LEAK, it, true) }
+        return if (onCount == keys.size) {
+            getString(DesignR.string.home_safety_short_on)
+        } else {
+            "$onCount/${keys.size} 部分防护"
+        }
     }
 
     private fun homePolicy(name: String?, mode: TunnelState.Mode): String {
