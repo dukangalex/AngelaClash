@@ -129,7 +129,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
-                        android:text='@{profile.total > 1 ? (I18nKt.toProgress((profile.download + profile.upload) / (profile.total / 1000)) / 10) + "%" : ""}'
+                        android:text="@{I18nKt.toTrafficPercent(profile.download + profile.upload, profile.total)}"
                         android:textColor="?attr/colorPrimary"
                         android:textSize="11sp"
                         android:textStyle="bold"

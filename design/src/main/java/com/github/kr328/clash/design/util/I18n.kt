@@ -77,6 +77,13 @@ fun Long.toBytesString(): String {
 fun Double.toProgress(): Int {
     return this.toInt()
 }
+
+fun toTrafficPercent(used: Long, total: Long): String {
+    if (total <= 1L) return ""
+    val pct = ((used.toDouble() / total.toDouble()) * 100.0).toInt().coerceIn(0, 100)
+    return "$pct%"
+}
+
 fun Long.toDateStr(): String {
     val simpleDateFormat =SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     return simpleDateFormat.format(Date(this))
