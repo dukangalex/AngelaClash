@@ -53,6 +53,14 @@
 - `go test native/config/chain.go native/config/chain_test.go`
   → `go test -tags "foss with_gvisor cmfa" ./native/config/`
 - 现在 `script_override_test.go`、`audit_fixes_test.go`（新增 9 个用例）以及 repair/display 相关代码都会被执行。
+- **顺带修掉一个隐藏的可移植性 bug**：`native/app/dns.go` 直接调用 mihomo 的
+  `dns.UpdateSystemDNS` / `dns.FlushCacheWithDefaultResolver`，而这两个函数只在
+  `android && cmfa` 标签下编译。整包测试一旦在 Linux runner 上跑 `native/config`，
+  就会连带编译 `native/app` 并报 `undefined: dns.UpdateSystemDNS`（这就是第一次发版
+  CI 的失败原因）。处理方式：把 `dns.go` 标记为 `//go:build android`，新增
+  `native/app/dns_notandroid.go`（`//go:build !android`）提供同签名的空实现。
+  两个方向都已验证：Linux + 标签编译通过、`GOOS=android` + 标签编译通过。
+  这样做不需要改动 mihomo 子模块，也不需要 CI 装 NDK。
 
 ### F-06 构建供应链（中）
 
