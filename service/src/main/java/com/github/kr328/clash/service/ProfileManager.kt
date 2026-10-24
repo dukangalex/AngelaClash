@@ -158,7 +158,8 @@ class ProfileManager(private val context: Context) : IProfileManager,
             (ImportedDao().queryAllUUIDs() + PendingDao().queryAllUUIDs()).distinct()
         }
 
-        return uuids.mapNotNull { resolveProfile(it) }
+        val ordered = store.sortByProfileOrder(uuids) { it }.map { it.item }
+        return ordered.mapNotNull { resolveProfile(it) }
     }
 
     override suspend fun queryActive(): Profile? {

@@ -90,4 +90,33 @@ class ServiceStore(context: Context) {
         key = "high_priority_notification",
         defaultValue = false
     )
+
+    var profileOrder: String by store.string(
+        key = "profile_order",
+        defaultValue = ""
+    )
+
+    fun <T> sortByProfileOrder(items: List<T>, uuidSelector: (T) -> UUID): List<ProfileOrderEntry<T>> {
+        val raw = profileOrder
+        if (raw.isBlank()) return items.mapIndexed { idx, item -> ProfileOrderEntry(item, idx) }
+        val orderMap = raw.split(",")
+            .mapIndexedNotNull { index, s ->
+                runCatching { UUID.fromString(s.trim()) to index }.getOrNull()
+            }
+            .toMap()
+        if (orderMap.isEmpty()) return items.mapIndexed { idx, item -> ProfileOrderEntry(item, idx) }
+        return items.mapIndexed { idx, item ->
+            ProfileOrderEntry(item, orderMap[uuidSelector(item)] ?: (10000 + idx))
+        }.sortedBy { it.order }
+    }
+
+    fun saveProfileOrder(uuids: List<UUID>) {
+        profileOrder = uuids.DistinctUuidString()
+    }
+
+    data class ProfileOrderEntry<T>(val item: T, val order: Int)
+
+    private fun List<UUID>.DistinctUuidString(): String {
+        return distinct().joinToString(",") { it.toString() }
+    }
 }

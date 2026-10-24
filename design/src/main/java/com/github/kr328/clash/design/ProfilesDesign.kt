@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.appcompat.widget.SwitchCompat
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.github.kr328.clash.design.adapter.ProfileAdapter
 import com.github.kr328.clash.design.databinding.DesignProfilesBinding
 import com.github.kr328.clash.design.databinding.DialogProfilesMenuBinding
@@ -17,6 +19,7 @@ import com.github.kr328.clash.design.dialog.AppBottomSheetDialog
 import com.github.kr328.clash.design.ui.ToastDuration
 import com.github.kr328.clash.design.util.*
 import com.github.kr328.clash.service.model.Profile
+import com.github.kr328.clash.service.store.ServiceStore
 import java.util.UUID
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.zxing.BarcodeFormat
@@ -44,9 +47,20 @@ class ProfilesDesign(
         data class Delete(val profile: Profile) : Request()
     }
 
+    private val serviceStore = ServiceStore(context)
     private val binding = DesignProfilesBinding
         .inflate(context.layoutInflater, context.root, false)
-    private val adapter = ProfileAdapter(context, this::requestActive, this::showMenu)
+    private lateinit var itemTouchHelper: ItemTouchHelper
+    private val adapter = ProfileAdapter(
+        context,
+        this::requestActive,
+        this::showMenu,
+        onStartDrag = { holder ->
+            if (::itemTouchHelper.isInitialized) {
+                itemTouchHelper.startDrag(holder)
+            }
+        },
+    )
 
     private var allUpdating: Boolean
         get() = adapter.states.allUpdating;
@@ -59,12 +73,15 @@ class ProfilesDesign(
         get() = binding.root
 
     suspend fun patchProfiles(profiles: List<Profile>) {
+        val sorted = withContext(Dispatchers.Default) {
+            serviceStore.sortByProfileOrder(profiles) { it.uuid }.map { it.item }
+        }
         adapter.apply {
-            patchDataSet(this::profiles, profiles, id = { it.uuid })
+            patchDataSet(this::profiles, sorted, id = { it.uuid })
         }
 
         val updatable = withContext(Dispatchers.Default) {
-            profiles.any { it.imported && it.type != Profile.Type.File }
+            sorted.any { it.imported && it.type != Profile.Type.File }
         }
 
         withContext(Dispatchers.Main) {
@@ -89,9 +106,58 @@ class ProfilesDesign(
 
         binding.activityBarLayout.applyFrom(context)
 
+        itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+            0,
+        ) {
+            override fun isLongPressDragEnabled(): Boolean = true
+
+            override fun isItemViewSwipeEnabled(): Boolean = false
+
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder,
+            ): Boolean {
+                val from = viewHolder.bindingAdapterPosition
+                val to = target.bindingAdapterPosition
+                if (adapter.moveItem(from, to)) {
+                    serviceStore.saveProfileOrder(adapter.profiles.map { it.uuid })
+                    return true
+                }
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) = Unit
+
+            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+                super.onSelectedChanged(viewHolder, actionState)
+                if (actionState == ItemTouchHelper.ACTION_STATE_DRAG && viewHolder != null) {
+                    viewHolder.itemView.animate()
+                        .scaleX(1.02f)
+                        .scaleY(1.02f)
+                        .alpha(0.92f)
+                        .setDuration(120)
+                        .start()
+                }
+            }
+
+            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                super.clearView(recyclerView, viewHolder)
+                viewHolder.itemView.animate()
+                    .scaleX(1.0f)
+                    .scaleY(1.0f)
+                    .alpha(1.0f)
+                    .setDuration(120)
+                    .start()
+                serviceStore.saveProfileOrder(adapter.profiles.map { it.uuid })
+            }
+        })
+
         binding.mainList.recyclerList.also {
             it.bindAppBarElevation(binding.activityBarLayout)
             it.applyLinearAdapter(context, adapter)
+            itemTouchHelper.attachToRecyclerView(it)
         }
     }
 

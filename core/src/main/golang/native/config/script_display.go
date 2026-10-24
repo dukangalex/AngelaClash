@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"os"
+	P "path"
 	"strings"
 
 	"github.com/metacubex/mihomo/common/orderedmap"
@@ -15,10 +16,11 @@ import (
 // System explicit options. Written to files/clash/script-options.json.
 // They are applied after the profile, the override script, and chain, so a
 // conflict is resolved in favor of these switches.
-func patchScriptDisplay(cfg *config.RawConfig, _ string) error {
+func patchScriptDisplay(cfg *config.RawConfig, profileDir string) error {
 	opts, _ := readScriptOptions()
 	groups := splitScriptOptions(opts.Values)
-	applyRouting(cfg, groups)
+	scriptRan := hasActiveScript(profileDir)
+	applyRouting(cfg, groups, scriptRan)
 	applyLeak(cfg, groups.leak)
 	applyChina(cfg, groups.cn)
 	applyStrict(cfg, groups.strict)
@@ -26,7 +28,23 @@ func patchScriptDisplay(cfg *config.RawConfig, _ string) error {
 	if cfg.DNS.Enable && len(cfg.DNS.NameServer) == 0 {
 		cfg.DNS.NameServer = []string{"https://223.5.5.5/dns-query", "https://1.1.1.1/dns-query"}
 	}
+	repairRawConfig(cfg)
 	return nil
+}
+
+func hasActiveScript(profileDir string) bool {
+	if profileDir == "" {
+		return false
+	}
+	if _, err := os.Stat(P.Join(profileDir, "script.on")); err != nil {
+		return false
+	}
+	path := C.Path.Resolve("script.js")
+	text, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	return hasScriptMain(string(text))
 }
 
 type scriptOptionFile struct {
@@ -118,8 +136,8 @@ func applyLeak(cfg *config.RawConfig, leak map[string]bool) {
 		cfg.IPv6 = true
 		cfg.DNS.IPv6 = true
 	}
-	cfg.Rule = dropMatching(cfg.Rule, isQuicReject)
 	if on(leak, false, "阻断 QUIC", "block-quic") {
+		cfg.Rule = dropMatching(cfg.Rule, isQuicReject)
 		rule := "AND,((NETWORK,UDP),(DST-PORT,443)),REJECT"
 		if on(leak, false, "放行中国 QUIC", "allow-cn-quic") {
 			rule = "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((GEOSITE,cn)))),REJECT"
@@ -165,15 +183,16 @@ func applyChina(cfg *config.RawConfig, cn map[string]bool) {
 }
 
 func applyPrivacy(cfg *config.RawConfig, privacy map[string]bool) {
-	cfg.Rule = dropMatching(cfg.Rule, isPrivacyReject)
 	var front []string
 	if on(privacy, false, "拦截 STUN", "block-stun") {
+		cfg.Rule = dropMatching(cfg.Rule, isStunReject)
 		front = append(front,
 			"AND,((NETWORK,UDP),(DST-PORT,3478)),REJECT",
 			"AND,((NETWORK,UDP),(DST-PORT,19302)),REJECT",
 		)
 	}
 	if on(privacy, false, "屏蔽局域网发现", "block-discovery") {
+		cfg.Rule = dropMatching(cfg.Rule, isDiscoveryReject)
 		front = append(front,
 			"AND,((NETWORK,UDP),(DST-PORT,5353)),REJECT",
 			"AND,((NETWORK,UDP),(DST-PORT,1900)),REJECT",
@@ -184,12 +203,25 @@ func applyPrivacy(cfg *config.RawConfig, privacy map[string]bool) {
 	cfg.Rule = prependMissing(cfg.Rule, front)
 }
 
-func isPrivacyReject(rule string) bool {
+func isStunReject(rule string) bool {
 	upper := strings.ToUpper(rule)
 	if !strings.Contains(upper, "REJECT") {
 		return false
 	}
-	for _, port := range []string{"3478", "19302", "5353", "1900", "137", "138"} {
+	for _, port := range []string{"3478", "5349", "19302"} {
+		if strings.Contains(upper, "DST-PORT,"+port) {
+			return true
+		}
+	}
+	return false
+}
+
+func isDiscoveryReject(rule string) bool {
+	upper := strings.ToUpper(rule)
+	if !strings.Contains(upper, "REJECT") {
+		return false
+	}
+	for _, port := range []string{"5353", "1900", "137", "138"} {
 		if strings.Contains(upper, "DST-PORT,"+port) {
 			return true
 		}
@@ -226,54 +258,140 @@ var serviceRules = []serviceRule{
 	{[]string{"广告拦截"}, false, []string{"GEOSITE,category-ads-all,REJECT"}},
 }
 
-func applyRouting(cfg *config.RawConfig, groups scriptGroups) {
+// nonGroupRuleOptions are behavioral toggles declared in ruleOptionsEnable
+// that control script generation behavior rather than representing a proxy-group.
+var nonGroupRuleOptions = map[string]bool{
+	"极简模式":      true,
+	"生成地区自动选择组": true,
+	"隐藏地区手动选择组": true,
+	"生成倍率组":     true,
+	"分流组添加所有节点": true,
+	"过滤低倍率节点":   true,
+	"过滤高倍率节点":   true,
+	"过滤非地区节点":   true,
+	"屏蔽国外QUIC":  true,
+	"屏蔽WebRTC":  true,
+	"强制TUN":     true,
+	"代理IPV4优先":  true,
+	"代理IPV6优先":  true,
+	"链式代理":      true,
+	"广告拦截":      true,
+	"AdBlock":   true,
+}
+
+var baseStrategyOptions = map[string]bool{
+	"手动选择": true,
+	"自动选择": true,
+	"负载均衡": true,
+	"故障转移": true,
+}
+
+func applyRouting(cfg *config.RawConfig, groups scriptGroups, scriptRan bool) {
 	rule := groups.rule
+	minimalMode := rule["极简模式"]
 	known := map[string]bool{}
 	var front []string
 	disabled := map[string]bool{}
+
 	for name, on := range rule {
-		if !on {
+		if nonGroupRuleOptions[name] {
+			continue
+		}
+		if !on || minimalMode {
 			disabled[name] = true
 		}
 	}
+
+	if quicOn, ok := rule["屏蔽国外QUIC"]; ok {
+		if !quicOn {
+			cfg.Rule = dropMatching(cfg.Rule, isQuicReject)
+		} else if !scriptRan {
+			cfg.Rule = dropMatching(cfg.Rule, isQuicReject)
+			cfg.Rule = append([]string{"AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((GEOSITE,cn)))),REJECT"}, cfg.Rule...)
+		}
+	}
+	if webrtcOn, ok := rule["屏蔽WebRTC"]; ok {
+		if !webrtcOn {
+			cfg.Rule = dropMatching(cfg.Rule, isStunReject)
+		} else if !scriptRan {
+			cfg.Rule = dropMatching(cfg.Rule, isStunReject)
+			cfg.Rule = append([]string{
+				"AND,((NETWORK,UDP),(DST-PORT,3478-3497)),REJECT",
+				"AND,((NETWORK,UDP),(DST-PORT,5349)),REJECT",
+				"AND,((NETWORK,UDP),(DST-PORT,19302-19309)),REJECT",
+			}, cfg.Rule...)
+		}
+	}
+
+	if adKey, hasAd := firstPresent(rule, []string{"AdBlock", "广告拦截"}); hasAd {
+		if !rule[adKey] || minimalMode {
+			cfg.ProxyGroup = dropGroup(cfg.ProxyGroup, "AdBlock")
+			cfg.ProxyGroup = dropGroup(cfg.ProxyGroup, "广告拦截")
+			cfg.Rule = dropMatching(cfg.Rule, isAdBlockRule)
+		} else if !scriptRan {
+			front = append(front, "GEOSITE,category-ads-all,REJECT")
+		}
+	}
+
 	fallback := fallbackGroup(cfg, disabled)
 
 	for _, spec := range serviceRules {
 		for _, key := range spec.keys {
 			known[key] = true
 		}
+		if minimalMode {
+			continue
+		}
 		name, ok := firstPresent(rule, spec.keys)
 		if !ok || !rule[name] {
 			continue
 		}
-		if spec.group {
+		if spec.group && !scriptRan {
 			ensureSelectGroup(cfg, name)
 		}
-		for _, pattern := range spec.rules {
-			if strings.Contains(pattern, "%s") {
-				front = append(front, strings.ReplaceAll(pattern, "%s", name))
-			} else {
-				front = append(front, pattern)
+		if !scriptRan {
+			for _, pattern := range spec.rules {
+				if strings.Contains(pattern, "%s") {
+					front = append(front, strings.ReplaceAll(pattern, "%s", name))
+				} else {
+					front = append(front, pattern)
+				}
 			}
 		}
 	}
 
 	for name, on := range rule {
-		if known[name] {
-			if !on {
-				cfg.ProxyGroup = dropGroup(cfg.ProxyGroup, name)
-			}
+		if nonGroupRuleOptions[name] {
 			continue
 		}
-		if on {
-			ensureSelectGroup(cfg, name)
+		if !on || minimalMode {
+			cfg.ProxyGroup = dropGroup(cfg.ProxyGroup, name)
 			continue
 		}
-		cfg.ProxyGroup = dropGroup(cfg.ProxyGroup, name)
+		if known[name] || baseStrategyOptions[name] || scriptRan {
+			continue
+		}
+		ensureSelectGroup(cfg, name)
 	}
 
 	cfg.Rule = retargetRules(cfg.Rule, disabled, fallback)
 	cfg.Rule = prependMissing(cfg.Rule, front)
+	repairRawConfig(cfg)
+}
+
+func isAdBlockRule(rule string) bool {
+	trimmed := strings.TrimSpace(rule)
+	upper := strings.ToUpper(trimmed)
+	if strings.Contains(upper, "CATEGORY-ADS") {
+		return true
+	}
+	if strings.HasSuffix(trimmed, ",AdBlock") || strings.HasSuffix(trimmed, ",AdBlock,no-resolve") {
+		return true
+	}
+	if strings.HasSuffix(trimmed, ",广告拦截") || strings.HasSuffix(trimmed, ",广告拦截,no-resolve") {
+		return true
+	}
+	return false
 }
 
 func dropMatching(rules []string, drop func(string) bool) []string {
@@ -305,7 +423,7 @@ func firstPresent(m map[string]bool, keys []string) (string, bool) {
 }
 
 func ensureSelectGroup(cfg *config.RawConfig, name string) {
-	if name == "" || name == "DIRECT" || name == "REJECT" || name == "广告拦截" {
+	if name == "" || name == "DIRECT" || name == "REJECT" || nonGroupRuleOptions[name] {
 		return
 	}
 	for _, group := range cfg.ProxyGroup {
@@ -337,7 +455,7 @@ func dropGroup(groups []map[string]any, name string) []map[string]any {
 }
 
 func fallbackGroup(cfg *config.RawConfig, disabled map[string]bool) string {
-	prefer := []string{"主代理", "PROXY", "Proxy", "节点选择", "手动切换", "SELECT"}
+	prefer := []string{"默认代理", "主代理", "PROXY", "Proxy", "节点选择", "手动切换", "SELECT", "漏网之鱼"}
 	names := map[string]bool{}
 	first := ""
 	for _, group := range cfg.ProxyGroup {
@@ -346,7 +464,7 @@ func fallbackGroup(cfg *config.RawConfig, disabled map[string]bool) string {
 			continue
 		}
 		names[name] = true
-		if first == "" {
+		if first == "" && name != "GLOBAL" && name != "直连" && name != "AdBlock" && name != "广告拦截" {
 			first = name
 		}
 	}
@@ -358,7 +476,7 @@ func fallbackGroup(cfg *config.RawConfig, disabled map[string]bool) string {
 	if first != "" {
 		return first
 	}
-	return "REJECT"
+	return "DIRECT"
 }
 
 func retargetRules(rules []string, disabled map[string]bool, fallback string) []string {

@@ -29,11 +29,17 @@ func patchScriptOverride(cfg *config.RawConfig, profileDir string) error {
 }
 
 func applyScriptText(cfg *config.RawConfig, src string) error {
+	opts, _ := readScriptOptions()
+	groups := splitScriptOptions(opts.Values)
+	return applyScriptTextWithOptions(cfg, src, groups.rule)
+}
+
+func applyScriptTextWithOptions(cfg *config.RawConfig, src string, ruleOpts map[string]bool) error {
 	src = strings.TrimSpace(src)
 	if src == "" || !hasScriptMain(src) {
 		return nil
 	}
-	return runScriptMain(cfg, src)
+	return runScriptMain(cfg, src, ruleOpts)
 }
 
 func hasScriptMain(src string) bool {
@@ -92,7 +98,7 @@ func stripJSComments(src string) string {
 	return b.String()
 }
 
-func runScriptMain(cfg *config.RawConfig, src string) error {
+func runScriptMain(cfg *config.RawConfig, src string, ruleOpts map[string]bool) error {
 	blob, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
@@ -115,7 +121,13 @@ func runScriptMain(cfg *config.RawConfig, src string) error {
 		log.Warnln("script has no main(), skipped")
 		return nil
 	}
-	val, err := fn(goja.Undefined(), vm.ToValue(doc))
+	ctxVal := injectScriptRuleOptions(vm, ruleOpts)
+	var val goja.Value
+	if goja.IsUndefined(ctxVal) {
+		val, err = fn(goja.Undefined(), vm.ToValue(doc))
+	} else {
+		val, err = fn(goja.Undefined(), vm.ToValue(doc), ctxVal)
+	}
 	if err != nil {
 		return fmt.Errorf("script main: %w", err)
 	}
@@ -159,6 +171,48 @@ func runScriptMain(cfg *config.RawConfig, src string) error {
 	}
 	*cfg = *next
 	return nil
+}
+
+func injectScriptRuleOptions(vm *goja.Runtime, ruleOpts map[string]bool) goja.Value {
+	if len(ruleOpts) == 0 {
+		return goja.Undefined()
+	}
+	_ = vm.Set("__angelaRuleOptions", ruleOpts)
+	res, err := vm.RunString(`
+(function() {
+	var src = (typeof __angelaRuleOptions === 'object' && __angelaRuleOptions !== null) ? __angelaRuleOptions : {};
+	var filtered = {};
+	if (typeof ruleOptionsEnable === 'object' && ruleOptionsEnable !== null) {
+		for (var k in src) {
+			if (Object.prototype.hasOwnProperty.call(src, k) && typeof src[k] === 'boolean') {
+				if (Object.prototype.hasOwnProperty.call(ruleOptionsEnable, k)) {
+					try { ruleOptionsEnable[k] = src[k]; } catch (e) {}
+					filtered[k] = src[k];
+				}
+			}
+		}
+	} else {
+		for (var k in src) {
+			if (Object.prototype.hasOwnProperty.call(src, k) && typeof src[k] === 'boolean') {
+				filtered[k] = src[k];
+			}
+		}
+	}
+	if (typeof activeRuleOptions === 'object' && activeRuleOptions !== null) {
+		for (var k in filtered) {
+			if (Object.prototype.hasOwnProperty.call(filtered, k)) {
+				try { activeRuleOptions[k] = filtered[k]; } catch (e) {}
+			}
+		}
+	}
+	return { customOptions: filtered };
+})()
+`)
+	if err != nil {
+		log.Warnln("inject script rule options: %s", err.Error())
+		return goja.Undefined()
+	}
+	return res
 }
 
 func cloneYaml(v any) any {

@@ -1,5 +1,20 @@
 # Angela Clash 更新说明
 
+## 1.2.0
+
+- 客户端 `1.2.0`（`10200`）
+- 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
+- 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
+- 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
+
+### 这次更新
+
+- **修复覆写脚本分流开关关闭后服务无法启动的问题**：
+  1. 在 `script_override.go` 执行 `main(config, context)` 前，将用户在「覆写脚本 -> 分流显示选项」中切换的开关状态同步注入 Goja JS 引擎（同时更新脚本内 `ruleOptionsEnable` / `activeRuleOptions` 对象并传入 `context.customOptions`），使脚本在生成策略组阶段即按用户开关裁剪；
+  2. 在 `script_display.go` 与 `repair.go` 中新增 `repairRawConfig` 全量策略组引用与规则修复机制：当关闭「手动选择」、「自动选择」、「故障转移」、「负载均衡」或任意分流组时，自动从其余策略组（如 `默认代理`、`GLOBAL`、各分流组）的 `proxies` 列表与 `default-selected` 中移除已禁用的策略组引用，并在成员清空时自动回退至 `默认代理` 或 `include-all`，彻底杜绝 `proxy group[x]: 默认代理: '手动选择' not found` 启动报错；
+  3. 识别并排除 `极简模式`、`生成地区自动选择组`、`过滤非地区节点`、`屏蔽国外QUIC`、`屏蔽WebRTC`、`强制TUN` 等非策略组行为开关，不再误将布尔功能开关创建为同名 `select` 策略组。
+- **配置列表支持拖拽排序并跨进程持久化**：在配置管理页（`ProfilesActivity`）新增左侧拖拽手柄图标与长按卡片拖拽排序支持（`ItemTouchHelper`），拖动时提供缩放与透明度动效反馈，并将自定义排序结果实时持久化至 `ServiceStore`，重启应用或后台服务后依然保持用户设定的配置顺序。
+
 ## 1.1.9
 
 - 客户端 `1.1.9`（`10109`）
