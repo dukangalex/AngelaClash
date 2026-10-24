@@ -219,13 +219,15 @@ class ChainActivity : BaseActivity<ChainDesign>() {
         }
         var warned = false
         for (result in results) {
-            val found = result.getOrElse { e ->
+            val e = result.exceptionOrNull()
+            if (e != null) {
                 if (!warned) {
                     chainDesign.showToast(e.message ?: getString(R.string.chain_no_hops), ToastDuration.Long)
                     warned = true
                 }
                 continue
             }
+            val found = result.getOrNull() ?: continue
             found.forEach { hop ->
                 if (hop.profileId == current.uuid && hop.name == entry) return@forEach
                 hops.add(hop)
