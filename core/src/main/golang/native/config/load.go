@@ -54,10 +54,14 @@ func UnmarshalAndPatch(profilePath string) (*config.RawConfig, error) {
 		return nil, err
 	}
 
+	repairRawConfig(rawConfig)
+
 	return rawConfig, nil
 }
 
 func Parse(rawConfig *config.RawConfig) (*config.Config, error) {
+	repairRawConfig(rawConfig)
+
 	cfg, err := config.ParseRawConfig(rawConfig)
 	if err != nil {
 		return nil, err

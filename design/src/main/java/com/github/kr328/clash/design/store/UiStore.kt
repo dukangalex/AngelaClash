@@ -63,6 +63,16 @@ class UiStore(context: Context) {
         defaultValue = 2
     )
 
+    var proxyStyle: String by store.string(
+        key = "proxy_style",
+        defaultValue = "tab"
+    )
+
+    var proxySize: Int by store.int(
+        key = "proxy_size",
+        defaultValue = 0
+    )
+
     var proxySort: ProxySort by store.enum(
         key = "proxy_sort",
         defaultValue = ProxySort.Default,

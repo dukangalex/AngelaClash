@@ -77,7 +77,8 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                                     group.proxies,
                                     group.type == "Selector",
                                     state,
-                                    unorderedStates
+                                    unorderedStates,
+                                    group.type,
                                 )
                             }
                         }

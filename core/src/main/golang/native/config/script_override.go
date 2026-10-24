@@ -1,9 +1,11 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	P "path"
+	"regexp"
 	"strings"
 
 	"github.com/dop251/goja"
@@ -98,6 +100,97 @@ func stripJSComments(src string) string {
 	return b.String()
 }
 
+var ruleOptionsDeclRe = regexp.MustCompile(`(?:const|let|var)\s+ruleOptionsEnable\s*=`)
+
+// patchJSRuleOptionsInSource rewrites boolean literals inside the
+// `ruleOptionsEnable = { ... }` object literal before the script is evaluated,
+// ensuring top-level `const activeRuleOptions = ruleOptionsEnable` or spread
+// copies immediately observe the user's switch states.
+func patchJSRuleOptionsInSource(src string, ruleOpts map[string]bool) string {
+	if len(ruleOpts) == 0 {
+		return src
+	}
+	loc := ruleOptionsDeclRe.FindStringIndex(src)
+	if loc == nil {
+		return src
+	}
+	i := loc[1]
+	for i < len(src) && (src[i] == ' ' || src[i] == '\t' || src[i] == '\r' || src[i] == '\n') {
+		i++
+	}
+	if i >= len(src) || src[i] != '{' {
+		return src
+	}
+	end := matchJSBrace(src, i)
+	if end <= i {
+		return src
+	}
+	body := src[i+1 : end]
+	for k, v := range ruleOpts {
+		if k == "" {
+			continue
+		}
+		if k == "链式代理" && v {
+			// Native chain proxy is handled by patchChain; avoid triggering
+			// script errors when customizeProxies is empty.
+			continue
+		}
+		valStr := "false"
+		if v {
+			valStr = "true"
+		}
+		escaped := regexp.QuoteMeta(k)
+		re := regexp.MustCompile(`((?:["']` + escaped + `["']|` + escaped + `)\s*:\s*)(?:true|false)`)
+		body = re.ReplaceAllString(body, "${1}"+valStr)
+	}
+	return src[:i+1] + body + src[end:]
+}
+
+func matchJSBrace(src string, open int) int {
+	depth := 0
+	for i := open; i < len(src); i++ {
+		c := src[i]
+		if c == '"' || c == '\'' || c == '`' {
+			quote := c
+			i++
+			for i < len(src) {
+				if src[i] == '\\' {
+					i += 2
+					continue
+				}
+				if src[i] == quote {
+					break
+				}
+				i++
+			}
+			continue
+		}
+		if c == '/' && i+1 < len(src) && src[i+1] == '/' {
+			for i < len(src) && src[i] != '\n' {
+				i++
+			}
+			continue
+		}
+		if c == '/' && i+1 < len(src) && src[i+1] == '*' {
+			i += 2
+			for i+1 < len(src) && !(src[i] == '*' && src[i+1] == '/') {
+				i++
+			}
+			i++
+			continue
+		}
+		if c == '{' {
+			depth++
+		} else if c == '}' {
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
 func runScriptMain(cfg *config.RawConfig, src string, ruleOpts map[string]bool) error {
 	blob, err := yaml.Marshal(cfg)
 	if err != nil {
@@ -112,8 +205,10 @@ func runScriptMain(cfg *config.RawConfig, src string, ruleOpts map[string]bool) 
 	proxies = cloneYaml(proxies)
 	providers = cloneYaml(providers)
 
+	patchedSrc := patchJSRuleOptionsInSource(src, ruleOpts)
+
 	vm := goja.New()
-	if _, err = vm.RunString(src); err != nil {
+	if _, err = vm.RunString(patchedSrc); err != nil {
 		return fmt.Errorf("script: %w", err)
 	}
 	fn, ok := goja.AssertFunction(vm.Get("main"))
@@ -169,6 +264,7 @@ func runScriptMain(cfg *config.RawConfig, src string, ruleOpts map[string]bool) 
 	if err != nil {
 		return fmt.Errorf("script config: %w", err)
 	}
+	repairRawConfig(next)
 	*cfg = *next
 	return nil
 }
@@ -177,10 +273,24 @@ func injectScriptRuleOptions(vm *goja.Runtime, ruleOpts map[string]bool) goja.Va
 	if len(ruleOpts) == 0 {
 		return goja.Undefined()
 	}
-	_ = vm.Set("__angelaRuleOptions", ruleOpts)
+	rawJSON, err := json.Marshal(ruleOpts)
+	if err != nil {
+		return goja.Undefined()
+	}
+	_ = vm.Set("__angelaRuleOptionsJSON", string(rawJSON))
 	res, err := vm.RunString(`
 (function() {
-	var src = (typeof __angelaRuleOptions === 'object' && __angelaRuleOptions !== null) ? __angelaRuleOptions : {};
+	var src = {};
+	try {
+		src = JSON.parse(__angelaRuleOptionsJSON) || {};
+	} catch (e) {
+		src = {};
+	}
+	if (src['链式代理'] === true) {
+		if (typeof customizeProxies === 'undefined' || !Array.isArray(customizeProxies) || customizeProxies.length === 0) {
+			delete src['链式代理'];
+		}
+	}
 	var filtered = {};
 	if (typeof ruleOptionsEnable === 'object' && ruleOptionsEnable !== null) {
 		for (var k in src) {

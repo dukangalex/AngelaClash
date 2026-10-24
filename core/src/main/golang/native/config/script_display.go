@@ -392,6 +392,26 @@ func applyRouting(cfg *config.RawConfig, groups scriptGroups, scriptRan bool) {
 		ensureSelectGroup(cfg, name)
 	}
 
+	if genAuto, ok := rule["生成地区自动选择组"]; ok && (!genAuto || minimalMode) {
+		out := make([]map[string]any, 0, len(cfg.ProxyGroup))
+		for _, g := range cfg.ProxyGroup {
+			n, _ := g["name"].(string)
+			if strings.HasSuffix(n, "-自动选择") {
+				disabled[n] = true
+				continue
+			}
+			out = append(out, g)
+		}
+		cfg.ProxyGroup = out
+	}
+
+	if genRate, ok := rule["生成倍率组"]; ok && (!genRate || minimalMode) {
+		for _, rName := range []string{"低倍率", "高倍率", "低倍率-自动选择", "高倍率-自动选择"} {
+			cfg.ProxyGroup = dropGroup(cfg.ProxyGroup, rName)
+			disabled[rName] = true
+		}
+	}
+
 	cfg.Rule = retargetRules(cfg.Rule, disabled, fallback)
 	cfg.Rule = prependMissing(cfg.Rule, front)
 	repairRawConfig(cfg)

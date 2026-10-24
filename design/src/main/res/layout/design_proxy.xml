@@ -28,7 +28,15 @@
             android:layout_height="match_parent"
             android:orientation="horizontal" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/group_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:visibility="gone" />
+
         <LinearLayout
+            android:id="@+id/header_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
@@ -50,14 +58,30 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
-                        android:layout_toStartOf="@id/url_test_layout" />
+                        android:layout_toStartOf="@id/search_view" />
+
+                    <ImageView
+                        android:id="@+id/search_view"
+                        android:layout_width="@dimen/item_tailing_component_size"
+                        android:layout_height="@dimen/item_tailing_component_size"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="8dp"
+                        android:layout_toStartOf="@id/url_test_layout"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@android:string/search_go"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.toggleSearch()}"
+                        android:padding="@dimen/toolbar_image_action_padding"
+                        android:src="@drawable/ic_baseline_search"
+                        android:tint="?attr/colorControlNormal" />
 
                     <FrameLayout
                         android:id="@+id/url_test_layout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
-                        android:layout_marginStart="@dimen/item_tailing_margin"
+                        android:layout_marginStart="8dp"
                         android:layout_toStartOf="@id/rule_view">
 
                         <ImageView
@@ -85,13 +109,13 @@
                         android:layout_width="@dimen/item_tailing_component_size"
                         android:layout_height="@dimen/item_tailing_component_size"
                         android:layout_centerVertical="true"
-                        android:layout_marginStart="@dimen/item_tailing_margin"
+                        android:layout_marginStart="8dp"
                         android:layout_toStartOf="@id/menu_view"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
-                        android:contentDescription="@string/rule_switches"
+                        android:contentDescription="@string/settings"
                         android:focusable="true"
-                        android:onClick="@{() -> self.requestOpenRules()}"
+                        android:onClick="@{() -> self.openSettingsSheet()}"
                         android:padding="@dimen/toolbar_image_action_padding"
                         android:src="@drawable/ic_rule_switches"
                         android:tint="?attr/colorControlNormal" />
@@ -102,7 +126,7 @@
                         android:layout_height="@dimen/item_tailing_component_size"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        android:layout_marginStart="@dimen/item_tailing_margin"
+                        android:layout_marginStart="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:contentDescription="@string/more"
@@ -112,6 +136,64 @@
 
                 </RelativeLayout>
             </com.github.kr328.clash.design.view.ActivityBarLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/search_card"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginHorizontal="14dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="?attr/clashSurfaceVariant"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="?attr/clashOutline"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_baseline_search"
+                        android:tint="?android:attr/textColorSecondary" />
+
+                    <EditText
+                        android:id="@+id/search_input"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="搜索节点名称..."
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:singleLine="true"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?android:attr/textColorSecondary"
+                        android:textSize="14sp" />
+
+                    <ImageView
+                        android:id="@+id/search_close"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:importantForAccessibility="no"
+                        android:onClick="@{() -> self.clearOrCloseSearch()}"
+                        android:padding="3dp"
+                        android:src="@drawable/ic_baseline_close"
+                        android:tint="?android:attr/textColorSecondary" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tab_layout_view"

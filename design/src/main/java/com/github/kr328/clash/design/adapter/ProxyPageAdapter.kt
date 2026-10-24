@@ -24,6 +24,29 @@ class ProxyPageAdapter(
     private var parent: RecyclerView? = null
 
     val states = List(adapters.size) { ProxyPageState() }
+    private val allGroupStates = MutableList<List<ProxyViewState>>(adapters.size) { emptyList() }
+    private var searchQuery: String = ""
+
+    fun setSearchQuery(query: String) {
+        val normalized = query.trim().lowercase()
+        if (searchQuery == normalized) return
+        searchQuery = normalized
+        adapters.indices.forEach { position ->
+            val filtered = filterStates(allGroupStates[position])
+            adapters[position].states = filtered
+            adapters[position].notifyDataSetChanged()
+        }
+        requestRedrawVisible()
+    }
+
+    private fun filterStates(source: List<ProxyViewState>): List<ProxyViewState> {
+        if (searchQuery.isEmpty()) return source
+        return source.filter {
+            it.proxy.name.lowercase().contains(searchQuery) ||
+                it.proxy.title.lowercase().contains(searchQuery) ||
+                it.proxy.subtitle.lowercase().contains(searchQuery)
+        }
+    }
 
     suspend fun updateAdapter(
         position: Int,
@@ -41,9 +64,11 @@ class ProxyPageAdapter(
         }
 
         withContext(Dispatchers.Main) {
+            allGroupStates[position] = states
+            val visibleStates = filterStates(states)
             adapters[position].apply {
                 this.selectable = selectable
-                this.swapDataSet(this::states, states, false)
+                this.swapDataSet(this::states, visibleStates, false)
             }
 
             requestRedrawVisible()
@@ -51,8 +76,8 @@ class ProxyPageAdapter(
     }
 
     fun requestRedrawVisible() {
-        factory.fromRoot(parent?.firstVisibleView ?: return)
-            .recyclerView.invalidateChildren()
+        val visible = parent?.firstVisibleView ?: return
+        factory.fromRoot(visible).recyclerView.invalidateChildren()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProxyPageFactory.Holder {

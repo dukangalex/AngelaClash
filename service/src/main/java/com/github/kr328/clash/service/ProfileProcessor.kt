@@ -48,6 +48,7 @@ object ProfileProcessor {
                 }
 
                 Clash.setAgeSecretKey(snapshot.ageSecretKey?.takeIf { it.isNotBlank() })
+                ScriptDisplayStore(context).writeProfileFlag(context.processingDir, snapshot.uuid)
 
                 val force = snapshot.type != Profile.Type.File
                 val subscriptionInfo = fetchProfile(context, snapshot.source, force, callback)
@@ -108,6 +109,7 @@ object ProfileProcessor {
                 }
 
                 Clash.setAgeSecretKey(snapshot.ageSecretKey?.takeIf { it.isNotBlank() })
+                ScriptDisplayStore(context).writeProfileFlag(context.processingDir, snapshot.uuid)
 
                 val subscriptionInfo = fetchProfile(context, snapshot.source, true, callback)
 

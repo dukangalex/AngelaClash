@@ -1,5 +1,21 @@
 # Angela Clash 更新说明
 
+## 1.2.2
+
+- 客户端 `1.2.2`（`10202`）
+- 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
+- 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
+- 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
+
+### 这次更新
+
+- **彻底修复覆写脚本下分流开关关闭后服务无法启动的问题**：
+  1. **修复 Goja 宿主 Map 属性注入与源码级开关预注入（`script_override.go`）**：在执行 `vm.RunString` 前直接在脚本源码的 `ruleOptionsEnable` 对象字面量内重写用户开关状态（兼容 `const activeRuleOptions = ruleOptionsEnable` 顶层绑定与单参 `main(config)` 脚本），并将运行期注入参数改为 JSON 原生对象解析，同时在脚本未定义 `customizeProxies` 时隔离 `链式代理` 脚本校验报错；
+  2. **增强无环策略组修复与 DAG 自环断路器（`repair.go` & `load.go`）**：当用户关闭「手动选择」、「自动选择」、「负载均衡」、「故障转移」、「生成地区自动选择组」、「生成倍率组」或任意分流组开关时，自动清理所有策略组 `proxies` / `use` / `default-selected` / `empty-fallback` 中的失效引用，对成员被清空的策略组自动回填真实节点列表（不再回填 `默认代理` 避免形成双向依赖环），内置 DFS 环路断路器并在 `RULE-SET` 规则集未定义时自动剔除悬挂规则。
+- **代理页面（`ProxyActivity` / `ProxyDesign`）全新底部设置面板与可折叠分组列表模式**：
+  1. **全新「设置」底部弹窗（`ProxyMenu`）**：将代理页右上角菜单升级为圆角底部抽屉面板，提供 **风格**（`标签页` / `列表`）、**排序**（`默认` / `延迟` / `名称`）、**布局**（`宽松` 单列 / `标准` 双列 / `紧凑` 三列）与 **尺寸**（`标准` / `紧凑` / `最小` 三档卡片密度）四组胶囊分段控制器；
+  2. **新增「列表」可折叠手风琴策略组视图（`ProxyGroupListAdapter`）与节点实时搜索**：在列表风格下，每个策略组展示当前类型与选中节点摘要（如 `Selector • 自动选择`）、定位当前节点按钮、单组并发测速按钮与圆形折叠箭头，展开即可在组内直接网格选点，顶部新增节点关键字实时搜索栏。
+
 ## 1.2.1
 
 - 客户端 `1.2.1`（`10201`）

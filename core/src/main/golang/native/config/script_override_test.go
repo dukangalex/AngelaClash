@@ -186,6 +186,48 @@ function main(config, context) {
 	}
 }
 
+func TestSingleArgScriptConstRuleOptionsDisabled(t *testing.T) {
+	raw, err := config.UnmarshalRawConfig([]byte(sampleProfile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	script := `
+const ruleOptionsEnable = {
+  手动选择: true,
+  自动选择: true,
+  链式代理: false,
+};
+const activeRuleOptions = ruleOptionsEnable;
+function main(config) {
+  const baseGroups = [];
+  if (activeRuleOptions.手动选择) baseGroups.push("手动选择");
+  if (activeRuleOptions.自动选择) baseGroups.push("自动选择");
+  const groups = [{ name: "默认代理", type: "select", proxies: [...baseGroups] }];
+  if (activeRuleOptions.手动选择) {
+    groups.push({ name: "手动选择", type: "select", proxies: ["node-a"] });
+  }
+  if (activeRuleOptions.自动选择) {
+    groups.push({ name: "自动选择", type: "url-test", proxies: ["node-a"] });
+  }
+  config["proxy-groups"] = groups;
+  config.rules = ["RULE-SET,missing_set,默认代理", "MATCH,默认代理"];
+  return config;
+}
+`
+	opts := map[string]bool{
+		"手动选择": false,
+		"自动选择": false,
+		"链式代理": true,
+	}
+	if err = applyScriptTextWithOptions(raw, script, opts); err != nil {
+		t.Fatal(err)
+	}
+	applyRouting(raw, scriptGroups{rule: opts}, true)
+	if _, err := Parse(raw); err != nil {
+		t.Fatalf("Parse failed when all base groups were disabled: %v", err)
+	}
+}
+
 func containsName(v any, name string) bool {
 	switch list := v.(type) {
 	case []string:
