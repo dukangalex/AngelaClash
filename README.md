@@ -83,10 +83,6 @@ Angela Clash 建立在上游开源工作之上：
 - [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid)，本客户端的上游界面与服务框架
 <<<<<<< HEAD
  
-=======
-- [Bettbox](https://github.com/appshubcc/Bettbox)，UI 设计参考
-
->>>>>>> origin/docs/release-channel-version-sync
 上述致谢不构成从属、授权或官方认可。
 
 ## 许可
