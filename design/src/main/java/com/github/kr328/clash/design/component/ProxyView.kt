@@ -40,10 +40,12 @@ class ProxyView(
         }
 
         val textHeight = state.rect.height()
+        val lineMultiplier = if (state.config.singleLine) 1 else 2
+        val extraVertical = if (state.config.singleLine) (4f * state.config.density).toInt() else state.config.textMargin.toInt()
         val exceptHeight = (state.config.layoutPadding * 2 +
                 state.config.contentPadding * 2 +
-                textHeight * 2 +
-                state.config.textMargin).toInt()
+                textHeight * lineMultiplier +
+                extraVertical).toInt()
 
         val height = when (MeasureSpec.getMode(heightMeasureSpec)) {
             MeasureSpec.UNSPECIFIED ->
@@ -109,8 +111,33 @@ class ProxyView(
 
         val width = width.toFloat()
         val height = height.toFloat()
+        val d = state.config.density
 
-        val delayTextSize = state.config.textSize * 0.86f
+        // Draw BettBox-style left accent bar when selected
+        val indicatorShift = if (state.isSelected) 6.5f * d else 0f
+        if (state.isSelected) {
+            paint.reset()
+            paint.isAntiAlias = true
+            paint.style = Paint.Style.FILL
+            paint.color = state.config.selectedControl
+            val barWidth = 3.0f * d
+            val barLeft = state.config.layoutPadding + state.config.contentPadding * 0.55f
+            val innerHeight = (height - state.config.layoutPadding * 2).coerceAtLeast(0f)
+            val barHeight = (innerHeight * if (state.config.singleLine) 0.48f else 0.44f).coerceAtLeast(8f * d)
+            val barTop = (height - barHeight) / 2f
+            val barRadius = barWidth / 2f
+            canvas.drawRoundRect(
+                barLeft,
+                barTop,
+                barLeft + barWidth,
+                barTop + barHeight,
+                barRadius,
+                barRadius,
+                paint
+            )
+        }
+
+        val delayTextSize = state.config.textSize * 0.85f
         paint.textSize = delayTextSize
         paint.isFakeBoldText = true
 
@@ -118,39 +145,30 @@ class ProxyView(
         val delayCount = paint.breakText(
             state.delayText,
             false,
-            (width - state.config.layoutPadding * 2 - state.config.contentPadding * 2)
+            (width - state.config.layoutPadding * 2 - state.config.contentPadding * 2 - indicatorShift)
                 .coerceAtLeast(0f),
             null
         )
 
         state.paint.getTextBounds(state.delayText, 0, delayCount, state.rect)
 
-        val delayPadH = if (delayCount > 0) 6f * state.config.density else 0f
-        val delayPadV = if (delayCount > 0) 3.5f * state.config.density else 0f
+        val delayPadH = if (delayCount > 0) 6f * d else 0f
+        val delayPadV = if (delayCount > 0) 3.5f * d else 0f
         val delayWidth = if (delayCount > 0) state.rect.width() + delayPadH * 2 else 0f
 
         paint.textSize = state.config.textSize
         val mainTextWidth = (width -
                 state.config.layoutPadding * 2 -
                 state.config.contentPadding * 2 -
+                indicatorShift -
                 delayWidth -
-                state.config.textMargin * 2
+                (if (delayCount > 0) 6f * d else 0f)
                 )
             .coerceAtLeast(0f)
 
         // measure title text bounds
         val titleCount = paint.breakText(
             state.title,
-            false,
-            mainTextWidth,
-            null,
-        )
-
-        // measure subtitle text bounds
-        paint.textSize = state.config.textSize * 0.86f
-        paint.isFakeBoldText = false
-        val subtitleCount = paint.breakText(
-            state.subtitle,
             false,
             mainTextWidth,
             null,
@@ -174,7 +192,7 @@ class ProxyView(
 
             paint.style = Paint.Style.FILL
             paint.color = android.graphics.Color.argb(
-                30,
+                32,
                 android.graphics.Color.red(state.delayColor),
                 android.graphics.Color.green(state.delayColor),
                 android.graphics.Color.blue(state.delayColor),
@@ -185,6 +203,31 @@ class ProxyView(
             canvas.drawText(state.delayText, 0, delayCount, textX, textY, paint)
         }
 
+        val textStartX = state.config.layoutPadding + state.config.contentPadding + indicatorShift
+
+        if (state.config.singleLine) {
+            // Single-line minimal mode: center title vertically
+            paint.reset()
+            paint.textSize = state.config.textSize
+            paint.isAntiAlias = true
+            paint.isFakeBoldText = true
+            paint.color = state.controls
+            val titleOffset = (paint.descent() + paint.ascent()) / 2
+            val y = height / 2f - titleOffset
+            canvas.drawText(state.title, 0, titleCount, textStartX, y, paint)
+            return
+        }
+
+        // measure subtitle text bounds
+        paint.textSize = state.config.textSize * 0.85f
+        paint.isFakeBoldText = false
+        val subtitleCount = paint.breakText(
+            state.subtitle,
+            false,
+            mainTextWidth,
+            null,
+        )
+
         // draw title
         paint.reset()
         paint.textSize = state.config.textSize
@@ -193,27 +236,25 @@ class ProxyView(
         paint.color = state.controls
         val titleOffset = (paint.descent() + paint.ascent()) / 2
         canvas.apply {
-            val x = state.config.layoutPadding + state.config.contentPadding
             val y = state.config.layoutPadding +
                     (height - state.config.layoutPadding * 2) * 0.36f - titleOffset
 
-            drawText(state.title, 0, titleCount, x, y, paint)
+            drawText(state.title, 0, titleCount, textStartX, y, paint)
         }
 
         // draw subtitle
         paint.reset()
-        paint.textSize = state.config.textSize * 0.86f
+        paint.textSize = state.config.textSize * 0.85f
         paint.isAntiAlias = true
         paint.isFakeBoldText = false
         paint.color = state.controls
         paint.alpha = if (state.isSelected) 220 else 165
         val subOffset = (paint.descent() + paint.ascent()) / 2
         canvas.apply {
-            val x = state.config.layoutPadding + state.config.contentPadding
             val y = state.config.layoutPadding +
                     (height - state.config.layoutPadding * 2) * 0.68f - subOffset
 
-            drawText(state.subtitle, 0, subtitleCount, x, y, paint)
+            drawText(state.subtitle, 0, subtitleCount, textStartX, y, paint)
         }
     }
 }

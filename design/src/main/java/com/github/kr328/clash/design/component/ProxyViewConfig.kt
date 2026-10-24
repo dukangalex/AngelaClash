@@ -26,10 +26,13 @@ class ProxyViewConfig(
     val outlineColor = context.resolveThemedColor(R.attr.clashOutline)
     val density = context.resources.displayMetrics.density
 
+    val singleLine: Boolean
+        get() = proxySize == 2
+
     val layoutPadding: Float
         get() = when (proxySize) {
-            2 -> 3.5f * density
-            1 -> 4.2f * density
+            2 -> 3.0f * density
+            1 -> 4.0f * density
             else -> context.getPixels(R.dimen.proxy_layout_padding).toFloat()
         }
 
@@ -41,8 +44,8 @@ class ProxyViewConfig(
                 context.getPixels(R.dimen.proxy_content_padding_grid3).toFloat()
             }
             return when (proxySize) {
-                2 -> base * 0.56f
-                1 -> base * 0.76f
+                2 -> base * 0.68f
+                1 -> base * 0.80f
                 else -> base
             }
         }
@@ -55,7 +58,7 @@ class ProxyViewConfig(
                 context.getPixels(R.dimen.proxy_text_margin_grid3).toFloat()
             }
             return when (proxySize) {
-                2 -> base * 0.35f
+                2 -> 0f
                 1 -> base * 0.65f
                 else -> base
             }
@@ -69,8 +72,8 @@ class ProxyViewConfig(
                 context.getPixels(R.dimen.proxy_text_size_grid3).toFloat()
             }
             return when (proxySize) {
-                2 -> base * 0.86f
-                1 -> base * 0.93f
+                2 -> base * 0.88f
+                1 -> base * 0.94f
                 else -> base
             }
         }
@@ -79,8 +82,8 @@ class ProxyViewConfig(
         get() {
             val base = context.getPixels(R.dimen.proxy_card_radius).toFloat()
             return when (proxySize) {
-                2 -> base * 0.68f
-                1 -> base * 0.82f
+                2 -> base * 0.72f
+                1 -> base * 0.85f
                 else -> base
             }
         }

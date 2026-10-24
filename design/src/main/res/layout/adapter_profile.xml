@@ -62,32 +62,39 @@
             android:orientation="vertical"
             android:paddingVertical="14dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@{profile.name}"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@{profile.name}"
+                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_profile_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:text="@string/profile_active_badge"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="@{profile.active ? View.VISIBLE : View.GONE}" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_profile_badge"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:text="@string/profile_active_badge"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:visibility="@{profile.active ? View.VISIBLE : View.GONE}" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@{profile.pending ? @string/format_type_unsaved(I18nKt.toString(profile.type, context)) : I18nKt.toString(profile.type, context)}"
@@ -101,24 +108,42 @@
                 android:orientation="vertical"
                 android:visibility="@{profile.total > 1 || profile.download + profile.upload > 1 ? View.VISIBLE : View.GONE}">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@{profile.total > 1 ? @string/profile_usage_with_total(I18nKt.toBytesString(profile.download + profile.upload), I18nKt.toBytesString(profile.total)) : @string/profile_usage(I18nKt.toBytesString(profile.download + profile.upload))}"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@{profile.total > 1 ? @string/profile_usage_with_total(I18nKt.toBytesString(profile.download + profile.upload), I18nKt.toBytesString(profile.total)) : @string/profile_usage(I18nKt.toBytesString(profile.download + profile.upload))}"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text='@{profile.total > 1 ? (I18nKt.toProgress((profile.download + profile.upload) / (profile.total / 1000)) / 10) + "%" : ""}'
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="@{profile.total > 1 ? View.VISIBLE : View.GONE}" />
+                </LinearLayout>
 
                 <ProgressBar
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="6dp"
                     android:max="1000"
                     android:progress="@{profile.total > 1 ? I18nKt.toProgress((profile.download + profile.upload) / (profile.total / 1000)) : 0}"
-                    android:progressTint="?attr/colorPrimary"
+                    android:progressDrawable="@drawable/bg_traffic_progress"
                     android:visibility="@{profile.total > 1 ? View.VISIBLE : View.GONE}" />
             </LinearLayout>
 

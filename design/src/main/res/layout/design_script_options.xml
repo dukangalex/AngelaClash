@@ -309,9 +309,42 @@
                             android:id="@+id/rule_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
+                            android:layout_marginStart="8dp"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/rule_enable_all"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_profile_badge"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.setAllRules(true)}"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="4dp"
+                            android:text="全开"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/rule_disable_all"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_b"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.setAllRules(false)}"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="4dp"
+                            android:text="全关"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <LinearLayout

@@ -1,5 +1,19 @@
 # Angela Clash 更新说明
 
+## 1.2.4
+
+- 客户端 `1.2.4`（`10204`）
+- 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
+- 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
+- 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
+
+### 这次更新
+
+- **深度参考 BettBox 交互逻辑与 UI 视觉细节升级**：
+  1. **代理节点卡片「最小」单行模式与选中态左侧高亮指示条（`ProxyView.kt` & `ProxyViewConfig.kt`）**：当尺寸设为「最小」时，节点卡片自动切换为紧凑单行高度（仅保留节点名称与右侧延迟胶囊，隐藏第二行副标题），并在所有选中态节点卡片左侧绘制圆角主色竖向指示条，大幅提升多列高密度视图下的可读性与辨识度；
+  2. **代理页双模式「定位当前节点（`◎`）」与策略组头部信息升级（`ProxyGroupListAdapter.kt` / `ProxyPageAdapter.kt` / `ProxyDesign.kt`）**：在「列表」与「标签页」模式下均支持通过右下角悬浮 `◎` 按钮、策略组头部 `◎` 图标或重复点击当前标签页直接平滑滚动定位至当前选中的节点；列表模式下每个策略组头部新增节点数量胶囊（支持搜索过滤计数 `filtered/total`）与当前选中节点的实时分色延迟胶囊；
+  3. **订阅配置卡片（`adapter_profile.xml`）与分流显示选项（`ScriptOptionsDesign.kt`）体验升级**：订阅卡片改为标题同行内联展示「使用中」徽章、已用流量百分比及 `6dp` 圆角进度条（`bg_traffic_progress`），未选中卡片补充清晰轮廓描边；覆写脚本「分流显示选项」新增「全开 / 全关」一键批量切换按钮与开启态卡片高亮描边。
+
 ## 1.2.3
 
 - 客户端 `1.2.3`（`10203`）

@@ -133,6 +133,17 @@ class ScriptDisplayStore(private val context: Context) {
         writePersisted(readPersisted().scriptEnabled, values)
     }
 
+    fun setGroupOptions(group: String, updates: Map<String, Boolean>) {
+        if (updates.isEmpty()) return
+        val values = effectiveValues()
+        for ((name, on) in updates) {
+            if (name.isNotBlank()) {
+                values[key(group, name)] = on
+            }
+        }
+        writePersisted(readPersisted().scriptEnabled, values)
+    }
+
     fun vpnHints(): VpnHints {
         val values = effectiveValues()
         fun on(group: String, name: String, fallback: Boolean): Boolean =

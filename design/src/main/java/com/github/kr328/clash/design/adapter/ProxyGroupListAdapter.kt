@@ -31,6 +31,7 @@ class ProxyGroupListAdapter(
     groupNames: List<String>,
     private val onSelect: (groupIndex: Int, proxyName: String) -> Unit,
     private val onUrlTest: (groupIndex: Int) -> Unit,
+    private val onLocate: (groupIndex: Int, proxyIndex: Int, proxyName: String) -> Unit = { _, _, _ -> },
 ) : RecyclerView.Adapter<ProxyGroupListAdapter.GroupHolder>() {
 
     class GroupItem(
@@ -101,6 +102,17 @@ class ProxyGroupListAdapter(
         notifyDataSetChanged()
     }
 
+    fun locateExpandedOrFirstGroup(): Triple<Int, Int, String>? {
+        if (items.isEmpty()) return null
+        val targetItem = items.firstOrNull { it.expanded } ?: items.first()
+        if (!targetItem.expanded) {
+            targetItem.expanded = true
+            notifyItemChanged(targetItem.index)
+        }
+        val proxyIdx = targetItem.filteredStates.indexOfFirst { it.proxy.name == targetItem.now }
+        return Triple(targetItem.index, proxyIdx, targetItem.now)
+    }
+
     private fun applyFilter(item: GroupItem) {
         if (searchQuery.isEmpty()) {
             item.filteredStates = item.allStates
@@ -121,6 +133,7 @@ class ProxyGroupListAdapter(
         val colorOutline = context.resolveThemedColor(R.attr.clashOutline)
         val colorOnSurface = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val colorSecondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
+        val colorPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         val selectableBg = context.resolveThemedResourceId(android.R.attr.selectableItemBackgroundBorderless)
 
         val card = MaterialCardView(context).apply {
@@ -163,19 +176,58 @@ class ProxyGroupListAdapter(
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
 
+        val titleLine = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+
         val titleView = TextView(context).apply {
             textSize = 16f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(colorOnSurface)
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
         }
 
-        val subtitleView = TextView(context).apply {
-            textSize = 13f
-            setTextColor(colorSecondary)
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
+        val countBadge = TextView(context).apply {
+            textSize = 11f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(colorPrimary)
+            setPadding(dp(6), dp(1), dp(6), dp(1))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(999).toFloat()
+                setColor(
+                    android.graphics.Color.argb(
+                        28,
+                        android.graphics.Color.red(colorPrimary),
+                        android.graphics.Color.green(colorPrimary),
+                        android.graphics.Color.blue(colorPrimary),
+                    )
+                )
+            }
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                marginStart = dp(6)
+            }
+        }
+
+        titleLine.addView(titleView)
+        titleLine.addView(countBadge)
+
+        val subtitleLine = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -184,8 +236,37 @@ class ProxyGroupListAdapter(
             }
         }
 
-        titleCol.addView(titleView)
-        titleCol.addView(subtitleView)
+        val subtitleView = TextView(context).apply {
+            textSize = 13f
+            setTextColor(colorSecondary)
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f,
+            )
+        }
+
+        val delayBadge = TextView(context).apply {
+            textSize = 11f
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(dp(6), dp(2), dp(6), dp(2))
+            visibility = View.GONE
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                marginStart = dp(6)
+                marginEnd = dp(6)
+            }
+        }
+
+        subtitleLine.addView(subtitleView)
+        subtitleLine.addView(delayBadge)
+
+        titleCol.addView(titleLine)
+        titleCol.addView(subtitleLine)
 
         // Locate / Target icon button (◎)
         val locateBtn = CrosshairIconView(context, colorSecondary).apply {
@@ -273,7 +354,9 @@ class ProxyGroupListAdapter(
             card = card,
             headerRow = headerRow,
             titleView = titleView,
+            countBadge = countBadge,
             subtitleView = subtitleView,
+            delayBadge = delayBadge,
             locateBtn = locateBtn,
             testBtn = testBtn,
             testProgress = testProgress,
@@ -283,12 +366,56 @@ class ProxyGroupListAdapter(
         )
     }
 
+    private fun bindHeaderDelayBadge(badge: TextView, item: GroupItem) {
+        val activeState = item.allStates.firstOrNull { it.proxy.name == item.now }
+        val delay = activeState?.proxy?.delay ?: 0
+        if (delay in 1..Short.MAX_VALUE) {
+            val d = context.resources.displayMetrics.density
+            val delayColor = when {
+                delay < 200 -> android.graphics.Color.parseColor("#10B981")
+                delay < 500 -> android.graphics.Color.parseColor("#F59E0B")
+                else -> android.graphics.Color.parseColor("#EF4444")
+            }
+            badge.text = "$delay ms"
+            badge.setTextColor(delayColor)
+            badge.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 999f * d
+                setColor(
+                    android.graphics.Color.argb(
+                        32,
+                        android.graphics.Color.red(delayColor),
+                        android.graphics.Color.green(delayColor),
+                        android.graphics.Color.blue(delayColor),
+                    )
+                )
+            }
+            badge.visibility = View.VISIBLE
+        } else {
+            badge.visibility = View.GONE
+        }
+    }
+
     override fun onBindViewHolder(holder: GroupHolder, position: Int) {
         val item = items[position]
 
         holder.titleView.text = item.name
+        val totalCount = item.allStates.size
+        val filteredCount = item.filteredStates.size
+        if (totalCount > 0) {
+            holder.countBadge.text = if (searchQuery.isNotEmpty() && filteredCount != totalCount) {
+                "$filteredCount/$totalCount"
+            } else {
+                "$totalCount"
+            }
+            holder.countBadge.visibility = View.VISIBLE
+        } else {
+            holder.countBadge.visibility = View.GONE
+        }
+
         val nowLabel = item.now.ifBlank { "-" }
         holder.subtitleView.text = "${item.typeName} • $nowLabel"
+        bindHeaderDelayBadge(holder.delayBadge, item)
 
         holder.chevronView.expanded = item.expanded
         holder.divider.visibility = if (item.expanded) View.VISIBLE else View.GONE
@@ -319,6 +446,8 @@ class ProxyGroupListAdapter(
                 item.expanded = true
                 notifyItemChanged(position)
             }
+            val selectedIdx = item.filteredStates.indexOfFirst { it.proxy.name == item.now }
+            onLocate(position, selectedIdx, item.now)
         }
 
         if (item.expanded) {
@@ -326,6 +455,7 @@ class ProxyGroupListAdapter(
                 if (item.selectable) {
                     item.now = proxyName
                     holder.subtitleView.text = "${item.typeName} • $proxyName"
+                    bindHeaderDelayBadge(holder.delayBadge, item)
                     onSelect(item.index, proxyName)
                     holder.gridView.adapter?.notifyDataSetChanged()
                 }
@@ -343,7 +473,9 @@ class ProxyGroupListAdapter(
         val card: MaterialCardView,
         val headerRow: View,
         val titleView: TextView,
+        val countBadge: TextView,
         val subtitleView: TextView,
+        val delayBadge: TextView,
         val locateBtn: View,
         val testBtn: ImageView,
         val testProgress: ProgressBar,

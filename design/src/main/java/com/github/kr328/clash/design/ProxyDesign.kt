@@ -164,12 +164,52 @@ class ProxyDesign(
             binding.tabLayoutView.visibility = View.GONE
             binding.pagesView.visibility = View.GONE
             binding.groupListView.visibility = View.VISIBLE
+            binding.locateCard.visibility = View.VISIBLE
         } else {
             binding.tabLayoutView.visibility = View.VISIBLE
             binding.pagesView.visibility = View.VISIBLE
             binding.groupListView.visibility = View.GONE
+            binding.locateCard.visibility = View.VISIBLE
         }
         updateUrlTestButtonStatus()
+    }
+
+    fun locateCurrentNode() {
+        if (groupNames.isEmpty()) return
+        if (uiStore.proxyStyle == "list") {
+            val located = groupListAdapter?.locateExpandedOrFirstGroup() ?: return
+            scrollGroupListToNode(located.first, located.second, located.third)
+        } else {
+            val currentTab = binding.pagesView.currentItem
+            val name = adapter.scrollToSelected(currentTab)
+            if (!name.isNullOrBlank()) {
+                Toast.makeText(context, "已定位: $name", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun scrollGroupListToNode(groupIndex: Int, proxyIndex: Int, proxyName: String) {
+        val lm = binding.groupListView.layoutManager as? LinearLayoutManager ?: return
+        val d = context.resources.displayMetrics.density
+        val columns = config.proxyLine.coerceIn(1, 3)
+        val rowIndex = if (proxyIndex >= 0) proxyIndex / columns else 0
+        val estimatedCardHeight = when (config.proxySize) {
+            2 -> (44 * d).toInt()
+            1 -> (56 * d).toInt()
+            else -> (66 * d).toInt()
+        }
+        val headerOffset = (76 * d).toInt()
+        val targetOffset = if (proxyIndex >= 0) {
+            -(headerOffset + rowIndex * estimatedCardHeight) + (binding.groupListView.height / 3)
+        } else {
+            (16 * d).toInt()
+        }
+        binding.groupListView.post {
+            lm.scrollToPositionWithOffset(groupIndex, targetOffset.coerceAtMost((24 * d).toInt()))
+        }
+        if (proxyName.isNotBlank()) {
+            Toast.makeText(context, "已定位: $proxyName", Toast.LENGTH_SHORT).show()
+        }
     }
 
     init {
@@ -203,6 +243,7 @@ class ProxyDesign(
             binding.elevationView.visibility = View.GONE
             binding.pagesView.visibility = View.GONE
             binding.groupListView.visibility = View.GONE
+            binding.locateCard.visibility = View.GONE
         } else {
             binding.pagesView.apply {
                 adapter = ProxyPageAdapter(
@@ -233,6 +274,15 @@ class ProxyDesign(
                 tab.text = groupNames[index]
             }.attach()
 
+            binding.tabLayoutView.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) = Unit
+                override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab?) = Unit
+                override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {
+                    val pos = tab?.position ?: return
+                    adapter.scrollToSelected(pos)
+                }
+            })
+
             val listAdapter = ProxyGroupListAdapter(
                 context = context,
                 config = config,
@@ -242,6 +292,9 @@ class ProxyDesign(
                 },
                 onUrlTest = { groupIndex ->
                     requests.trySend(Request.UrlTest(groupIndex))
+                },
+                onLocate = { groupIndex, proxyIndex, proxyName ->
+                    scrollGroupListToNode(groupIndex, proxyIndex, proxyName)
                 },
             )
             groupListAdapter = listAdapter

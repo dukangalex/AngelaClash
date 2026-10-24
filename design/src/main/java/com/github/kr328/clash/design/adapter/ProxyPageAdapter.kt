@@ -25,6 +25,7 @@ class ProxyPageAdapter(
 
     val states = List(adapters.size) { ProxyPageState() }
     private val allGroupStates = MutableList<List<ProxyViewState>>(adapters.size) { emptyList() }
+    private val groupSelectedNames = MutableList(adapters.size) { "" }
     private var searchQuery: String = ""
 
     fun setSearchQuery(query: String) {
@@ -65,6 +66,7 @@ class ProxyPageAdapter(
 
         withContext(Dispatchers.Main) {
             allGroupStates[position] = states
+            groupSelectedNames[position] = parent.now
             val visibleStates = filterStates(states)
             adapters[position].apply {
                 this.selectable = selectable
@@ -73,6 +75,20 @@ class ProxyPageAdapter(
 
             requestRedrawVisible()
         }
+    }
+
+    fun scrollToSelected(position: Int): String? {
+        if (position !in adapters.indices) return null
+        val selectedName = groupSelectedNames[position]
+        val list = adapters[position].states
+        val targetIdx = list.indexOfFirst {
+            it.isSelected || (selectedName.isNotEmpty() && it.proxy.name == selectedName)
+        }
+        if (targetIdx < 0) return selectedName.ifBlank { null }
+        val visible = parent?.firstVisibleView ?: return selectedName.ifBlank { null }
+        val rv = factory.fromRoot(visible).recyclerView
+        rv.smoothScrollToPosition(targetIdx)
+        return list[targetIdx].proxy.name
     }
 
     fun requestRedrawVisible() {

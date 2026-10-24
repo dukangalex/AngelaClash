@@ -23,7 +23,7 @@ import com.google.android.material.card.MaterialCardView
 
 class ScriptOptionsDesign(
     context: Context,
-    store: ScriptDisplayStore,
+    private val store: ScriptDisplayStore,
     running: Boolean,
 ) : Design<ScriptOptionsDesign.Request>(context) {
     enum class Request {
@@ -37,6 +37,8 @@ class ScriptOptionsDesign(
         .inflate(context.layoutInflater, context.root, false)
     private var ruleRows: List<ScriptDisplayStore.Row> = emptyList()
     private val ruleSwitches = mutableListOf<SwitchCompat>()
+    private val ruleCards = mutableListOf<MaterialCardView>()
+    private var suppressSwitchCallback = false
 
     override val root: View
         get() = binding.root
@@ -58,6 +60,32 @@ class ScriptOptionsDesign(
 
     fun request(request: Request) {
         requests.trySend(request)
+    }
+
+    fun setAllRules(enabled: Boolean) {
+        if (ruleRows.isEmpty()) return
+        val updates = LinkedHashMap<String, Boolean>()
+        ruleRows.forEach { row ->
+            if (row.name.isNotBlank()) {
+                updates[row.name] = enabled
+            }
+        }
+        store.setGroupOptions(ScriptDisplayStore.GROUP_RULE, updates)
+        suppressSwitchCallback = true
+        val activeStroke = ColorUtils.setAlphaComponent(
+            context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary),
+            140,
+        )
+        val inactiveStroke = context.resolveThemedColor(R.attr.clashOutline)
+        ruleSwitches.forEachIndexed { idx, sw ->
+            if (sw.isEnabled) {
+                sw.isChecked = enabled
+                ruleCards.getOrNull(idx)?.setStrokeColor(if (enabled) activeStroke else inactiveStroke)
+            }
+        }
+        suppressSwitchCallback = false
+        updateRuleCount()
+        requests.trySend(Request.Reload)
     }
 
     fun showSource(url: String, syncedAt: Long, busy: Boolean) {
@@ -91,14 +119,19 @@ class ScriptOptionsDesign(
         val snap = store.snapshot()
         ruleRows = snap.sections.firstOrNull()?.rows.orEmpty()
         binding.ruleCard.visibility = View.VISIBLE
-        binding.ruleEmpty.visibility = if (ruleRows.isEmpty()) View.VISIBLE else View.GONE
-        binding.ruleCount.visibility = if (ruleRows.isEmpty()) View.GONE else View.VISIBLE
+        val emptyVis = if (ruleRows.isEmpty()) View.VISIBLE else View.GONE
+        val actionVis = if (ruleRows.isEmpty()) View.GONE else View.VISIBLE
+        binding.ruleEmpty.visibility = emptyVis
+        binding.ruleCount.visibility = actionVis
+        binding.ruleEnableAll.visibility = actionVis
+        binding.ruleDisableAll.visibility = actionVis
         renderRuleRows(store)
     }
 
     private fun renderRuleRows(store: ScriptDisplayStore) {
         binding.ruleRows.removeAllViews()
         ruleSwitches.clear()
+        ruleCards.clear()
         ruleRows.forEachIndexed { index, row ->
             binding.ruleRows.addView(ruleRow(store, row, index))
         }
@@ -111,6 +144,10 @@ class ScriptOptionsDesign(
         }
         val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
+        val colorPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
+        val activeStroke = ColorUtils.setAlphaComponent(colorPrimary, 140)
+        val inactiveStroke = context.resolveThemedColor(R.attr.clashOutline)
+
         val title = TextView(context).apply {
             text = displayName
             textSize = 16f
@@ -138,6 +175,7 @@ class ScriptOptionsDesign(
                 })
             }
         }
+        lateinit var cardView: MaterialCardView
         val toggle = SwitchCompat(context).apply {
             isChecked = row.on
             contentDescription = buildString {
@@ -150,6 +188,8 @@ class ScriptOptionsDesign(
             minHeight = dp(48)
             isEnabled = row.name.isNotBlank()
             setOnCheckedChangeListener { _, enabled ->
+                if (suppressSwitchCallback) return@setOnCheckedChangeListener
+                cardView.setStrokeColor(if (enabled) activeStroke else inactiveStroke)
                 store.setOption(ScriptDisplayStore.GROUP_RULE, row.name, enabled)
                 updateRuleCount()
                 requests.trySend(Request.Reload)
@@ -181,12 +221,12 @@ class ScriptOptionsDesign(
             }
         }
 
-        return MaterialCardView(context).apply {
+        cardView = MaterialCardView(context).apply {
             radius = dp(16).toFloat()
             cardElevation = 0f
             setCardBackgroundColor(surfaceColor())
             strokeWidth = dp(1)
-            setStrokeColor(context.resolveThemedColor(R.attr.clashOutline))
+            setStrokeColor(if (row.on) activeStroke else inactiveStroke)
             addView(item, ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -199,6 +239,8 @@ class ScriptOptionsDesign(
                 bottomMargin = dp(3)
             }
         }
+        ruleCards += cardView
+        return cardView
     }
 
     private fun styleOutlinedCard(card: MaterialCardView, radiusDp: Int, accent: Boolean = false) {
