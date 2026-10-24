@@ -14,8 +14,11 @@ class UpdateReleaseAssetsTest {
     private val x64 = asset("x86_64")
     private val universal = asset("universal")
 
-    @Test fun universalRemainsPreferred() {
-        assertEquals(universal, UpdateReleaseAssets.select(listOf(x86, arm64, universal), listOf("arm64-v8a")))
+    @Test fun deviceAbiBeatsTheUniversalBuild() {
+        assertEquals(arm64, UpdateReleaseAssets.select(listOf(universal, arm64), listOf("arm64-v8a")))
+    }
+    @Test fun universalIsTheOfflineFallback() {
+        assertEquals(universal, UpdateReleaseAssets.select(listOf(universal, x86), listOf("arm64-v8a")))
     }
     @Test fun selectsCompatibleApkInsteadOfFirstAsset() {
         assertEquals(arm64, UpdateReleaseAssets.select(listOf(x86, arm64), listOf("arm64-v8a", "armeabi-v7a")))

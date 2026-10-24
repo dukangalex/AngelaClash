@@ -618,16 +618,46 @@ func isBypassRule(rule string) bool {
 	case "GEOIP":
 		return payload == "cn" || payload == "private"
 	case "GEOSITE":
-		return payload == "cn" || payload == "private" || payload == "geolocation-cn" || strings.Contains(payload, "cn")
+		return geositeIsChina(payload)
 	case "DOMAIN-SUFFIX":
 		return payload == "cn" || strings.HasSuffix(payload, ".cn")
 	case "IP-CIDR", "IP-CIDR6":
 		return isPrivateCIDR(parts[1])
 	case "RULE-SET":
-		return strings.Contains(payload, "cn") || strings.Contains(payload, "private") || strings.Contains(payload, "lan") || strings.Contains(payload, "direct")
+		return ruleSetIsBypass(payload)
 	default:
 		return false
 	}
+}
+
+// geositeIsChina matches CN-ish geosite codes as whole tokens. Substring
+// matching turned unrelated codes such as `ncnc` into "domestic" traffic.
+func geositeIsChina(payload string) bool {
+	switch payload {
+	case "cn", "private", "geolocation-cn":
+		return true
+	}
+	base, suffix, hasSuffix := strings.Cut(payload, "@")
+	if !hasSuffix {
+		return false
+	}
+	// `cn@ads` and `category-games@cn` are both China-scoped rule sets.
+	return base == "cn" || suffix == "cn"
+}
+
+// ruleSetIsBypass matches provider names that are clearly domestic/LAN/direct
+// rule sets. Tokens are separated by '-', '_', '@' and '.', so `my-direct-rules`
+// matches while `ncnc` does not.
+func ruleSetIsBypass(payload string) bool {
+	for _, token := range strings.FieldsFunc(payload, func(r rune) bool {
+		return r == '-' || r == '_' || r == '@' || r == '.'
+	}) {
+		switch token {
+		case "cn", "private", "lan", "direct":
+			return true
+		}
+	}
+	return false
 }
 
 func isPrivateCIDR(raw string) bool {

@@ -434,6 +434,10 @@
     <string name="script_synced_at">Last sync %1$s</string>
     <string name="script_source_cleared">Link cleared. The local script is unchanged.</string>
     <string name="script_imported">Script imported</string>
+    <string name="script_import_cancelled">Import cancelled</string>
+    <string name="script_source_changed_title">Remote script changed</string>
+    <string name="script_source_changed_message">The script at %1$s changed since the last sync.\n\nBefore: %2$s…\nAfter:  %3$s…\n\nA script can rewrite the whole routing configuration. Only continue if you trust the new content.</string>
+    <string name="script_source_changed_continue">Import anyway</string>
     <string name="script_import_bad_url">That is not a web link.</string>
     <string name="script_import_not_script">That link did not return a script.</string>
     <string name="script_import_empty">The script at that link is empty.</string>
@@ -589,4 +593,19 @@
     <string name="home_network_card_label">Forwarding</string>
     <string name="home_network_short_on">Forwarding</string>
     <string name="home_network_short_off">Not Forwarding</string>
+    <string name="backup_export">Export backup</string>
+    <string name="backup_export_summary">Encrypt profiles, scripts and routing settings to a file</string>
+    <string name="backup_restore">Restore from backup</string>
+    <string name="backup_restore_summary">Import an encrypted backup; existing profiles are kept</string>
+    <string name="backup_passphrase_message">Choose a passphrase of at least 8 characters. It is never stored, so a forgotten passphrase means the backup cannot be opened.</string>
+    <string name="backup_passphrase_hint">Passphrase</string>
+    <string name="backup_passphrase_confirm">Confirm</string>
+    <string name="backup_passphrase_short">The passphrase needs at least %1$d characters</string>
+    <string name="backup_export_done">Exported %1$d profiles and %2$d script files</string>
+    <string name="backup_restore_done">Restored %1$d profiles and %2$d group selections</string>
+    <string name="backup_wrong_passphrase">Wrong passphrase, or the backup file is damaged</string>
+    <string name="backup_failed">Failed: %1$s</string>
+    <string name="backup_export_open_failed">The selected location is not writable</string>
+    <string name="backup_restore_open_failed">The selected file cannot be read</string>
+    <string name="backup_restore_message">Restoring merges the backup into this device: profiles with the same id are overwritten, every other profile is kept.</string>
 </resources>

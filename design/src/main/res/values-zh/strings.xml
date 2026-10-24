@@ -341,6 +341,10 @@
     <string name="script_synced_at">上次同步 %1$s</string>
     <string name="script_source_cleared">已清除链接。本地脚本还在。</string>
     <string name="script_imported">脚本已导入</string>
+    <string name="script_import_cancelled">已取消导入</string>
+    <string name="script_source_changed_title">远端脚本内容已变化</string>
+    <string name="script_source_changed_message">%1$s 的内容与上次同步时不一致。\n\n旧：%2$s…\n新：%3$s…\n\n脚本可以改写整份分流配置，确认内容可信后再继续。</string>
+    <string name="script_source_changed_continue">仍然导入</string>
     <string name="script_import_bad_url">这不是网页链接。</string>
     <string name="script_import_not_script">这个链接返回的不是脚本。</string>
     <string name="script_import_empty">链接里的脚本是空的。</string>
@@ -494,4 +498,19 @@
     <string name="home_network_card_label">网络状态</string>
     <string name="home_network_short_on">正常转发</string>
     <string name="home_network_short_off">未开启转发</string>
+    <string name="backup_export">导出备份</string>
+    <string name="backup_export_summary">将订阅、脚本与分流设置加密导出到文件</string>
+    <string name="backup_restore">从备份恢复</string>
+    <string name="backup_restore_summary">导入加密备份文件，不会删除现有订阅</string>
+    <string name="backup_passphrase_message">请设置至少 8 位的口令。口令不会被保存，忘记后该备份无法再打开。</string>
+    <string name="backup_passphrase_hint">备份口令</string>
+    <string name="backup_passphrase_confirm">确定</string>
+    <string name="backup_passphrase_short">口令至少需要 %1$d 位</string>
+    <string name="backup_export_done">已导出 %1$d 个订阅、%2$d 个脚本文件</string>
+    <string name="backup_restore_done">已恢复 %1$d 个订阅、%2$d 条策略选择</string>
+    <string name="backup_wrong_passphrase">口令不正确，或备份文件已损坏</string>
+    <string name="backup_failed">操作失败：%1$s</string>
+    <string name="backup_export_open_failed">无法写入所选位置</string>
+    <string name="backup_restore_open_failed">无法读取所选文件</string>
+    <string name="backup_restore_message">恢复会将备份合并到本机：同 ID 的订阅被覆盖，其余订阅保持不变。</string>
 </resources>

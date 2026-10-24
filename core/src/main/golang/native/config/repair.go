@@ -5,6 +5,7 @@ import (
 
 	"github.com/metacubex/mihomo/common/yaml"
 	"github.com/metacubex/mihomo/config"
+	"github.com/metacubex/mihomo/log"
 )
 
 func init() {
@@ -27,6 +28,14 @@ func builtinOutbounds() map[string]bool {
 		"DIRECT": true, "REJECT": true, "REJECT-DROP": true,
 		"PASS": true, "PASS-RULE": true, "COMPATIBLE": true,
 	}
+}
+
+// repairWarnf keeps every automatic rewrite observable. Silent repairs used to
+// change routing (empty group -> DIRECT, missing RULE-SET provider -> rule
+// dropped) without any trace in the log, which made "why is this traffic
+// direct?" impossible to answer.
+func repairWarnf(format string, args ...any) {
+	log.Warnln("[repair] "+format, args...)
 }
 
 func repairDoc(doc map[string]any) {
@@ -108,6 +117,8 @@ func repairRawConfig(cfg *config.RawConfig) {
 	breakGroupCycles(cfg.ProxyGroup, allNodeNames)
 	for _, p := range cfg.Proxy {
 		if dp, _ := p["dialer-proxy"].(string); dp != "" && !names[dp] {
+			name, _ := p["name"].(string)
+			repairWarnf("dropped dialer-proxy %q on %q: target does not exist", dp, name)
 			delete(p, "dialer-proxy")
 		}
 	}
@@ -176,8 +187,11 @@ func repairGroupMap(
 			}
 		}
 		if len(filtered) == 0 {
+			repairWarnf("group %q had no usable members, falling back to DIRECT", groupName)
 			filtered = []any{"DIRECT"}
 			validSet["DIRECT"] = true
+		} else {
+			repairWarnf("group %q had no usable members, filled with %d node(s)", groupName, len(filtered))
 		}
 	}
 	if ef, _ := m["empty-fallback"].(string); ef != "" && !leafNames[ef] {
@@ -261,6 +275,7 @@ func retargetMissingRule(
 		if len(parts) >= 3 {
 			providerName := strings.TrimSpace(parts[1])
 			if providerName != "" && (ruleProviders == nil || ruleProviders[providerName] == nil) {
+				repairWarnf("dropped rule %q: rule provider %q is missing", trimmed, providerName)
 				return "", false
 			}
 		}
@@ -271,6 +286,7 @@ func retargetMissingRule(
 	if strings.HasPrefix(upper, "MATCH,") {
 		target := strings.TrimSpace(trimmed[len("MATCH,"):])
 		if target != "" && !names[target] {
+			repairWarnf("retargeted %q -> %q: target does not exist", trimmed, fallback)
 			return "MATCH," + fallback, true
 		}
 		return rule, true
@@ -289,6 +305,7 @@ func retargetMissingRule(
 	if len(parts) >= 3 {
 		target := strings.TrimSpace(parts[2])
 		if target != "" && !names[target] {
+			repairWarnf("retargeted %q -> %q: target does not exist", trimmed, fallback)
 			parts[2] = fallback
 			return strings.Join(parts, ","), true
 		}

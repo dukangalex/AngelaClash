@@ -18,7 +18,12 @@ import com.github.kr328.clash.service.store.ServiceStore
 class EnhanceToolsDesign(
     context: Context,
     srvStore: ServiceStore,
-) : Design<Unit>(context) {
+) : Design<EnhanceToolsDesign.Request>(context) {
+    enum class Request {
+        ExportBackup,
+        RestoreBackup,
+    }
+
     private val binding = DesignSettingsCommonBinding
         .inflate(context.layoutInflater, context.root, false)
 
@@ -56,6 +61,22 @@ class EnhanceToolsDesign(
                         context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                     }
                 }
+            }
+
+            // Explicit, encrypted backup. Android cloud backup is disabled, so
+            // this is the supported way to move profiles to another device.
+            clickable(
+                title = R.string.backup_export,
+                summary = R.string.backup_export_summary,
+            ) {
+                clicked { requests.trySend(Request.ExportBackup) }
+            }
+
+            clickable(
+                title = R.string.backup_restore,
+                summary = R.string.backup_restore_summary,
+            ) {
+                clicked { requests.trySend(Request.RestoreBackup) }
             }
         }
 

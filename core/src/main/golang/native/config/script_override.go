@@ -2,18 +2,43 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	P "path"
 	"regexp"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/dop251/goja"
+	"github.com/dop251/goja/ast"
+	"github.com/dop251/goja/parser"
 	"github.com/metacubex/mihomo/common/yaml"
 	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/log"
 )
+
+// scriptExecutionTimeout bounds how long a user script may run while the
+// profile is being loaded. Without it a `while (true) {}` in script.js keeps
+// config.Load() from ever returning, which leaves the VPN service stuck in
+// "loading" with no way out but a force stop.
+var scriptExecutionTimeout = 5 * time.Second
+
+// maxScriptCallStack keeps runaway recursion inside goja instead of the Go heap.
+const maxScriptCallStack = 1024
+
+// scriptTimeoutError is the value handed to Runtime.Interrupt, so the timeout
+// can be told apart from real script errors once the VM unwinds.
+type scriptTimeoutError struct{}
+
+func (scriptTimeoutError) Error() string { return "script execution timed out" }
+
+// scriptApplied records whether the profile's override script actually ran for
+// the current load. patchScriptDisplay uses it instead of re-reading script.js
+// and grepping for a `main` entry point.
+var scriptApplied atomic.Bool
 
 func patchScriptOverride(cfg *config.RawConfig, profileDir string) error {
 	if _, err := os.Stat(P.Join(profileDir, "script.on")); err != nil {
@@ -38,66 +63,70 @@ func applyScriptText(cfg *config.RawConfig, src string) error {
 
 func applyScriptTextWithOptions(cfg *config.RawConfig, src string, ruleOpts map[string]bool) error {
 	src = strings.TrimSpace(src)
-	if src == "" || !hasScriptMain(src) {
+	if src == "" {
+		return nil
+	}
+	declares, err := scriptDeclaresMain(src)
+	if err != nil {
+		return fmt.Errorf("script 语法错误: %w", err)
+	}
+	if !declares {
+		log.Infoln("script has no main(), skipped")
 		return nil
 	}
 	return runScriptMain(cfg, src, ruleOpts)
 }
 
-func hasScriptMain(src string) bool {
-	stripped := stripJSComments(src)
-	return strings.Contains(stripped, "function main") ||
-		strings.Contains(stripped, "main=function") ||
-		strings.Contains(stripped, "main = function") ||
-		strings.Contains(stripped, "main=async") ||
-		strings.Contains(stripped, "main = async")
+// scriptDeclaresMain reports whether the script declares a top-level `main`
+// entry point. It parses the source instead of grepping for text, so comments,
+// string literals ("function main()") and identifiers that merely contain
+// "main" cannot pretend to be an entry point. A parse error is returned as an
+// error: a syntactically broken script must be surfaced, not silently skipped.
+func scriptDeclaresMain(src string) (bool, error) {
+	program, err := parser.ParseFile(nil, "script.js", src, 0)
+	if err != nil {
+		return false, err
+	}
+	if program == nil {
+		return false, nil
+	}
+	for _, statement := range program.Body {
+		switch node := statement.(type) {
+		case *ast.FunctionDeclaration:
+			if node.Function != nil && node.Function.Name != nil && node.Function.Name.Name.String() == "main" {
+				return true, nil
+			}
+		case *ast.ExpressionStatement:
+			if assign, ok := node.Expression.(*ast.AssignExpression); ok && isMainIdentifier(assign.Left) {
+				return true, nil
+			}
+		case *ast.LexicalDeclaration:
+			for _, binding := range node.List {
+				if isMainIdentifier(binding.Target) {
+					return true, nil
+				}
+			}
+		case *ast.VariableStatement:
+			for _, binding := range node.List {
+				if isMainIdentifier(binding.Target) {
+					return true, nil
+				}
+			}
+		}
+	}
+	for _, declaration := range program.DeclarationList {
+		for _, binding := range declaration.List {
+			if isMainIdentifier(binding.Target) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
-func stripJSComments(src string) string {
-	var b strings.Builder
-	b.Grow(len(src))
-	i := 0
-	for i < len(src) {
-		if src[i] == '"' || src[i] == '\'' || src[i] == '`' {
-			quote := src[i]
-			b.WriteByte(src[i])
-			i++
-			for i < len(src) {
-				if src[i] == '\\' && i+1 < len(src) {
-					b.WriteByte(src[i])
-					b.WriteByte(src[i+1])
-					i += 2
-					continue
-				}
-				b.WriteByte(src[i])
-				if src[i] == quote {
-					i++
-					break
-				}
-				i++
-			}
-			continue
-		}
-		if i+1 < len(src) && src[i] == '/' && src[i+1] == '/' {
-			for i < len(src) && src[i] != '\n' {
-				i++
-			}
-			continue
-		}
-		if i+1 < len(src) && src[i] == '/' && src[i+1] == '*' {
-			i += 2
-			for i+1 < len(src) && !(src[i] == '*' && src[i+1] == '/') {
-				i++
-			}
-			if i+1 < len(src) {
-				i += 2
-			}
-			continue
-		}
-		b.WriteByte(src[i])
-		i++
-	}
-	return b.String()
+func isMainIdentifier(expr ast.Expression) bool {
+	identifier, ok := expr.(*ast.Identifier)
+	return ok && identifier.Name.String() == "main"
 }
 
 var ruleOptionsDeclRe = regexp.MustCompile(`(?:const|let|var)\s+ruleOptionsEnable\s*=`)
@@ -208,8 +237,13 @@ func runScriptMain(cfg *config.RawConfig, src string, ruleOpts map[string]bool) 
 	patchedSrc := patchJSRuleOptionsInSource(src, ruleOpts)
 
 	vm := goja.New()
+	vm.SetMaxCallStackSize(maxScriptCallStack)
+	timer := time.AfterFunc(scriptExecutionTimeout, func() {
+		vm.Interrupt(scriptTimeoutError{})
+	})
+	defer timer.Stop()
 	if _, err = vm.RunString(patchedSrc); err != nil {
-		return fmt.Errorf("script: %w", err)
+		return scriptError("script", err)
 	}
 	fn, ok := goja.AssertFunction(vm.Get("main"))
 	if !ok {
@@ -224,7 +258,20 @@ func runScriptMain(cfg *config.RawConfig, src string, ruleOpts map[string]bool) 
 		val, err = fn(goja.Undefined(), vm.ToValue(doc), ctxVal)
 	}
 	if err != nil {
-		return fmt.Errorf("script main: %w", err)
+		return scriptError("script main", err)
+	}
+	if promise, isPromise := val.Export().(*goja.Promise); isPromise {
+		// `async function main()` returns a Promise. Resolved promises are
+		// unwrapped; anything still pending cannot be driven because the
+		// runtime exposes no timers or event loop.
+		switch promise.State() {
+		case goja.PromiseStateFulfilled:
+			val = promise.Result()
+		case goja.PromiseStateRejected:
+			return fmt.Errorf("script main: %v", promise.Result())
+		default:
+			return fmt.Errorf("script main(): async main() 未 resolve；内核不提供计时器/事件循环，请改用同步 main()")
+		}
 	}
 	if val == nil || goja.IsUndefined(val) || goja.IsNull(val) {
 		return fmt.Errorf("script main() must return the config")
@@ -266,7 +313,17 @@ func runScriptMain(cfg *config.RawConfig, src string, ruleOpts map[string]bool) 
 	}
 	repairRawConfig(next)
 	*cfg = *next
+	scriptApplied.Store(true)
 	return nil
+}
+
+// scriptError turns an interrupt caused by the watchdog into a message the UI
+// can show, instead of the opaque "interrupted" goja error.
+func scriptError(stage string, err error) error {
+	if errors.Is(err, scriptTimeoutError{}) || strings.Contains(err.Error(), scriptTimeoutError{}.Error()) {
+		return fmt.Errorf("%s: 执行超过 %s，已被中止（请检查脚本是否有死循环）", stage, scriptExecutionTimeout)
+	}
+	return fmt.Errorf("%s: %w", stage, err)
 }
 
 func injectScriptRuleOptions(vm *goja.Runtime, ruleOpts map[string]bool) goja.Value {

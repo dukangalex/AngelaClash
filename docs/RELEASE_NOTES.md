@@ -1,5 +1,32 @@
 # Angela Clash 更新说明
 
+## 1.3.0
+
+- 客户端 `1.3.0`（`10300`）
+- 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
+- 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
+- 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
+
+### 这次更新
+
+- **新增「加密备份 / 恢复」（增强工具）**：系统云备份（`allowBackup`）已关闭，换机迁移改由你自己掌控。
+  1. **导出**：`AGB\x01` 容器的 AES-256-GCM 加密包，口令经 PBKDF2-HMAC-SHA1（120000 轮）派生密钥，口令不落盘；通过系统文件选择器保存到你指定的位置（应用不申请存储权限）；
+  2. **内容完整**：订阅及其 `config.yaml`（含节点凭据与 token）、覆写脚本与脚本选项、链式代理入口/落地绑定、各策略组的选择；
+  3. **恢复**：按 UUID 合并——同 ID 覆盖、其余保留、不删除任何现有订阅，文件先写临时文件再原子替换，中途中断可重复执行；
+  4. **失败即报错**：口令错误、文件被篡改或截断、非本应用文件都只会得到一句“口令不正确，或备份文件已损坏”，不会留下半份数据。
+- **安全审计整改（16 项发现，12 项已修复，4 项写明保留原因）**：完整对照表见仓库内 `docs/SECURITY_FIXES.md`，审计报告见 `docs/AUDIT_REPORT.md`。
+  1. **脚本执行隔离**：覆写脚本增加 5 秒看门狗（`vm.Interrupt`）与 1024 层调用栈上限，死循环不再挂死配置加载；内核加载侧补 180 秒超时，服务不会无限停在“加载中”；
+  2. **修复 `async function main` 必然失败**：按 Promise 状态取值或返回真实原因，不再统一报 `must return an object`；
+  3. **系统选项不再改写订阅 DNS**：“DNS 走代理”只在订阅未配置 `nameserver` 时补默认 DoH，不再清空 `fallback`、不覆盖订阅自带的分流 DNS；
+  4. **规则与端点识别修正**：`ruleDstPort()` 按精确端口匹配（不再 `strings.Contains`），入口脚本检测改用 goja AST（注释里的 `function main` 不再被误判），直连判定改为 token 化比较；
+  5. **自动修补可追溯**：`repair` 系列对规则的每一处自动改写都会写入 `[repair]` 日志，不再是静默 fail-open。
+- **发布与供应链加固**
+  1. **签名**：release 显式开启 v1/v2/v3 签名，`apksigner verify` 结果随版本一起发布；
+  2. **下载体积**：更新器改为先按设备 ABI 选取 APK，universal 仅兜底，单次更新从 138 MB 降到约 51 MB；
+  3. **CI**：改为全包测试 `go test -tags "foss with_gvisor cmfa" ./native/config/`；11 个第三方 Action 全部固定到 commit SHA；`go install` 固定 commit；geo 数据（`BundleMRS.7z` / `geoip.metadb` / `ASN.mmdb` / `geosite.dat`）加入 SHA-256 校验；
+  4. **脚本来源确认**：记录上次导入脚本的 SHA-256，同一 URL 内容变化时弹窗显示新旧哈希，默认取消。
+- **文档与隐私**：`PRIVACY_POLICY.md` 改写为真实行为（无统计、无崩溃上报、唯一外联是 GitHub Releases API、云备份关闭、备份只在本地加解密）；`README.md` 不再硬编码版本号；`docs/IDENTITY.md` 的内核基线与 `version.properties` 对齐。
+
 ## 1.2.4
 
 - 客户端 `1.2.4`（`10204`）

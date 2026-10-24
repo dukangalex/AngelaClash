@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cloud backup and device-to-device transfer are disabled: the profile store
+  contains subscription URLs (account tokens) and config.yaml files with node
+  credentials, and script-options.json drives routing decisions. Losing that
+  data on a device change is preferable to leaking it into a cloud account.
+  Profiles can be exported and re-imported explicitly from the UI.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+    </device-transfer>
+</data-extraction-rules>

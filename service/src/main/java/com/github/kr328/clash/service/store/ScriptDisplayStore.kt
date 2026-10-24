@@ -54,16 +54,32 @@ class ScriptDisplayStore(private val context: Context) {
     fun writeFetched(text: String, url: String) {
         writeAtomic(scriptFile, text)
         val current = readPersisted()
-        writePersisted(current.scriptEnabled, effectiveValues(), url, System.currentTimeMillis())
+        writePersisted(
+            current.scriptEnabled,
+            effectiveValues(),
+            url,
+            System.currentTimeMillis(),
+            syncedSha256 = sha256(text),
+        )
     }
 
     fun sourceUrl(): String = readPersisted().source
 
     fun syncedAt(): Long = readPersisted().syncedAt
 
+    /** SHA-256 of the last imported script; empty when it was typed by hand. */
+    fun syncedSha256(): String = readPersisted().syncedSha256
+
     fun setSource(url: String) {
         val current = readPersisted()
-        writePersisted(current.scriptEnabled, current.values, url.trim(), if (url.isBlank()) 0L else current.syncedAt)
+        val clearing = url.isBlank()
+        writePersisted(
+            current.scriptEnabled,
+            current.values,
+            url.trim(),
+            if (clearing) 0L else current.syncedAt,
+            syncedSha256 = if (clearing) "" else current.syncedSha256,
+        )
     }
 
     fun profileScriptEnabled(uuid: UUID): Boolean {
@@ -74,7 +90,14 @@ class ScriptDisplayStore(private val context: Context) {
         val current = readPersisted()
         val profiles = LinkedHashMap(current.profiles)
         if (enabled) profiles[uuid.toString()] = true else profiles.remove(uuid.toString())
-        writePersisted(current.scriptEnabled, current.values, current.source, current.syncedAt, profiles)
+        writePersisted(
+            current.scriptEnabled,
+            current.values,
+            current.source,
+            current.syncedAt,
+            profiles,
+            current.syncedSha256,
+        )
     }
 
     fun writeProfileFlag(dir: File, uuid: UUID) {
@@ -88,7 +111,7 @@ class ScriptDisplayStore(private val context: Context) {
 
     fun restoreDefault() {
         writeAtomic(scriptFile, "")
-        writePersisted(false, linkedMapOf(), "", 0L)
+        writePersisted(false, linkedMapOf(), "", 0L, syncedSha256 = "")
     }
 
     fun snapshot(): Snapshot {
@@ -200,10 +223,11 @@ class ScriptDisplayStore(private val context: Context) {
         val source: String,
         val syncedAt: Long,
         val profiles: LinkedHashMap<String, Boolean>,
+        val syncedSha256: String = "",
     )
 
     private fun readPersisted(): Persisted {
-        if (!optionFile.exists()) return Persisted(true, linkedMapOf(), "", 0L, linkedMapOf())
+        if (!optionFile.exists()) return Persisted(true, linkedMapOf(), "", 0L, linkedMapOf(), "")
         return try {
             val root = JSONObject(optionFile.readText())
             val values = linkedMapOf<String, Boolean>()
@@ -230,9 +254,10 @@ class ScriptDisplayStore(private val context: Context) {
                 root.optString("source", ""),
                 root.optLong("syncedAt", 0L),
                 profiles,
+                root.optString("syncedSha256", ""),
             )
         } catch (_: Exception) {
-            Persisted(true, linkedMapOf(), "", 0L, linkedMapOf())
+            Persisted(true, linkedMapOf(), "", 0L, linkedMapOf(), "")
         }
     }
 
@@ -242,6 +267,7 @@ class ScriptDisplayStore(private val context: Context) {
         source: String? = null,
         syncedAt: Long? = null,
         profiles: Map<String, Boolean>? = null,
+        syncedSha256: String? = null,
     ) {
         val current = readPersisted()
         val obj = JSONObject()
@@ -249,6 +275,7 @@ class ScriptDisplayStore(private val context: Context) {
         obj.put("enabled", true)
         obj.put("source", source ?: current.source)
         obj.put("syncedAt", syncedAt ?: current.syncedAt)
+        obj.put("syncedSha256", syncedSha256 ?: current.syncedSha256)
         val map = JSONObject()
         for ((k, v) in values) map.put(k, v)
         obj.put("values", map)

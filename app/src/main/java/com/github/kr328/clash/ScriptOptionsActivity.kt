@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 import kotlin.coroutines.resume
 
 class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
@@ -85,6 +86,18 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
             design.showToast(getString(R.string.script_import_failed, e.message ?: ""), ToastDuration.Long)
             return
         }
+        // A script can rewrite the whole runtime config, so a silent change of
+        // content at an already trusted URL is worth one confirmation.
+        val nextHash = sha256(text)
+        val previousHash = store.syncedSha256()
+        if (store.sourceUrl() == url && previousHash.isNotEmpty() && previousHash != nextHash) {
+            val accepted = confirmSourceChanged(url, previousHash, nextHash)
+            if (!accepted) {
+                design.showSource(store.sourceUrl(), store.syncedAt(), false)
+                design.showToast(R.string.script_import_cancelled, ToastDuration.Short)
+                return
+            }
+        }
         store.writeFetched(text, url)
         design.reload(store)
         reloadRunning()
@@ -120,6 +133,38 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
         cont.invokeOnCancellation { dialog.dismiss() }
         dialog.show()
     }
+
+    private suspend fun confirmSourceChanged(url: String, previous: String, next: String): Boolean =
+        withContext(Dispatchers.Main) {
+            suspendCancellableCoroutine { continuation ->
+                val dialog = MaterialAlertDialogBuilder(this@ScriptOptionsActivity)
+                    .setTitle(R.string.script_source_changed_title)
+                    .setMessage(
+                        getString(
+                            R.string.script_source_changed_message,
+                            url,
+                            previous.take(12),
+                            next.take(12),
+                        )
+                    )
+                    .setNegativeButton(android.R.string.cancel) { _, _ ->
+                        if (continuation.isActive) continuation.resume(false)
+                    }
+                    .setPositiveButton(R.string.script_source_changed_continue) { _, _ ->
+                        if (continuation.isActive) continuation.resume(true)
+                    }
+                    .setOnCancelListener {
+                        if (continuation.isActive) continuation.resume(false)
+                    }
+                    .create()
+                continuation.invokeOnCancellation { dialog.dismiss() }
+                dialog.show()
+            }
+        }
+
+    private fun sha256(text: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(text.toByteArray(Charsets.UTF_8))
+        .joinToString("") { "%02x".format(it) }
 
     private suspend fun fetchScript(raw: String): String = withContext(Dispatchers.IO) {
         var current = normalize(raw)

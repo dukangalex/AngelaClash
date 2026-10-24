@@ -14,9 +14,15 @@ import com.github.kr328.clash.service.util.importedDir
 import com.github.kr328.clash.service.util.sendProfileLoaded
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.*
 
 class ConfigurationModule(service: Service) : Module<ConfigurationModule.LoadException>(service) {
+    private companion object {
+        /** Upper bound for one load; provider fetches may legitimately be slow. */
+        const val LOAD_TIMEOUT_MS = 180_000L
+    }
+
     data class LoadException(val message: String)
 
     private val store = ServiceStore(service)
@@ -65,7 +71,15 @@ class ConfigurationModule(service: Service) : Module<ConfigurationModule.LoadExc
                 scripts.ensureScript()
                 scripts.writeProfileFlag(activeDir, active.uuid)
 
-                Clash.load(activeDir).await()
+                // Scripts run under a 5s watchdog inside the kernel, but a
+                // stalled provider fetch or a dead network can still keep the
+                // service in "loading" forever. Surface it instead of hanging.
+                val loadCompleted = withTimeoutOrNull(LOAD_TIMEOUT_MS) { Clash.load(activeDir).await() }
+                if (loadCompleted == null) {
+                    throw IllegalStateException(
+                        "加载超时（${LOAD_TIMEOUT_MS / 1000}s）：请检查订阅、脚本或节点提供者"
+                    )
+                }
 
                 val remove = SelectionDao().querySelections(active.uuid)
                     .filterNot { Clash.patchSelector(it.proxy, it.selected) }

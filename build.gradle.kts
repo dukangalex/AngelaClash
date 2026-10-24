@@ -164,6 +164,11 @@ subprojects {
                     if (storeFile?.isFile != true) {
                         throw GradleException("release.keystore is missing. Release builds do not use the debug key.")
                     }
+                    // v2 for API 24+, v3 for API 28+ (enables key rotation
+                    // lineage later; the updater already understands it).
+                    enableV1Signing = true
+                    enableV2Signing = true
+                    enableV3Signing = true
                 }
             }
         }

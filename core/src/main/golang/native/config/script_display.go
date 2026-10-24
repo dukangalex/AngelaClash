@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"os"
-	P "path"
+	"strconv"
 	"strings"
 
 	"github.com/metacubex/mihomo/common/orderedmap"
@@ -14,8 +14,10 @@ import (
 )
 
 // System explicit options. Written to files/clash/script-options.json.
-// They are applied after the profile, the override script, and chain, so a
-// conflict is resolved in favor of these switches.
+// processor order is: script override -> overrides/patches -> script display ->
+// chain, i.e. these switches win over the profile and the override script, but
+// chain routing is applied last (see process.go). Keep this comment and the
+// processors list in sync.
 func patchScriptDisplay(cfg *config.RawConfig, profileDir string) error {
 	opts, _ := readScriptOptions()
 	groups := splitScriptOptions(opts.Values)
@@ -32,19 +34,15 @@ func patchScriptDisplay(cfg *config.RawConfig, profileDir string) error {
 	return nil
 }
 
+// hasActiveScript is kept for callers that want to know whether the profile's
+// override script contributed to the running configuration. It is driven by the
+// loader instead of re-reading and re-scanning script.js, so a script that was
+// skipped, timed out or failed can never be mistaken for an applied one.
 func hasActiveScript(profileDir string) bool {
 	if profileDir == "" {
 		return false
 	}
-	if _, err := os.Stat(P.Join(profileDir, "script.on")); err != nil {
-		return false
-	}
-	path := C.Path.Resolve("script.js")
-	text, err := os.ReadFile(path)
-	if err != nil {
-		return false
-	}
-	return hasScriptMain(string(text))
+	return scriptApplied.Load()
 }
 
 type scriptOptionFile struct {
@@ -110,15 +108,17 @@ func on(m map[string]bool, fallback bool, keys ...string) bool {
 }
 
 func applyLeak(cfg *config.RawConfig, leak map[string]bool) {
+	cfg.DNS.Enable = true
 	if on(leak, true, "DNS 走代理", "dns-via-proxy") {
-		cfg.DNS.Enable = true
-		cfg.DNS.NameServer = []string{"https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"}
-		cfg.DNS.Fallback = nil
-		cfg.DNS.ProxyServerNameserver = []string{"https://223.5.5.5/dns-query"}
-	} else {
-		cfg.DNS.Enable = true
-		cfg.DNS.NameServer = []string{"https://223.5.5.5/dns-query", "https://119.29.29.29/dns-query"}
-		cfg.DNS.Fallback = nil
+		// Seed sane defaults ONLY when the profile does not configure DNS.
+		// Overwriting a subscription's nameservers breaks unlock policies,
+		// fake-ip filters and split-DNS setups the user cannot see.
+		if len(cfg.DNS.NameServer) == 0 {
+			cfg.DNS.NameServer = []string{"https://1.1.1.1/dns-query", "https://8.8.8.8/dns-query"}
+		}
+		if len(cfg.DNS.ProxyServerNameserver) == 0 {
+			cfg.DNS.ProxyServerNameserver = []string{"https://223.5.5.5/dns-query"}
+		}
 	}
 	if on(leak, true, "禁止系统 DNS", "no-system-dns") {
 		cfg.ClashForAndroid.AppendSystemDNS = false
@@ -222,12 +222,11 @@ func applyPrivacy(cfg *config.RawConfig, privacy map[string]bool) {
 }
 
 func isStunReject(rule string) bool {
-	upper := strings.ToUpper(rule)
-	if !strings.Contains(upper, "REJECT") {
+	if !strings.Contains(strings.ToUpper(rule), "REJECT") {
 		return false
 	}
-	for _, port := range []string{"3478", "5349", "19302"} {
-		if strings.Contains(upper, "DST-PORT,"+port) {
+	for _, port := range []int{3478, 5349, 19302} {
+		if ruleDstPort(rule, port) {
 			return true
 		}
 	}
@@ -235,12 +234,11 @@ func isStunReject(rule string) bool {
 }
 
 func isDiscoveryReject(rule string) bool {
-	upper := strings.ToUpper(rule)
-	if !strings.Contains(upper, "REJECT") {
+	if !strings.Contains(strings.ToUpper(rule), "REJECT") {
 		return false
 	}
-	for _, port := range []string{"5353", "1900", "137", "138"} {
-		if strings.Contains(upper, "DST-PORT,"+port) {
+	for _, port := range []int{5353, 1900, 137, 138} {
+		if ruleDstPort(rule, port) {
 			return true
 		}
 	}
@@ -446,9 +444,39 @@ func dropMatching(rules []string, drop func(string) bool) []string {
 	return out
 }
 
-func isQuicReject(rule string) bool {
+// ruleDstPort reports whether a rule pins DST-PORT to a value that covers port.
+// Ports are compared as tokens so that 4430 is not treated as 443, and ranges
+// such as 3478-3497 are understood.
+func ruleDstPort(rule string, port int) bool {
 	upper := strings.ToUpper(rule)
-	return strings.Contains(upper, "DST-PORT,443") && strings.Contains(upper, "UDP")
+	index := strings.Index(upper, "DST-PORT")
+	if index < 0 {
+		return false
+	}
+	rest := upper[index+len("DST-PORT"):]
+	rest = strings.TrimLeft(rest, " \t,=")
+	end := strings.IndexAny(rest, ",() ")
+	if end >= 0 {
+		rest = rest[:end]
+	}
+	rest = strings.TrimSpace(rest)
+	if rest == "" {
+		return false
+	}
+	if from, to, isRange := strings.Cut(rest, "-"); isRange {
+		low, lowErr := strconv.Atoi(strings.TrimSpace(from))
+		high, highErr := strconv.Atoi(strings.TrimSpace(to))
+		if lowErr != nil || highErr != nil {
+			return false
+		}
+		return port >= low && port <= high
+	}
+	value, err := strconv.Atoi(rest)
+	return err == nil && value == port
+}
+
+func isQuicReject(rule string) bool {
+	return strings.Contains(strings.ToUpper(rule), "UDP") && ruleDstPort(rule, 443)
 }
 
 func firstPresent(m map[string]bool, keys []string) (string, bool) {

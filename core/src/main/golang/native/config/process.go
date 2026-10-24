@@ -145,6 +145,9 @@ func validConfig(cfg *config.RawConfig, _ string) error {
 }
 
 func process(cfg *config.RawConfig, profileDir string) error {
+	// The flag is per-load state: a previous load must never make this one
+	// believe an override script contributed to the configuration.
+	scriptApplied.Store(false)
 	for _, p := range processors {
 		if err := p(cfg, profileDir); err != nil {
 			return err
