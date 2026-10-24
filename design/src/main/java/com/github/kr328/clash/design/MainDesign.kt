@@ -456,12 +456,15 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         )
 
         val selectedBg = context.resolveThemedColor(R.attr.clashSelectedSurface)
-        val normalBg = context.resolveThemedColor(com.google.android.material.R.attr.colorSurface)
+        val surfaceVariantBg = context.resolveThemedColor(R.attr.clashSurfaceVariant)
+        val isDarkSurface = (Color.red(surfaceVariantBg) + Color.green(surfaceVariantBg) + Color.blue(surfaceVariantBg)) < 384
+        val offCardBg = if (isDarkSurface) Color.parseColor("#FF1B263B") else Color.parseColor("#FFF1F5F9")
         val primaryColor = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
         val royalStroke = ContextCompat.getColor(context, R.color.color_clash_royal)
-        val outlineStroke = context.resolveThemedColor(R.attr.clashOutline)
-        val textPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
-        val textSecondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
+        val outlineStroke = if (isDarkSurface) Color.parseColor("#3894A3B8") else context.resolveThemedColor(R.attr.clashOutline)
+        val textPrimary = if (isDarkSurface) Color.WHITE else Color.parseColor("#FF0F172A")
+        val textSecondary = if (isDarkSurface) Color.parseColor("#FF94A3B8") else Color.parseColor("#FF64748B")
+        val textOffTitle = if (isDarkSurface) Color.parseColor("#FFE2E8F0") else Color.parseColor("#FF334155")
 
         for (rowIndex in specs.indices step 2) {
             val rowLayout = LinearLayout(context).apply {
@@ -486,9 +489,9 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                     cardElevation = 0f
                     isClickable = true
                     isFocusable = true
-                    setCardBackgroundColor(if (isOn) selectedBg else normalBg)
+                    setCardBackgroundColor(if (isOn) selectedBg else offCardBg)
                     strokeColor = if (isOn) royalStroke else outlineStroke
-                    strokeWidth = dp(1).coerceAtLeast(1)
+                    strokeWidth = if (isOn) (1.4f * density).toInt().coerceAtLeast(2) else dp(1).coerceAtLeast(1)
                     val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
                     if (colOffset == 0) lp.marginEnd = dp(4) else lp.marginStart = dp(4)
                     layoutParams = lp
@@ -496,7 +499,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
                 val inner = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(11), dp(10), dp(11), dp(10))
+                    setPadding(dp(12), dp(10), dp(12), dp(10))
                 }
 
                 val topRow = LinearLayout(context).apply {
@@ -506,17 +509,17 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
                 val titleTv = TextView(context).apply {
                     text = spec.displayTitle
-                    textSize = 12.5f
+                    textSize = 13f
                     setTypeface(typeface, Typeface.BOLD)
-                    setTextColor(if (isOn) textPrimary else textSecondary)
+                    setTextColor(if (isOn) textPrimary else textOffTitle)
                     maxLines = 1
                     ellipsize = TextUtils.TruncateAt.END
                     layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 }
 
                 val statusBadge = TextView(context).apply {
-                    text = if (isOn) "● 开启" else "○ 关闭"
-                    textSize = 10f
+                    text = if (isOn) "● 开启" else "○ 已关闭"
+                    textSize = 10.5f
                     setTypeface(typeface, Typeface.BOLD)
                     setTextColor(if (isOn) primaryColor else textSecondary)
                 }
@@ -526,7 +529,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
                 val subTv = TextView(context).apply {
                     text = spec.subtitle
-                    textSize = 10f
+                    textSize = 10.5f
                     setTextColor(textSecondary)
                     maxLines = 1
                     ellipsize = TextUtils.TruncateAt.END

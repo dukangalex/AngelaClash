@@ -61,18 +61,39 @@ fun Context.resolveClickableAttrs(
 }
 
 fun Context.resolveThemedColor(@AttrRes resId: Int): Int {
+    val ta = theme.obtainStyledAttributes(intArrayOf(resId))
+    try {
+        val csl = ta.getColorStateList(0)
+        if (csl != null) {
+            return csl.defaultColor
+        }
+        val directColor = ta.getColor(0, 0)
+        if (directColor != 0) {
+            return directColor
+        }
+    } catch (_: Exception) {
+    } finally {
+        ta.recycle()
+    }
+
     val value = TypedValue()
-    theme.resolveAttribute(resId, value, true)
+    if (!theme.resolveAttribute(resId, value, true)) {
+        return 0
+    }
 
     if (value.type in TypedValue.TYPE_FIRST_COLOR_INT..TypedValue.TYPE_LAST_COLOR_INT) {
         return value.data
     }
 
-    if (value.type == TypedValue.TYPE_REFERENCE && value.data != 0) {
-        return try {
-            ContextCompat.getColorStateList(this, value.data)?.defaultColor ?: value.data
+    val targetResId = if (value.resourceId != 0) value.resourceId else value.data
+    if (targetResId != 0) {
+        try {
+            ContextCompat.getColorStateList(this, targetResId)?.let { return it.defaultColor }
         } catch (_: Resources.NotFoundException) {
-            value.data
+        }
+        try {
+            return ContextCompat.getColor(this, targetResId)
+        } catch (_: Resources.NotFoundException) {
         }
     }
 

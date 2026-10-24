@@ -1,5 +1,18 @@
 # Angela Clash 更新说明
 
+## 1.2.3
+
+- 客户端 `1.2.3`（`10203`）
+- 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
+- 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
+- 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
+
+### 这次更新
+
+- **修复首页「系统显式快捷选项」点击关闭后卡片文字透明消失（点击后黑洞）及副标题缺失问题**：
+  1. **修复主题颜色解析器 `resolveThemedColor`（`Theme.kt` & `themes.xml`）**：此前 `android.R.attr.textColorSecondary` 指向 Material `ColorStateList` XML 资源（`TypedValue.TYPE_STRING`），旧实现直接返回了字符串池索引（Alpha 通道为 `0x00` 全透明），导致快捷卡片的副标题以及关闭状态下的标题和状态文字全部变为透明；现已改为通过 `obtainStyledAttributes` + `getColorStateList` 及显式主题属性解析真实不透明颜色，同时在代理页底部设置面板与策略组列表中一并生效；
+  2. **优化首页快捷选项关闭态视觉层级（`MainDesign.kt`）**：关闭态卡片采用高对比度深灰蓝面板（`#1B263B`）与清晰边框，保留亮灰白标题、`○ 已关闭` 状态胶囊与功能副标题，杜绝暗色背景下出现「黑洞」卡片。
+
 ## 1.2.2
 
 - 客户端 `1.2.2`（`10202`）
