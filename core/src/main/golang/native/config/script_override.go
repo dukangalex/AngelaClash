@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	P "path"
 	"regexp"
 	"strings"
 	"sync/atomic"
@@ -41,7 +40,9 @@ func (scriptTimeoutError) Error() string { return "script execution timed out" }
 var scriptApplied atomic.Bool
 
 func patchScriptOverride(cfg *config.RawConfig, profileDir string) error {
-	if _, err := os.Stat(P.Join(profileDir, "script.on")); err != nil {
+	// Same predicate as patchScriptDisplay, so "script is on for this profile"
+	// can never mean two different things in two processors.
+	if !profileScriptEnabled(profileDir) {
 		return nil
 	}
 	path := C.Path.Resolve("script.js")

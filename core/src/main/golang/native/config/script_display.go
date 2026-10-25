@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"os"
+	P "path"
 	"strconv"
 	"strings"
 
@@ -20,18 +21,48 @@ import (
 // processors list in sync.
 func patchScriptDisplay(cfg *config.RawConfig, profileDir string) error {
 	opts, _ := readScriptOptions()
-	groups := splitScriptOptions(opts.Values)
-	scriptRan := hasActiveScript(profileDir)
-	applyRouting(cfg, groups, scriptRan)
-	applyLeak(cfg, groups.leak)
-	applyChina(cfg, groups.cn)
-	applyStrict(cfg, groups.strict)
-	applyPrivacy(cfg, groups.privacy)
+	applyScriptDisplayOptions(cfg, opts, profileScriptEnabled(profileDir), hasActiveScript(profileDir))
 	if cfg.DNS.Enable && len(cfg.DNS.NameServer) == 0 {
 		cfg.DNS.NameServer = []string{"https://223.5.5.5/dns-query", "https://1.1.1.1/dns-query"}
 	}
 	repairRawConfig(cfg)
 	return nil
+}
+
+// applyScriptDisplayOptions is the whole switchboard in one place, split out of
+// patchScriptDisplay so the profile gate can be tested without a filesystem.
+//
+// Policy groups belong to the profile. The 分流显示选项 switches may only rewrite
+// them when THIS profile opted into the override script (script.on). Otherwise a
+// subscription's own 策略组 must reach the proxy page untouched - otherwise
+// toggling a switch on the script page silently renames/creates/drops groups in
+// profiles that never enabled the script.
+func applyScriptDisplayOptions(cfg *config.RawConfig, opts scriptOptionFile, scriptOn, scriptRan bool) {
+	groups := splitScriptOptions(opts.Values)
+	if scriptOn {
+		applyRouting(cfg, groups, scriptRan)
+	} else {
+		// Leak guards are rule-level only: they never create or drop a group.
+		applyQuicWebRtcGuards(cfg, groups.rule, scriptRan)
+	}
+	// Leak protection, China direct and strict routing stay on for every
+	// profile: they only prepend rules the user can see, and never touch the
+	// policy groups the subscription ships.
+	applyLeak(cfg, groups.leak)
+	applyChina(cfg, groups.cn)
+	applyStrict(cfg, groups.strict)
+	applyPrivacy(cfg, groups.privacy)
+}
+
+// profileScriptEnabled reports whether the profile opted into the override
+// script. The flag is written beside config.yaml by ProfileProcessor and
+// ConfigurationModule.
+func profileScriptEnabled(profileDir string) bool {
+	if profileDir == "" {
+		return false
+	}
+	_, err := os.Stat(P.Join(profileDir, "script.on"))
+	return err == nil
 }
 
 // hasActiveScript is kept for callers that want to know whether the profile's
@@ -56,7 +87,10 @@ type scriptGroups struct {
 }
 
 func readScriptOptions() (scriptOptionFile, bool) {
-	path := C.Path.Resolve("script-options.json")
+	return readOptionsFrom(C.Path.Resolve("script-options.json"))
+}
+
+func readOptionsFrom(path string) (scriptOptionFile, bool) {
 	buf, err := os.ReadFile(path)
 	if err != nil {
 		return scriptOptionFile{}, false
@@ -303,21 +337,13 @@ var baseStrategyOptions = map[string]bool{
 }
 
 func applyRouting(cfg *config.RawConfig, groups scriptGroups, scriptRan bool) {
-	rule := groups.rule
-	minimalMode := rule["极简模式"]
-	known := map[string]bool{}
-	var front []string
-	disabled := map[string]bool{}
+	applyQuicWebRtcGuards(cfg, groups.rule, scriptRan)
+	applyPolicyGroups(cfg, groups.rule, scriptRan)
+}
 
-	for name, on := range rule {
-		if nonGroupRuleOptions[name] {
-			continue
-		}
-		if !on || minimalMode {
-			disabled[name] = true
-		}
-	}
-
+// applyQuicWebRtcGuards only inserts or removes REJECT rules. It never creates
+// a proxy group, so it is safe to run for profiles without an override script.
+func applyQuicWebRtcGuards(cfg *config.RawConfig, rule map[string]bool, scriptRan bool) {
 	if quicOn, ok := rule["屏蔽国外QUIC"]; ok {
 		if !quicOn {
 			cfg.Rule = dropMatching(cfg.Rule, isQuicReject)
@@ -336,6 +362,25 @@ func applyRouting(cfg *config.RawConfig, groups scriptGroups, scriptRan bool) {
 				"AND,((NETWORK,UDP),(DST-PORT,5349)),REJECT",
 				"AND,((NETWORK,UDP),(DST-PORT,19302-19309)),REJECT",
 			}, cfg.Rule...)
+		}
+	}
+}
+
+// applyPolicyGroups owns the proxy groups: it creates a select group per enabled
+// service option, drops the groups whose switch was turned off and rewrites the
+// matching rules. Only reached when the profile enabled the override script.
+func applyPolicyGroups(cfg *config.RawConfig, rule map[string]bool, scriptRan bool) {
+	minimalMode := rule["极简模式"]
+	known := map[string]bool{}
+	var front []string
+	disabled := map[string]bool{}
+
+	for name, on := range rule {
+		if nonGroupRuleOptions[name] {
+			continue
+		}
+		if !on || minimalMode {
+			disabled[name] = true
 		}
 	}
 

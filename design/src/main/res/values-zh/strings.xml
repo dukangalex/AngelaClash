@@ -321,7 +321,7 @@
     <string name="script_page_intro">控制 main(config) 如何覆写当前配置；节点保持不变。</string>
     <string name="script_enable">覆写脚本按配置打开</string>
     <string name="script_enable_summary">这里只维护脚本内容。要不要用，在每份配置的菜单里单独选，默认关闭。</string>
-    <string name="script_page_hint">和脚本或订阅冲突时，以系统显式选项为准。</string>
+    <string name="script_page_hint">这些开关只作用于开启了覆写脚本的配置。未开启的配置保持订阅自带的策略组；与系统显式选项冲突时仍以系统选项为准。</string>
     <string name="script_credit"></string>
     <string name="system_options">系统显式</string>
     <string name="system_options_summary">这些开关优先于脚本和订阅。</string>
@@ -369,7 +369,7 @@
     <string name="script_display_restore">恢复内置脚本</string>
     <string name="script_display_restore_summary">用内置 Angela Clash 脚本重置开关</string>
     <string name="script_display_restore_message">当前脚本和已改过的开关会被内置脚本替换。</string>
-    <string name="script_display_rule">分流显示选项</string>
+    <string name="script_display_rule">分流开关</string>
     <string name="script_rule_count_format">%1$d/%2$d 已启用</string>
     <string name="script_display_leak">防泄漏</string>
     <string name="script_display_cn">中国直连</string>
@@ -513,4 +513,16 @@
     <string name="backup_export_open_failed">无法写入所选位置</string>
     <string name="backup_restore_open_failed">无法读取所选文件</string>
     <string name="backup_restore_message">恢复会将备份合并到本机：同 ID 的订阅被覆盖，其余订阅保持不变。</string>
+    <string name="rule_switches_profile_on">本配置已启用脚本，下列开关会改写它的策略组</string>
+    <string name="rule_switches_profile_off">本配置未启用脚本，策略组保持订阅原样</string>
+    <string name="rule_switches_script_off">为当前配置启用覆写脚本后，这些开关才会生效。在此之前开关不可用，运行配置完全按订阅执行。</string>
+    <string name="rule_switches_script_toggle">为当前配置启用覆写脚本</string>
+    <string name="rule_switches_no_profile">当前没有启用的配置</string>
+    <string name="script_group_service">服务分流</string>
+    <string name="script_group_structure">策略组结构</string>
+    <string name="script_group_filter">节点筛选</string>
+    <string name="script_group_network">网络防护</string>
+    <string name="script_group_count">%1$d/%2$d</string>
+    <string name="script_group_chip_on">%1$s 已开启，点击关闭</string>
+    <string name="script_group_chip_off">%1$s 已关闭，点击开启</string>
 </resources>

@@ -414,7 +414,7 @@
     <string name="script_page_intro">Control how main(config) overrides the selected profile. Nodes stay unchanged.</string>
     <string name="script_enable">Turn the script on per profile</string>
     <string name="script_enable_summary">This page keeps the script. Each profile chooses whether to use it. Off by default.</string>
-    <string name="script_page_hint">System options win when they disagree with the script or the subscription.</string>
+    <string name="script_page_hint">These switches only touch profiles that turned the override script on. A profile without it keeps the policy groups from its subscription; system options still win when they disagree.</string>
     <string name="script_credit"></string>
     <string name="system_options">System options</string>
     <string name="system_options_summary">These switches outrank the script and the subscription.</string>
@@ -462,7 +462,7 @@
     <string name="script_display_restore">Restore built-in script</string>
     <string name="script_display_restore_summary">Reset switches to the built-in Angela Clash script</string>
     <string name="script_display_restore_message">The current script and switch overrides will be replaced by the built-in script.</string>
-    <string name="script_display_rule">Rule options</string>
+    <string name="script_display_rule">Routing switches</string>
     <string name="script_rule_count_format">%1$d of %2$d enabled</string>
     <string name="script_display_leak">Leak protection</string>
     <string name="script_display_cn">China direct</string>
@@ -608,4 +608,16 @@
     <string name="backup_export_open_failed">The selected location is not writable</string>
     <string name="backup_restore_open_failed">The selected file cannot be read</string>
     <string name="backup_restore_message">Restoring merges the backup into this device: profiles with the same id are overwritten, every other profile is kept.</string>
+    <string name="rule_switches_profile_on">Script is on for this profile, so these switches rewrite its policy groups</string>
+    <string name="rule_switches_profile_off">Script is off: this profile keeps the policy groups from its subscription</string>
+    <string name="rule_switches_script_off">Enable the override script for this profile to change its policy groups. Until then the switches stay inactive and the subscription is used as-is.</string>
+    <string name="rule_switches_script_toggle">Enable override script for this profile</string>
+    <string name="rule_switches_no_profile">No active profile</string>
+    <string name="script_group_service">Per-service routing</string>
+    <string name="script_group_structure">Policy group structure</string>
+    <string name="script_group_filter">Node filtering</string>
+    <string name="script_group_network">Network guards</string>
+    <string name="script_group_count">%1$d/%2$d</string>
+    <string name="script_group_chip_on">%1$s, on. Tap to turn off</string>
+    <string name="script_group_chip_off">%1$s, off. Tap to turn on</string>
 </resources>

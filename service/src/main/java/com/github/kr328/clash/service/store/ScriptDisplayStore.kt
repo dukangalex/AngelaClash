@@ -114,6 +114,9 @@ class ScriptDisplayStore(private val context: Context) {
         writePersisted(false, linkedMapOf(), "", 0L, syncedSha256 = "")
     }
 
+    /** Display hint for a single option name, or null when the script did not describe it. */
+    fun snapshotSummary(name: String): String? = SUMMARIES[name]
+
     fun snapshot(): Snapshot {
         ensureScript()
         val script = scriptFile.readText()

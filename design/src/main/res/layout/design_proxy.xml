@@ -113,9 +113,9 @@
                         android:layout_toStartOf="@id/menu_view"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
-                        android:contentDescription="@string/settings"
+                        android:contentDescription="@string/rule_switches"
                         android:focusable="true"
-                        android:onClick="@{() -> self.openSettingsSheet()}"
+                        android:onClick="@{() -> self.requestOpenRules()}"
                         android:padding="@dimen/toolbar_image_action_padding"
                         android:src="@drawable/ic_rule_switches"
                         android:tint="?attr/colorControlNormal" />
