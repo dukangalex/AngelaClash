@@ -53,6 +53,35 @@ func (s *sortableProxyList) Swap(i, j int) {
 	s.list[i], s.list[j] = s.list[j], s.list[i]
 }
 
+// GroupMeta is one entry of the profile's proxy-groups list, reduced to the
+// properties the proxy page needs to decide whether to show it.
+type GroupMeta struct {
+	Name           string
+	Type           C.AdapterType
+	Hidden         bool
+	ProxyGroupType bool
+}
+
+// FilterGroupNames keeps every group the profile defines. `hidden: true` is a
+// hint from the config generator telling clients like ClashX to fold a group
+// into its parent's tab row; it is not a routing property. Honouring it hid
+// real groups from the 代理 page (a subscription can mark e.g. 入口优选 hidden
+// while its tab keeps working), so the list only drops what the user asked to
+// drop: groups that cannot be picked by hand.
+func FilterGroupNames(metas []GroupMeta, excludeNotSelectable bool) []string {
+	result := make([]string, 0, len(metas))
+	for _, m := range metas {
+		if !m.ProxyGroupType {
+			continue
+		}
+		if excludeNotSelectable && m.Type != C.Selector {
+			continue
+		}
+		result = append(result, m.Name)
+	}
+	return result
+}
+
 func QueryProxyGroupNames(excludeNotSelectable bool) []string {
 	mode := tunnel.Mode()
 
@@ -62,24 +91,27 @@ func QueryProxyGroupNames(excludeNotSelectable bool) []string {
 
 	global := tunnel.Proxies()["GLOBAL"].Adapter().(outboundgroup.ProxyGroup)
 	proxies := global.Providers()[0].Proxies()
-	result := make([]string, 0, len(proxies)+1)
 
+	result := make([]string, 0, len(proxies)+1)
 	if mode == tunnel.Global {
 		result = append(result, "GLOBAL")
 	}
 
+	metas := make([]GroupMeta, 0, len(proxies))
 	for _, p := range proxies {
-		if g, ok := p.Adapter().(outboundgroup.ProxyGroup); ok {
-			if !excludeNotSelectable || p.Type() == C.Selector {
-				if g.Hidden() {
-					continue
-				}
-				result = append(result, p.Name())
-			}
+		g, ok := p.Adapter().(outboundgroup.ProxyGroup)
+		if !ok {
+			continue
 		}
+		metas = append(metas, GroupMeta{
+			Name:           p.Name(),
+			Type:           p.Type(),
+			Hidden:         g.Hidden(),
+			ProxyGroupType: true,
+		})
 	}
 
-	return result
+	return append(result, FilterGroupNames(metas, excludeNotSelectable)...)
 }
 
 func QueryProxyGroup(name string, sortMode SortMode, uiSubtitlePattern *regexp2.Regexp) *ProxyGroup {
