@@ -146,646 +146,428 @@
                     android:paddingTop="10dp"
                     android:paddingBottom="24dp">
 
-                    <!-- 1. BettBox Boxed Top Console Card -->
-                    <com.google.android.material.card.MaterialCardView
+                    <!-- ========== UI v2 / BettBox 结构 ========== -->
+                    <!-- 设计要点：顶部不再是一张卡；模式是一条药丸分段；速度是一张大图；
+                         诊断 4 项压成小方砖；除配置条外一律不画描边。 -->
+
+                    <!-- 1. 顶部：标题 + 状态 + 操作（无卡片） -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                        app:cardCornerRadius="@dimen/ac_radius_xl"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/clashOutline"
-                        app:strokeWidth="1dp">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingTop="6dp">
 
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onConnectionDiagClick()}"
                             android:orientation="vertical">
 
-                            <!-- UI v2：顶部蓝紫渐变高光条，给首页一个固定的视觉锚点 -->
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="3dp"
-                                android:background="@drawable/bg_accent_gradient" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:letterSpacing="0.01"
+                                android:singleLine="true"
+                                android:text="@string/dashboard_title"
+                                android:textSize="26sp"
+                                android:textStyle="bold" />
 
                             <LinearLayout
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
                                 android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingHorizontal="@dimen/ac_card_pad"
-                                android:paddingVertical="12dp">
+                                android:orientation="horizontal">
 
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:onClick="@{() -> self.onConnectionDiagClick()}"
-                                    android:orientation="vertical">
+                                <View
+                                    android:layout_width="7dp"
+                                    android:layout_height="7dp"
+                                    android:background="@{clashRunning ? @drawable/bg_status_dot_on : @drawable/bg_status_dot_off}" />
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:letterSpacing="0.06"
-                                        android:singleLine="true"
-                                        android:text="@string/home_console_label"
-                                        android:textColor="?attr/colorPrimary"
-                                        android:textSize="10sp"
-                                        android:textStyle="bold" />
-
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="3dp"
-                                        android:gravity="center_vertical"
-                                        android:orientation="horizontal">
-
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:singleLine="true"
-                                            android:text="@string/dashboard_title"
-                                            android:textSize="22sp"
-                                            android:textStyle="bold" />
-
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginStart="8dp"
-                                            android:background="@{clashRunning ? @drawable/bg_badge_emerald : @drawable/bg_profile_badge}"
-                                            android:clickable="true"
-                                            android:focusable="true"
-                                            android:onClick="@{() -> self.request(Request.ToggleStatus)}"
-                                            android:paddingHorizontal="9dp"
-                                            android:paddingVertical="3dp"
-                                            android:singleLine="true"
-                                            android:text="@{clashRunning ? @string/status_pill_running : @string/status_pill_stopped}"
-                                            android:textColor="@{clashRunning ? @color/color_emerald_accent : colorClashStopped}"
-                                            android:textSize="10sp"
-                                            android:textStyle="bold" />
-                                    </LinearLayout>
-                                </LinearLayout>
-
-                                <ImageView
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:layout_marginEnd="6dp"
-                                    android:background="@drawable/bg_icon_box"
-                                    android:clickable="true"
-                                    android:contentDescription="@string/script_display_options"
-                                    android:focusable="true"
-                                    android:foreground="?attr/selectableItemBackgroundBorderless"
-                                    android:onClick="@{() -> self.request(Request.OpenScript)}"
-                                    android:padding="9dp"
-                                    android:src="@drawable/ic_baseline_extension"
-                                    android:tint="?android:attr/textColorSecondary" />
-
-                                <ImageView
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:layout_marginEnd="6dp"
-                                    android:background="@drawable/bg_icon_box"
-                                    android:clickable="true"
-                                    android:contentDescription="@string/logs"
-                                    android:focusable="true"
-                                    android:foreground="?attr/selectableItemBackgroundBorderless"
-                                    android:onClick="@{() -> self.request(Request.OpenLogs)}"
-                                    android:padding="9dp"
-                                    android:src="@drawable/ic_baseline_assignment"
-                                    android:tint="?android:attr/textColorSecondary" />
-
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/power"
+                                <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:checked="@{clashRunning}"
-                                    android:contentDescription="@{clashRunning ? @string/service_power_control : @string/tap_to_start}"
-                                    android:minHeight="44dp"
-                                    android:onClick="@{() -> self.request(Request.ToggleStatus)}">
-                                    <requestFocus />
-                                </androidx.appcompat.widget.SwitchCompat>
+                                    android:layout_marginStart="6dp"
+                                    android:singleLine="true"
+                                    android:text="@{clashRunning ? @string/status_pill_running : @string/status_pill_stopped}"
+                                    android:textColor="@{clashRunning ? colorClashStarted : colorClashStopped}"
+                                    android:textSize="12sp" />
                             </LinearLayout>
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
 
-                    <!-- Attention Banner when action needed -->
-                    <com.google.android.material.card.MaterialCardView
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:contentDescription="@string/script_display_options"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.request(Request.OpenScript)}"
+                            android:padding="9dp"
+                            android:src="@drawable/ic_baseline_extension"
+                            android:tint="?android:attr/textColorSecondary" />
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:contentDescription="@string/logs"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.request(Request.OpenLogs)}"
+                            android:padding="9dp"
+                            android:src="@drawable/ic_baseline_assignment"
+                            android:tint="?android:attr/textColorSecondary" />
+
+                        <!-- 电源：开启时渐变实心圆，关闭时只有一圈淡描边 -->
+                        <ImageView
+                            android:id="@+id/power"
+                            android:layout_width="46dp"
+                            android:layout_height="46dp"
+                            android:layout_marginStart="4dp"
+                            android:background="@{clashRunning ? @drawable/bg_power_on : @drawable/bg_power_off}"
+                            android:clickable="true"
+                            android:contentDescription="@{clashRunning ? @string/service_power_control : @string/tap_to_start}"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.request(Request.ToggleStatus)}"
+                            android:padding="12dp"
+                            android:src="@drawable/ic_baseline_power_settings_new"
+                            android:tint="@{clashRunning ? @color/color_power_on_fg : colorClashStopped}" />
+                    </LinearLayout>
+
+                    <!-- 2. 出站模式：药丸分段（无卡片、无副标题） -->
+                    <LinearLayout
+                        android:id="@+id/mode_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:clickable="true"
-                        android:focusable="true"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_segment_track"
+                        android:orientation="horizontal"
+                        android:padding="4dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/mode_rule"
+                            style="@style/Widget.AngelaClash.ModeSegment"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:text="@string/rule_mode_title" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/mode_global"
+                            style="@style/Widget.AngelaClash.ModeSegment"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1"
+                            android:text="@string/global_mode_title" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/mode_direct"
+                            style="@style/Widget.AngelaClash.ModeSegment"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_weight="1"
+                            android:text="@string/direct_mode_title" />
+                    </LinearLayout>
+
+                    <!-- 3. 需要处理时的一行提示 -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_tile_flat"
+                        android:drawableStart="@drawable/ic_baseline_warning"
+                        android:drawablePadding="8dp"
                         android:onClick="@{() -> self.onAttention()}"
-                        android:visibility="@{showAttention ? View.VISIBLE : View.GONE}"
-                        app:cardBackgroundColor="?attr/clashSelectedSurface"
-                        app:cardCornerRadius="18dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/colorPrimary"
-                        app:strokeWidth="1dp">
+                        android:padding="12dp"
+                        android:text="@{homeAttention}"
+                        android:textColor="@color/color_amber_accent"
+                        android:textSize="12sp"
+                        android:visibility="@{showAttention ? View.VISIBLE : View.GONE}" />
+
+                    <!-- 4. 网速大图（BettBox 的视觉主体） -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_card_flat"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="10dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center_vertical"
-                            android:minHeight="48dp"
-                            android:orientation="horizontal"
-                            android:paddingHorizontal="14dp"
-                            android:paddingVertical="10dp">
-
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:importantForAccessibility="no"
-                                android:src="@drawable/ic_baseline_info"
-                                android:tint="?attr/colorPrimary" />
+                            android:orientation="horizontal">
 
                             <TextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
                                 android:layout_weight="1"
-                                android:text="@{homeAttention}"
+                                android:text="@string/dashboard_speed"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:singleLine="true"
+                                android:text="@{`↑ ` + upload}"
+                                android:textColor="@color/color_emerald_accent"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:singleLine="true"
+                                android:text="@{`↓ ` + download}"
                                 android:textColor="?attr/colorPrimary"
-                                android:textSize="13sp"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <com.github.kr328.clash.design.ui.SpeedChartView
+                            android:id="@+id/speed_bars"
+                            android:layout_width="match_parent"
+                            android:layout_height="132dp"
+                            android:layout_marginTop="8dp" />
+                    </LinearLayout>
+
+                    <!-- 5. 当前配置（唯一保留进度条的一条） -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_card_flat"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.request(Request.OpenProfiles)}"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="14dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="6dp"
+                                android:background="@drawable/bg_profile_badge"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="2dp"
+                                android:text="@string/dashboard_profile_active_tag"
+                                android:textColor="?attr/colorPrimary"
+                                android:textSize="10sp"
                                 android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="@{profileName == null ? @string/not_selected : profileName}"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_profile_badge"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="2dp"
+                                android:text="@{profileScriptBadge}"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:visibility="@{profileScriptBadge == null || profileScriptBadge.length() == 0 ? View.GONE : View.VISIBLE}" />
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_marginStart="6dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_baseline_chevron_right"
+                                android:tint="?android:attr/textColorSecondary" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ProgressBar
+                                android:id="@+id/traffic_progress"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="0dp"
+                                android:layout_height="6dp"
+                                android:layout_weight="1"
+                                android:max="100"
+                                android:progress="24"
+                                android:progressDrawable="@drawable/bg_traffic_progress" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:singleLine="true"
+                                android:text="@{@string/format_traffic_forwarded(forwarded)}"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 6. 代理组 + 链路：两条可点行，不画卡 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_card_flat"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:onClick="@{() -> self.request(Request.OpenProxy)}"
+                            android:orientation="horizontal"
+                            android:paddingVertical="14dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/proxy_card_title"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:text="@{proxyHeadline}"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:singleLine="true"
+                                android:text="@{proxyBadge}"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp" />
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_marginStart="4dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_baseline_chevron_right"
+                                android:tint="?android:attr/textColorSecondary" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="?attr/clashOutline"
+                            android:visibility="@{showChain ? View.VISIBLE : View.GONE}" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:onClick="@{() -> self.request(Request.OpenChain)}"
+                            android:orientation="horizontal"
+                            android:paddingVertical="14dp"
+                            android:visibility="@{showChain ? View.VISIBLE : View.GONE}">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/chain_card_title"
+                                    android:textColor="?android:attr/textColorSecondary"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:text="@{chainSummary}"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
 
                             <ImageView
                                 android:layout_width="18dp"
                                 android:layout_height="18dp"
                                 android:importantForAccessibility="no"
                                 android:src="@drawable/ic_baseline_chevron_right"
-                                android:tint="?attr/colorPrimary" />
+                                android:tint="?android:attr/textColorSecondary" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
 
-                    <!-- 2. BettBox Network Speed Card with Live Throughput Pill & 16-Bar Sparkline -->
-                    <com.google.android.material.card.MaterialCardView
+                    <!-- 7. 四个小方砖：只有「标签 + 值」，没有副标题 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:onClick="@{() -> self.showTrafficConsole()}"
-                        app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                        app:cardCornerRadius="22dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/clashOutline"
-                        app:strokeWidth="1dp">
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal">
 
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_tile_flat"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onConnectionDiagClick()}"
                             android:orientation="vertical"
-                            android:padding="15dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_flash_on"
-                                    android:tint="?attr/colorPrimary" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:layout_weight="1"
-                                    android:text="@string/dashboard_speed"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="@drawable/bg_badge_blue"
-                                    android:paddingHorizontal="9dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@string/dashboard_speed_badge"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/dashboard_down_rate_label"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="12sp" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:layout_weight="1"
-                                    android:ellipsize="end"
-                                    android:gravity="end"
-                                    android:maxLines="1"
-                                    android:text="@{download}"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="21sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/dashboard_up_rate_label"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="12sp" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:layout_weight="1"
-                                    android:ellipsize="end"
-                                    android:gravity="end"
-                                    android:maxLines="1"
-                                    android:text="@{upload}"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/speed_bars"
-                                android:layout_width="match_parent"
-                                android:layout_height="26dp"
-                                android:layout_marginTop="12dp"
-                                android:gravity="bottom"
-                                android:orientation="horizontal" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- 3. BettBox Active Profile & Traffic Usage Card -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:onClick="@{() -> self.request(Request.OpenProfiles)}"
-                        app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                        app:cardCornerRadius="22dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/clashOutline"
-                        app:strokeWidth="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="15dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_outline_folder"
-                                    android:tint="?attr/colorPrimary" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:layout_weight="1"
-                                    android:text="@string/dashboard_profile_card_title"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="6dp"
-                                    android:background="@drawable/bg_badge_blue"
-                                    android:paddingHorizontal="8dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@{profileScriptBadge}"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold"
-                                    android:visibility="@{profileScriptBadge == null || profileScriptBadge.length() == 0 ? View.GONE : View.VISIBLE}" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="6dp"
-                                    android:background="@drawable/bg_badge_blue"
-                                    android:paddingHorizontal="8dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@string/dashboard_profile_active_tag"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_chevron_right"
-                                    android:tint="?android:attr/textColorSecondary" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{profileName == null || profileName.length() == 0 ? @string/not_selected : profileName}"
-                                    android:textSize="19sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:text="@{@string/dashboard_total(forwarded)}"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <ProgressBar
-                                android:id="@+id/traffic_progress"
-                                style="?android:attr/progressBarStyleHorizontal"
-                                android:layout_width="match_parent"
-                                android:layout_height="6dp"
-                                android:layout_marginTop="10dp"
-                                android:max="100"
-                                android:progress="32"
-                                android:progressDrawable="@drawable/bg_traffic_progress" />
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{@string/format_traffic_forwarded(forwarded)}"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="11sp" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@{profileStackSummary}"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="11sp" />
-                            </LinearLayout>
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- 4. BettBox Outbound Mode Card with Recessed Track & 2-Line Buttons -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                        app:cardCornerRadius="22dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/clashOutline"
-                        app:strokeWidth="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="15dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_alt_route"
-                                    android:tint="?attr/colorPrimary" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:layout_weight="1"
-                                    android:text="@string/dashboard_mode"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:clickable="true"
-                                    android:ellipsize="end"
-                                    android:focusable="true"
-                                    android:maxLines="1"
-                                    android:onClick="@{() -> self.request(Request.OpenRuleSwitches)}"
-                                    android:paddingHorizontal="4dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@{homePolicy + ` · ` + @string/dashboard_mode_persist_hint}"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="11sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/mode_group"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:background="@drawable/bg_inset_card"
-                                android:orientation="horizontal"
-                                android:padding="4dp">
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/mode_rule"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="4dp"
-                                    android:layout_weight="1"
-                                    android:gravity="center"
-                                    android:insetLeft="0dp"
-                                    android:insetTop="0dp"
-                                    android:insetRight="0dp"
-                                    android:insetBottom="0dp"
-                                    android:lineSpacingExtra="2dp"
-                                    android:minWidth="0dp"
-                                    android:minHeight="54dp"
-                                    android:paddingHorizontal="4dp"
-                                    android:paddingVertical="6dp"
-                                    android:text="@string/rule_mode"
-                                    android:textAllCaps="false"
-                                    app:cornerRadius="12dp" />
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/mode_global"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="4dp"
-                                    android:layout_weight="1"
-                                    android:gravity="center"
-                                    android:insetLeft="0dp"
-                                    android:insetTop="0dp"
-                                    android:insetRight="0dp"
-                                    android:insetBottom="0dp"
-                                    android:lineSpacingExtra="2dp"
-                                    android:minWidth="0dp"
-                                    android:minHeight="54dp"
-                                    android:paddingHorizontal="4dp"
-                                    android:paddingVertical="6dp"
-                                    android:text="@string/global_mode"
-                                    android:textAllCaps="false"
-                                    app:cornerRadius="12dp" />
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/mode_direct"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:gravity="center"
-                                    android:insetLeft="0dp"
-                                    android:insetTop="0dp"
-                                    android:insetRight="0dp"
-                                    android:insetBottom="0dp"
-                                    android:lineSpacingExtra="2dp"
-                                    android:minWidth="0dp"
-                                    android:minHeight="54dp"
-                                    android:paddingHorizontal="4dp"
-                                    android:paddingVertical="6dp"
-                                    android:text="@string/direct_mode"
-                                    android:textAllCaps="false"
-                                    app:cornerRadius="12dp" />
-                            </LinearLayout>
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- 5. BettBox Proxy Strategy Group Card -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:onClick="@{() -> self.request(Request.OpenProxy)}"
-                        app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                        app:cardCornerRadius="22dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/clashOutline"
-                        app:strokeWidth="1dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="15dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_view_list"
-                                    android:tint="?attr/colorPrimary" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:layout_weight="1"
-                                    android:text="@string/proxy_card_title"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="6dp"
-                                    android:background="@drawable/bg_badge_emerald"
-                                    android:paddingHorizontal="8dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@{proxyBadge}"
-                                    android:textColor="@color/color_emerald_accent"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_chevron_right"
-                                    android:tint="?android:attr/textColorSecondary" />
-                            </LinearLayout>
+                            android:padding="14dp">
 
                             <TextView
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:ellipsize="end"
-                                android:maxLines="1"
-                                android:text="@{proxyHeadline}"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:text="@string/home_connected_card_label"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp" />
 
                             <TextView
                                 android:layout_width="match_parent"
@@ -793,86 +575,29 @@
                                 android:layout_marginTop="4dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="@{proxySubtitle}"
-                                android:textColor="?android:attr/textColorSecondary"
-                                android:textSize="11sp" />
+                                android:text="@{homeConnected}"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- 6. BettBox Chain Proxy (dialer-proxy) Card -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:onClick="@{() -> self.request(Request.OpenChain)}"
-                        android:visibility="@{showChain ? View.VISIBLE : View.GONE}"
-                        app:cardBackgroundColor="?attr/clashSelectedSurface"
-                        app:cardCornerRadius="22dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/colorPrimary"
-                        app:strokeWidth="1dp">
 
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_tile_flat"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onSafetyDiagClick()}"
                             android:orientation="vertical"
-                            android:padding="15dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_swap_vert"
-                                    android:tint="?attr/colorPrimary" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:layout_weight="1"
-                                    android:text="@string/chain_card_title"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginEnd="6dp"
-                                    android:background="@drawable/bg_badge_blue"
-                                    android:paddingHorizontal="8dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@{chainBadge}"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
-
-                                <ImageView
-                                    android:layout_width="16dp"
-                                    android:layout_height="16dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_chevron_right"
-                                    android:tint="?attr/colorPrimary" />
-                            </LinearLayout>
+                            android:padding="14dp">
 
                             <TextView
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:ellipsize="end"
-                                android:maxLines="1"
-                                android:text="@{chainSummary}"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:text="@string/home_safety_card_label"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp" />
 
                             <TextView
                                 android:layout_width="match_parent"
@@ -880,566 +605,196 @@
                                 android:layout_marginTop="4dp"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="@{chainSubtitle}"
-                                android:textColor="?android:attr/textColorSecondary"
-                                android:textSize="11sp" />
+                                android:text="@{homeSafetyShort}"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
 
-                    <!-- 7. BettBox 2-Column Core Engine & Intranet/TUN Telemetry Row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:baselineAligned="false"
                         android:orientation="horizontal">
 
-                        <!-- Left Card: Core Engine & Runtime State -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_marginEnd="5dp"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            android:onClick="@{() -> self.onCoreEngineClick()}"
-                            app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                            app:cardCornerRadius="22dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="?attr/clashOutline"
-                            app:strokeWidth="1dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="13dp">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:importantForAccessibility="no"
-                                        android:src="@drawable/ic_baseline_meta"
-                                        android:tint="?attr/colorPrimary" />
-
-                                    <TextView
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="5dp"
-                                        android:layout_weight="1"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@string/telemetry_core_title"
-                                        android:textColor="?android:attr/textColorSecondary"
-                                        android:textSize="11sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:background="@drawable/bg_badge_blue"
-                                        android:paddingHorizontal="6dp"
-                                        android:paddingVertical="1dp"
-                                        android:text="@string/telemetry_core_badge"
-                                        android:textColor="?attr/colorPrimary"
-                                        android:textSize="9sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{coreVersion}"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="3dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{coreSubtitle}"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="10sp" />
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <!-- Right Card: Intranet & TUN Virtual Stack -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="5dp"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            android:onClick="@{() -> self.onTunNetworkClick()}"
-                            app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                            app:cardCornerRadius="22dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="?attr/clashOutline"
-                            app:strokeWidth="1dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="13dp">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:importantForAccessibility="no"
-                                        android:src="@drawable/ic_baseline_dns"
-                                        android:tint="?attr/colorPrimary" />
-
-                                    <TextView
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="5dp"
-                                        android:layout_weight="1"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@string/telemetry_tun_title"
-                                        android:textColor="?android:attr/textColorSecondary"
-                                        android:textSize="11sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:background="@drawable/bg_badge_emerald"
-                                        android:paddingHorizontal="6dp"
-                                        android:paddingVertical="1dp"
-                                        android:text="@string/telemetry_tun_badge"
-                                        android:textColor="@color/color_emerald_accent"
-                                        android:textSize="9sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{tunHeadline}"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="3dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{tunSubtitle}"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="10sp" />
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
-                    </LinearLayout>
-
-                    <!-- 8. BettBox System Explicit Quick Options Grid Card (Directly on Home Dashboard) -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                        app:cardCornerRadius="22dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/clashOutline"
-                        app:strokeWidth="1dp">
-
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_tile_flat"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onPolicyDiagClick()}"
                             android:orientation="vertical"
-                            android:padding="15dp">
+                            android:padding="14dp">
 
-                            <LinearLayout
-                                android:layout_width="match_parent"
+                            <TextView
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_extension"
-                                    android:tint="?attr/colorPrimary" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:layout_weight="1"
-                                    android:text="@string/home_quick_options_title"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="?attr/selectableItemBackgroundBorderless"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:onClick="@{() -> self.request(Request.OpenScript)}"
-                                    android:paddingHorizontal="6dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@string/home_quick_options_action"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="11sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
+                                android:text="@string/home_policy_card_label"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp" />
 
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="3dp"
-                                android:text="@string/home_quick_options_sub"
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="@{homePolicy}"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_tile_flat"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onNetworkDiagClick()}"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/home_network_card_label"
                                 android:textColor="?android:attr/textColorSecondary"
                                 android:textSize="11sp" />
 
-                            <LinearLayout
-                                android:id="@+id/home_quick_options"
+                            <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:orientation="vertical" />
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="@{homeNetwork}"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
 
-                    <!-- 9. BettBox 2x2 Service Diagnostic Matrix Card -->
-                    <com.google.android.material.card.MaterialCardView
+                    <!-- 8. 内核 / TUN：同样两条小块，合在一张卡里 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_card_flat"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onCoreEngineClick()}"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/telemetry_core_title"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="@{coreVersion}"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onTunNetworkClick()}"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/telemetry_tun_title"
+                                android:textColor="?android:attr/textColorSecondary"
+                                android:textSize="11sp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="@{tunHeadline}"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 9. 快捷开关：标题一行，6 个紧凑方块（内容由代码生成） -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/home_quick_options_title"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.request(Request.OpenScript)}"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="2dp"
+                            android:text="@string/home_quick_options_action"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/home_quick_options"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                        app:cardCornerRadius="22dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="?attr/clashOutline"
-                        app:strokeWidth="1dp">
+                        android:orientation="vertical" />
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="15dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:text="@string/service_matrix_title"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:gravity="center_vertical"
-                                android:onClick="@{() -> self.request(Request.RunSelfCheck)}"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_baseline_vpn_lock"
-                                    android:tint="?attr/colorPrimary" />
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="6dp"
-                                    android:layout_weight="1"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@string/service_matrix_title"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="@drawable/bg_badge_blue"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:onClick="@{() -> self.request(Request.RunSelfCheck)}"
-                                    android:paddingHorizontal="8dp"
-                                    android:paddingVertical="2dp"
-                                    android:text="@string/service_matrix_badge"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <!-- Sub-Row 1: Connection & Safety -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:baselineAligned="false"
-                                android:orientation="horizontal">
-
-                                <!-- Cell 1: Connection -->
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="match_parent"
-                                    android:layout_marginEnd="5dp"
-                                    android:layout_weight="1"
-                                    android:background="@drawable/bg_inset_card"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.onConnectionDiagClick()}"
-                                    android:orientation="vertical"
-                                    android:padding="12dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center_vertical"
-                                        android:orientation="horizontal">
-
-                                        <TextView
-                                            android:layout_width="0dp"
-                                            android:layout_height="wrap_content"
-                                            android:layout_weight="1"
-                                            android:text="@string/home_connected_card_label"
-                                            android:textColor="?android:attr/textColorSecondary"
-                                            android:textSize="11sp" />
-
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:importantForAccessibility="no"
-                                            android:src="@drawable/ic_baseline_chevron_right"
-                                            android:tint="?android:attr/textColorSecondary" />
-                                    </LinearLayout>
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="5dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homeConnected}"
-                                        android:textColor="@{clashRunning ? @color/color_emerald_accent : colorClashStopped}"
-                                        android:textSize="15sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="3dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homeConnectedSub}"
-                                        android:textColor="?android:attr/textColorSecondary"
-                                        android:textSize="10sp" />
-                                </LinearLayout>
-
-                                <!-- Cell 2: Safety -->
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="match_parent"
-                                    android:layout_marginStart="5dp"
-                                    android:layout_weight="1"
-                                    android:background="@drawable/bg_inset_card"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.onSafetyDiagClick()}"
-                                    android:orientation="vertical"
-                                    android:padding="12dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center_vertical"
-                                        android:orientation="horizontal">
-
-                                        <TextView
-                                            android:layout_width="0dp"
-                                            android:layout_height="wrap_content"
-                                            android:layout_weight="1"
-                                            android:text="@string/home_safety_card_label"
-                                            android:textColor="?android:attr/textColorSecondary"
-                                            android:textSize="11sp" />
-
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:importantForAccessibility="no"
-                                            android:src="@drawable/ic_baseline_chevron_right"
-                                            android:tint="?android:attr/textColorSecondary" />
-                                    </LinearLayout>
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="5dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homeSafetyShort}"
-                                        android:textColor="?attr/colorPrimary"
-                                        android:textSize="15sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="3dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homeSafetySub}"
-                                        android:textColor="?android:attr/textColorSecondary"
-                                        android:textSize="10sp" />
-                                </LinearLayout>
-                            </LinearLayout>
-
-                            <!-- Sub-Row 2: Policy & Network -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:baselineAligned="false"
-                                android:orientation="horizontal">
-
-                                <!-- Cell 3: Policy -->
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="match_parent"
-                                    android:layout_marginEnd="5dp"
-                                    android:layout_weight="1"
-                                    android:background="@drawable/bg_inset_card"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.onPolicyDiagClick()}"
-                                    android:orientation="vertical"
-                                    android:padding="12dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center_vertical"
-                                        android:orientation="horizontal">
-
-                                        <TextView
-                                            android:layout_width="0dp"
-                                            android:layout_height="wrap_content"
-                                            android:layout_weight="1"
-                                            android:text="@string/home_policy_card_label"
-                                            android:textColor="?android:attr/textColorSecondary"
-                                            android:textSize="11sp" />
-
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:importantForAccessibility="no"
-                                            android:src="@drawable/ic_baseline_chevron_right"
-                                            android:tint="?android:attr/textColorSecondary" />
-                                    </LinearLayout>
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="5dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homePolicy}"
-                                        android:textSize="15sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="3dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homePolicySub}"
-                                        android:textColor="?android:attr/textColorSecondary"
-                                        android:textSize="10sp" />
-                                </LinearLayout>
-
-                                <!-- Cell 4: Network Forwarding -->
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="match_parent"
-                                    android:layout_marginStart="5dp"
-                                    android:layout_weight="1"
-                                    android:background="@drawable/bg_inset_card"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:foreground="?attr/selectableItemBackground"
-                                    android:onClick="@{() -> self.onNetworkDiagClick()}"
-                                    android:orientation="vertical"
-                                    android:padding="12dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center_vertical"
-                                        android:orientation="horizontal">
-
-                                        <TextView
-                                            android:layout_width="0dp"
-                                            android:layout_height="wrap_content"
-                                            android:layout_weight="1"
-                                            android:text="@string/home_network_card_label"
-                                            android:textColor="?android:attr/textColorSecondary"
-                                            android:textSize="11sp" />
-
-                                        <ImageView
-                                            android:layout_width="14dp"
-                                            android:layout_height="14dp"
-                                            android:importantForAccessibility="no"
-                                            android:src="@drawable/ic_baseline_chevron_right"
-                                            android:tint="?android:attr/textColorSecondary" />
-                                    </LinearLayout>
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="5dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homeNetworkShort}"
-                                        android:textColor="@{clashRunning ? @color/color_emerald_accent : colorClashStopped}"
-                                        android:textSize="15sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="3dp"
-                                        android:ellipsize="end"
-                                        android:maxLines="1"
-                                        android:text="@{homeNetworkSub}"
-                                        android:textColor="?android:attr/textColorSecondary"
-                                        android:textSize="10sp" />
-                                </LinearLayout>
-                            </LinearLayout>
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                    <LinearLayout
+                        android:id="@+id/explicit_host"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical" />
                 </LinearLayout>
             </ScrollView>
 

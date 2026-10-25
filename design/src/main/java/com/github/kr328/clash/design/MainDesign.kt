@@ -5,12 +5,9 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
-import android.text.style.RelativeSizeSpan
-import android.text.style.StyleSpan
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -79,10 +76,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     private var peakDownRaw: Long = 0L
     private var peakUpRaw: Long = 0L
 
-    private val speedPercentages = intArrayOf(
-        22, 30, 26, 38, 32, 46, 36, 54, 42, 60, 48, 66, 52, 74, 58, 82
-    )
-    private val speedBarViews = mutableListOf<View>()
+    // 面积图的数据在 SpeedChartView 内部维护，这里不再存柱子高度。
 
     fun onAttention() {
         attentionAction?.let(::request)
@@ -110,10 +104,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             .setNeutralButton("重置峰值与波形") { _, _ ->
                 peakDownRaw = 0L
                 peakUpRaw = 0L
-                for (i in speedPercentages.indices) {
-                    speedPercentages[i] = 20
-                }
-                renderSpeedBars(binding.clashRunning)
+                binding.speedBars.reset()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -498,22 +489,24 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                 val spec = specs[idx]
                 val isOn = store.optionOn(spec.group, spec.keyName, spec.defaultOn)
 
-                val card = MaterialCardView(context).apply {
-                    radius = 15f * density
-                    cardElevation = 0f
+                // BettBox 风格：不画描边，只用底色区分开/关；也不再塞副标题。
+                val card = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
                     isClickable = true
                     isFocusable = true
-                    setCardBackgroundColor(if (isOn) selectedBg else offCardBg)
-                    strokeColor = if (isOn) royalStroke else outlineStroke
-                    strokeWidth = if (isOn) (1.4f * density).toInt().coerceAtLeast(2) else dp(1).coerceAtLeast(1)
-                    val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
-                    if (colOffset == 0) lp.marginEnd = dp(4) else lp.marginStart = dp(4)
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        cornerRadius = 18f * density
+                        setColor(if (isOn) selectedBg else offCardBg)
+                    }
+                    val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                    if (colOffset == 0) lp.marginEnd = dp(5) else lp.marginStart = dp(5)
                     layoutParams = lp
                 }
 
                 val inner = LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(12), dp(10), dp(12), dp(10))
+                    setPadding(dp(13), dp(12), dp(13), dp(12))
                 }
 
                 val topRow = LinearLayout(context).apply {
@@ -541,22 +534,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                 topRow.addView(titleTv)
                 topRow.addView(statusBadge)
 
-                val subTv = TextView(context).apply {
-                    text = spec.subtitle
-                    textSize = 10.5f
-                    setTextColor(textSecondary)
-                    maxLines = 1
-                    ellipsize = TextUtils.TruncateAt.END
-                    val lp = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                    )
-                    lp.topMargin = dp(3)
-                    layoutParams = lp
-                }
-
                 inner.addView(topRow)
-                inner.addView(subTv)
                 card.addView(inner)
 
                 card.setOnClickListener {
@@ -687,18 +665,13 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             if (downBytes > peakDownRaw) peakDownRaw = downBytes
             if (upBytes > peakUpRaw) peakUpRaw = upBytes
 
-            val combined = (downBytes + upBytes).coerceAtLeast(0L)
-            val pct = if (combined <= 0L) {
-                20
-            } else {
-                val logVal = (ln(combined.toDouble() + 1.0) / ln(1024.0 * 1024.0 * 10.0) * 80.0).toInt()
-                (22 + logVal).coerceIn(22, 100)
-            }
-            for (i in 0 until speedPercentages.size - 1) {
-                speedPercentages[i] = speedPercentages[i + 1]
-            }
-            speedPercentages[speedPercentages.size - 1] = pct
-            renderSpeedBars(binding.clashRunning)
+            // 面积图要的是上下行各自的曲线，不是合成值：
+            // 用对数归一化，否则 10 MB/s 和 100 KB/s 在图上都贴着顶。
+            binding.speedBars.push(
+                normalizeSpeed(downBytes),
+                normalizeSpeed(upBytes),
+                binding.clashRunning,
+            )
 
             // Update traffic progress bar smoothly
             val totalDown = (total ushr 32) and 0xFFFFFFFFL
@@ -714,48 +687,21 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         }
     }
 
-    private fun initSpeedBars() {
-        val host = binding.speedBars
-        host.removeAllViews()
-        speedBarViews.clear()
-        val density = context.resources.displayMetrics.density
-        fun dp(n: Float) = (n * density).toInt().coerceAtLeast(1)
+    /** 对数归一化：0 B/s -> 0，10 MB/s 以上 -> 1。比线性好看得多，也不会一直贴顶。 */
+    private fun normalizeSpeed(bytes: Long): Float {
+        if (bytes <= 0L) return 0f
+        val v = ln(bytes.toDouble() + 1.0) / ln(1024.0 * 1024.0 * 10.0)
+        return v.toFloat().coerceIn(0f, 1f)
+    }
 
-        for (i in speedPercentages.indices) {
-            val v = View(context)
-            speedBarViews.add(v)
-            val lp = LinearLayout.LayoutParams(0, dp(8f), 1f)
-            if (i > 0) lp.marginStart = dp(3f)
-            v.layoutParams = lp
-            host.addView(v)
-        }
-        renderSpeedBars(false)
+    private fun initSpeedBars() {
+        binding.speedBars.setRunning(false)
     }
 
     private fun renderSpeedBars(running: Boolean) {
-        if (speedBarViews.isEmpty()) return
-        val density = context.resources.displayMetrics.density
-        val maxH = (26f * density).toInt().coerceAtLeast(12)
-        val primary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
-        val muted = context.resolveThemedColor(R.attr.clashOutline)
-
-        for (i in speedBarViews.indices) {
-            val view = speedBarViews[i]
-            val pct = speedPercentages[i].coerceIn(16, 100)
-            val h = ((maxH * pct) / 100).coerceAtLeast((4f * density).toInt())
-            val lp = view.layoutParams as LinearLayout.LayoutParams
-            lp.height = h
-            view.layoutParams = lp
-
-            val bg = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = 4f * density
-                val color = if (running) primary else muted
-                setColor(color)
-                alpha = if (running) (90 + (i * 10)).coerceAtMost(240) else 110
-            }
-            view.background = bg
-        }
+        // 保留方法名（setClashRunning 还在调），只切运行状态，不写采样点，
+        // 真正的曲线由 setTraffic() 每秒 push 一次上下行。
+        binding.speedBars.setRunning(running)
     }
 
     suspend fun setMode(mode: TunnelState.Mode) {
@@ -769,69 +715,25 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         }
     }
 
-    private fun buildModeLabel(
-        title: String,
-        subtitle: String,
-        selected: Boolean,
-        normalColor: Int,
-        unselectedSubColor: Int,
-    ): CharSequence {
-        val sb = SpannableStringBuilder()
-        sb.append(title)
-        val titleEnd = sb.length
-        sb.setSpan(StyleSpan(Typeface.BOLD), 0, titleEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        sb.setSpan(RelativeSizeSpan(1.02f), 0, titleEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        sb.setSpan(
-            ForegroundColorSpan(if (selected) Color.WHITE else normalColor),
-            0,
-            titleEnd,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
-
-        sb.append("\n")
-        val subStart = sb.length
-        sb.append(subtitle)
-        val subEnd = sb.length
-        sb.setSpan(RelativeSizeSpan(0.78f), subStart, subEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        sb.setSpan(
-            ForegroundColorSpan(if (selected) Color.parseColor("#E6FFFFFF") else unselectedSubColor),
-            subStart,
-            subEnd,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-        )
-        return sb
-    }
-
     private fun paintMode(selected: Int) {
         val royalPrimary = ContextCompat.getColor(context, R.color.color_clash_royal)
         val normal = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
-        val unselectedSubColor = ContextCompat.getColor(context, R.color.color_dark_clash_stopped)
 
+        // BettBox 的分段控件只有文字，没有「智能规则匹配」这类副标题 —— 副标题是噪音。
         val specs = listOf(
-            Triple(
-                binding.modeRule,
-                context.getString(R.string.rule_mode_title),
-                context.getString(R.string.rule_mode_sub),
-            ),
-            Triple(
-                binding.modeGlobal,
-                context.getString(R.string.global_mode_title),
-                context.getString(R.string.global_mode_sub),
-            ),
-            Triple(
-                binding.modeDirect,
-                context.getString(R.string.direct_mode_title),
-                context.getString(R.string.direct_mode_sub),
-            ),
+            binding.modeRule to context.getString(R.string.rule_mode_title),
+            binding.modeGlobal to context.getString(R.string.global_mode_title),
+            binding.modeDirect to context.getString(R.string.direct_mode_title),
         )
 
-        for ((button, title, sub) in specs) {
+        for ((button, title) in specs) {
             val on = button.id == selected
             button.backgroundTintList = ColorStateList.valueOf(
                 if (on) royalPrimary else Color.TRANSPARENT
             )
             button.strokeWidth = 0
-            button.text = buildModeLabel(title, sub, on, normal, unselectedSubColor)
+            button.setTextColor(if (on) Color.WHITE else normal)
+            button.text = title
         }
     }
 

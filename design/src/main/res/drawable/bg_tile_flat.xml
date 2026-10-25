@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI v2：小数据方砖 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="?attr/clashSurfaceVariant" />
+    <corners android:radius="18dp" />
+</shape>

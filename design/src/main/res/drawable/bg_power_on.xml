@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI v2：电源按钮 —— 开启时蓝紫渐变实心圆 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <gradient android:angle="45" android:endColor="#7C5BFF" android:startColor="#5B8CFF" />
+</shape>
