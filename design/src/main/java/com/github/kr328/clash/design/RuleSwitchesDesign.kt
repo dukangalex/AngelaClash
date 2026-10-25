@@ -33,6 +33,7 @@ class RuleSwitchesDesign(
     private val profileUuid: UUID?,
     private val profileName: String?,
     scriptOn: Boolean,
+    groups: List<String>,
 ) : Design<RuleSwitchesDesign.Request>(context) {
     sealed class Request {
         object Reload : Request()
@@ -46,6 +47,7 @@ class RuleSwitchesDesign(
         setPadding(dp(12), dp(8), dp(12), dp(24))
     }
     private var scriptEnabled = scriptOn
+    private var profileGroups: List<String> = groups
 
     override val root: View
         get() = binding.root
@@ -63,6 +65,14 @@ class RuleSwitchesDesign(
         render()
     }
 
+    /** Groups the running config exposes for the active profile. */
+    fun updateGroups(groups: List<String>) {
+        profileGroups = groups
+        if (!scriptEnabled) {
+            render()
+        }
+    }
+
     private fun render() {
         host.removeAllViews()
         host.addView(headerCard())
@@ -71,8 +81,10 @@ class RuleSwitchesDesign(
             host.addView(noteCard(getString(R.string.rule_switches_no_profile), accent = true))
             return
         }
+
         if (!scriptEnabled) {
-            host.addView(noteCard(getString(R.string.rule_switches_script_off), accent = true))
+            renderProfileGroups()
+            return
         }
 
         val rows = store.snapshot().sections.firstOrNull()?.rows.orEmpty()
@@ -84,6 +96,50 @@ class RuleSwitchesDesign(
         for (row in rows) {
             host.addView(switchCard(row.name, row.on))
         }
+    }
+
+    /**
+     * 这份配置没开脚本时，这一页显示的是**它自己的**规则结果：运行配置里真实存在的
+     * 策略组。没有脚本就没有可拨的开关，只有订阅原本的结构，读一眼就知道"原规则"是什么。
+     */
+    private fun renderProfileGroups() {
+        host.addView(noteCard(getString(R.string.rule_switches_script_off), accent = true))
+
+        if (profileGroups.isEmpty()) {
+            host.addView(noteCard(getString(R.string.rule_switches_native_empty), accent = false))
+            return
+        }
+
+        host.addView(noteCard(getString(R.string.rule_switches_native_summary), accent = false))
+        profileGroups.forEach { host.addView(groupCard(it)) }
+    }
+
+    /** Read-only card: the group exists in this profile's config, nothing to toggle. */
+    private fun groupCard(name: String): View {
+        val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
+        val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
+
+        val title = TextView(context).apply {
+            text = name
+            textSize = 15f
+            setTextColor(primaryText)
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+        val badge = TextView(context).apply {
+            text = getString(R.string.rule_switches_native_badge)
+            textSize = 11f
+            setTextColor(secondaryText)
+            setPadding(dp(10), 0, 0, 0)
+        }
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16), dp(14), dp(16), dp(14))
+            addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(badge)
+        }
+        return card(row, stroke = null)
     }
 
     /** Current profile + the switch that decides whether these toggles apply to it. */

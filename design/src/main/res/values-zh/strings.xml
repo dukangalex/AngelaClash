@@ -525,4 +525,7 @@
     <string name="script_group_count">%1$d/%2$d</string>
     <string name="script_group_chip_on">%1$s 已开启，点击关闭</string>
     <string name="script_group_chip_off">%1$s 已关闭，点击开启</string>
+    <string name="rule_switches_native_summary">这份配置没启用脚本，下面是它自己的策略组。这一页不会改动它们。</string>
+    <string name="rule_switches_native_badge">订阅</string>
+    <string name="rule_switches_native_empty">启动代理后，这里会列出这份配置自带的策略组</string>
 </resources>

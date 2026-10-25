@@ -620,4 +620,7 @@
     <string name="script_group_count">%1$d/%2$d</string>
     <string name="script_group_chip_on">%1$s, on. Tap to turn off</string>
     <string name="script_group_chip_off">%1$s, off. Tap to turn on</string>
+    <string name="rule_switches_native_summary">The script is off for this profile, so these are its own policy groups. Nothing on this page rewrites them.</string>
+    <string name="rule_switches_native_badge">profile</string>
+    <string name="rule_switches_native_empty">Start the tunnel to list this profile\'s own policy groups</string>
 </resources>

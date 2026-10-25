@@ -53,33 +53,99 @@ func (s *sortableProxyList) Swap(i, j int) {
 	s.list[i], s.list[j] = s.list[j], s.list[i]
 }
 
-// GroupMeta is one entry of the profile's proxy-groups list, reduced to the
-// properties the proxy page needs to decide whether to show it.
+// GroupMeta is one entry of the running config's proxy-group set, reduced to
+// the properties the proxy page needs to decide whether to show it.
 type GroupMeta struct {
-	Name           string
-	Type           C.AdapterType
-	Hidden         bool
-	ProxyGroupType bool
+	Name   string
+	Type   C.AdapterType
+	Hidden bool
 }
 
-// FilterGroupNames keeps every group the profile defines. `hidden: true` is a
-// hint from the config generator telling clients like ClashX to fold a group
-// into its parent's tab row; it is not a routing property. Honouring it hid
-// real groups from the 代理 page (a subscription can mark e.g. 入口优选 hidden
-// while its tab keeps working), so the list only drops what the user asked to
-// drop: groups that cannot be picked by hand.
+// FilterGroupNames keeps every group the config registers. Two rules used to
+// make real groups vanish from the 代理 page:
+//
+//   - `hidden: true` is a ClashX-style hint to fold a group into its parent's
+//     tab row; it is not a routing property, so it is reported through
+//     GroupMeta.Hidden instead of dropping the group.
+//   - the names were read from GLOBAL's member list. A config that ships its
+//     own GLOBAL group (the built-in override script does) only lists a subset
+//     there, so any group it omits - e.g. a subscription's 入口优选 - was never
+//     offered to the UI even though the kernel had loaded it.
+//
+// The only filter left is the user's own: the 不可选择 menu toggle keeps
+// manually selectable groups.
 func FilterGroupNames(metas []GroupMeta, excludeNotSelectable bool) []string {
 	result := make([]string, 0, len(metas))
 	for _, m := range metas {
-		if !m.ProxyGroupType {
-			continue
-		}
 		if excludeNotSelectable && m.Type != C.Selector {
 			continue
 		}
 		result = append(result, m.Name)
 	}
 	return result
+}
+
+// collectGroupMetas returns every ProxyGroup the kernel has loaded, keyed by
+// name.
+func collectGroupMetas(proxies map[string]C.Proxy) map[string]GroupMeta {
+	metas := make(map[string]GroupMeta, len(proxies))
+	for name, p := range proxies {
+		g, ok := p.Adapter().(outboundgroup.ProxyGroup)
+		if !ok {
+			continue
+		}
+		metas[name] = GroupMeta{
+			Name:   name,
+			Type:   p.Type(),
+			Hidden: g.Hidden(),
+		}
+	}
+	return metas
+}
+
+// orderGroupMetas puts the groups in config order: globalOrder first (that is
+// where a config keeps its intended order), then every other group the kernel
+// loaded, alphabetically, so nothing silently disappears.
+func orderGroupMetas(globalOrder []string, registered map[string]GroupMeta) []GroupMeta {
+	ordered := make([]GroupMeta, 0, len(registered))
+	seen := make(map[string]bool, len(registered))
+
+	for _, name := range globalOrder {
+		m, ok := registered[name]
+		if !ok || seen[m.Name] {
+			continue
+		}
+		seen[m.Name] = true
+		ordered = append(ordered, m)
+	}
+
+	rest := make([]string, 0, len(registered))
+	for name := range registered {
+		if name == "GLOBAL" || seen[name] {
+			continue
+		}
+		rest = append(rest, name)
+	}
+	sort.Strings(rest)
+	for _, name := range rest {
+		ordered = append(ordered, registered[name])
+	}
+
+	return ordered
+}
+
+// globalMemberOrder returns the order a config lists its groups in, as far as
+// GLOBAL exposes it. It can be a subset: a config may ship its own GLOBAL.
+func globalMemberOrder(global outboundgroup.ProxyGroup) []string {
+	if global == nil || len(global.Providers()) == 0 {
+		return nil
+	}
+	members := global.Providers()[0].Proxies()
+	names := make([]string, 0, len(members))
+	for _, p := range members {
+		names = append(names, p.Name())
+	}
+	return names
 }
 
 func QueryProxyGroupNames(excludeNotSelectable bool) []string {
@@ -89,29 +155,20 @@ func QueryProxyGroupNames(excludeNotSelectable bool) []string {
 		return []string{}
 	}
 
-	global := tunnel.Proxies()["GLOBAL"].Adapter().(outboundgroup.ProxyGroup)
-	proxies := global.Providers()[0].Proxies()
+	proxies := tunnel.Proxies()
+	registered := collectGroupMetas(proxies)
 
-	result := make([]string, 0, len(proxies)+1)
+	var global outboundgroup.ProxyGroup
+	if p, ok := proxies["GLOBAL"]; ok && p != nil {
+		global, _ = p.Adapter().(outboundgroup.ProxyGroup)
+	}
+
+	result := make([]string, 0, len(registered)+1)
 	if mode == tunnel.Global {
 		result = append(result, "GLOBAL")
 	}
 
-	metas := make([]GroupMeta, 0, len(proxies))
-	for _, p := range proxies {
-		g, ok := p.Adapter().(outboundgroup.ProxyGroup)
-		if !ok {
-			continue
-		}
-		metas = append(metas, GroupMeta{
-			Name:           p.Name(),
-			Type:           p.Type(),
-			Hidden:         g.Hidden(),
-			ProxyGroupType: true,
-		})
-	}
-
-	return append(result, FilterGroupNames(metas, excludeNotSelectable)...)
+	return append(result, FilterGroupNames(orderGroupMetas(globalMemberOrder(global), registered), excludeNotSelectable)...)
 }
 
 func QueryProxyGroup(name string, sortMode SortMode, uiSubtitlePattern *regexp2.Regexp) *ProxyGroup {
