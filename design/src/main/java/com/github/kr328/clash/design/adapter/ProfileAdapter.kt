@@ -16,6 +16,8 @@ class ProfileAdapter(
     private val onClicked: (Profile) -> Unit,
     private val onMenuClicked: (Profile) -> Unit,
     private val onStartDrag: ((Holder) -> Unit)? = null,
+    /** 这份配置是否启用了覆写脚本；null = 未知，不显示徽标。 */
+    private val scriptState: ((Profile) -> Boolean?)? = null,
 ) : RecyclerView.Adapter<ProfileAdapter.Holder>() {
     class Holder(val binding: AdapterProfileBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -60,6 +62,12 @@ class ProfileAdapter(
             } else {
                 false
             }
+        }
+
+        // 徽标每次都要刷新：脚本开关就在本页切，不能靠 profile 对象是否相同来跳过。
+        binding.scriptBadge = when (scriptState?.invoke(current)) {
+            true -> context.getString(R.string.profile_script_on)
+            else -> null
         }
 
         if (current === binding.profile)

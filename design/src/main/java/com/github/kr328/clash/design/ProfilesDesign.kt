@@ -60,6 +60,8 @@ class ProfilesDesign(
                 itemTouchHelper.startDrag(holder)
             }
         },
+        // 配置卡上的「脚本 ON」徽标：和首页用同一个判断，避免两处口径不一致。
+        scriptState = { profile -> scriptOn(profile.uuid) },
     )
 
     private var allUpdating: Boolean
@@ -71,6 +73,11 @@ class ProfilesDesign(
 
     override val root: View
         get() = binding.root
+
+    /** 脚本开关在菜单里切换后，重画列表以更新「脚本 ON」徽标。 */
+    fun refreshScriptBadges() {
+        adapter.notifyDataSetChanged()
+    }
 
     suspend fun patchProfiles(profiles: List<Profile>) {
         val sorted = withContext(Dispatchers.Default) {

@@ -8,6 +8,9 @@
             name="currentTime"
             type="com.github.kr328.clash.design.ui.ObservableCurrentTime" />
         <variable
+            name="scriptBadge"
+            type="String" />
+        <variable
             name="clicked"
             type="android.view.View.OnClickListener" />
         <variable
@@ -89,6 +92,19 @@
                     android:textSize="10sp"
                     android:textStyle="bold"
                     android:visibility="@{profile.active ? View.VISIBLE : View.GONE}" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_profile_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:text="@{scriptBadge}"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="@{scriptBadge == null ? View.GONE : View.VISIBLE}" />
             </LinearLayout>
 
             <TextView

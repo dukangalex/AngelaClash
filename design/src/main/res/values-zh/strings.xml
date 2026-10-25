@@ -532,4 +532,5 @@
     <string name="dashboard_script_off">无脚本</string>
     <string name="proxy_group_badge_primary">主组</string>
     <string name="proxy_group_badge_readonly">不可选</string>
+    <string name="profile_script_on">脚本 ON</string>
 </resources>

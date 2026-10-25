@@ -82,6 +82,7 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                             design.showProfileQrCode(it.profile)
                         is ProfilesDesign.Request.SetScript -> {
                             scripts.setProfileScriptEnabled(it.profile.uuid, it.enabled)
+                            design.refreshScriptBadges()
                             val active = withProfile { queryActive() }
                             if (active?.uuid == it.profile.uuid) {
                                 sendProfileChanged(it.profile.uuid)

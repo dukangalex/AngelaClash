@@ -1,5 +1,22 @@
 # Angela Clash 更新说明
 
+## 1.4.0
+
+- 客户端 `1.4.0`（`10400`）
+- 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
+- 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
+- 内置地理数据随上游 `meta-rules-dat` 2026-10-25 构建，`gradle/geo-files.sha256` 逐个校验。
+- 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
+
+### 这次更新
+
+- **UI 第一批：说清楚"这份配置会不会被脚本改写"**
+  1. **首页配置卡**新增「脚本 ON / 无脚本」徽标，跟着当前配置自己的脚本开关走。以前只能进配置菜单才知道，现在一眼看到。
+  2. **配置列表**每张卡片也带同样的徽标，两处判断用的是同一个 `profileScriptEnabled()`，不会出现首页说 ON、配置页说没有的情况；在菜单里切换脚本后徽标立即刷新。
+  3. **代理页组卡片**新增角色徽标：第一个组标「主组」，不可手动切换的组标「不可选」——和配置里的 `hidden`（只是显示提示）区分开。
+- **设计令牌**：新增 `ac_gutter` / `ac_gap` / `ac_card_pad` / `ac_radius_xl…sm` / `ac_badge_*` 一组尺寸令牌，后续页面统一引用，避免每处手写 12/14/16dp 与 16/18/22dp 圆角。
+- **修复：发布通知发错地方**。v1.3.3 的 Telegram 通知实际上发到了作者与机器人的私聊（`TG_CHANNEL_ID` 是私人会话 id），步骤却显示成功。现在固定发到 [@AngelaClashChannel](https://t.me/AngelaClashChannel)，并在发送后校验 `chat.type`，不是频道就直接让工作流失败。
+
 ## 1.3.3
 
 - 客户端 `1.3.3`（`10303`）
