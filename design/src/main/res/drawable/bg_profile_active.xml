@@ -1,9 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="?attr/clashSelectedSurface" />
-    <corners android:radius="18dp" />
-    <stroke
-        android:width="1.5dp"
-        android:color="?attr/colorPrimary" />
-</shape>
+<!--
+  UI v2：当前生效配置的卡片改用蓝紫渐变描边。
+  做法是 layer-list 套两层圆角形状 —— 外层整块渐变，内层内缩 2dp 铺底色，
+  露出来的 2dp 就是渐变描边（shape 的 <stroke> 不支持渐变，只能这样叠）。
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:angle="45"
+                android:endColor="#7C5BFF"
+                android:startColor="#5B8CFF"
+                android:type="linear" />
+        </shape>
+    </item>
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp" />
+            <solid android:color="?attr/clashSelectedSurface" />
+        </shape>
+    </item>
+</layer-list>

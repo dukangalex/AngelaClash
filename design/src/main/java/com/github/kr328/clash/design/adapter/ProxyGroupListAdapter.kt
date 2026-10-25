@@ -49,12 +49,46 @@ class ProxyGroupListAdapter(
     private val sharedPool = RecyclerView.RecycledViewPool()
     private var searchQuery: String = ""
 
-    val items: List<GroupItem> = groupNames.mapIndexed { idx, name ->
+    var items: List<GroupItem> = groupNames.mapIndexed { idx, name ->
         GroupItem(
             index = idx,
             name = name,
             expanded = idx == 0,
         )
+    }
+        private set
+
+    /**
+     * 换配置后组集合会变，但页面不该为了这个重启。
+     * 这里原地换掉组列表，并尽量把原来展开的那个组继续展开。
+     */
+    fun replaceGroupNames(newNames: List<String>) {
+        val expandedName = items.firstOrNull { it.expanded }?.name
+        val previous = items.associateBy { it.name }
+
+        items = newNames.mapIndexed { idx, name ->
+            GroupItem(
+                index = idx,
+                name = name,
+                expanded = if (expandedName != null) name == expandedName else idx == 0,
+            ).also { item ->
+                // 名字没变的组沿用已经测出来的延迟，避免整页回到 "?"
+                previous[name]?.let { old ->
+                    item.typeName = old.typeName
+                    item.now = old.now
+                    item.selectable = old.selectable
+                    item.allStates = old.allStates
+                    item.filteredStates = old.filteredStates
+                }
+            }
+        }
+
+        // 原来展开的组在新配置里没了，就退回展开第一个
+        if (items.none { it.expanded } && items.isNotEmpty()) {
+            items[0].expanded = true
+        }
+
+        notifyDataSetChanged()
     }
 
     fun setSearchQuery(query: String) {

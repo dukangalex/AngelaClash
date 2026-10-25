@@ -34,6 +34,14 @@ class ProxyMenu(
     private val density = context.resources.displayMetrics.density
     private fun dp(v: Int): Int = (v * density).toInt()
 
+    /**
+     * 换配置后运行模式可能跟着变（配置里可以指定 mode）。
+     * 这里只更新菜单里打勾的状态，不触发 PatchMode —— 模式是内核给的，不是用户在菜单里改的。
+     */
+    fun updateMode(newMode: TunnelState.Mode?) {
+        mode = newMode
+    }
+
     fun show() {
         showSettingsSheet()
     }

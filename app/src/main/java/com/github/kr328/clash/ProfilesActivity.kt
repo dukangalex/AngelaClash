@@ -10,6 +10,7 @@ import com.github.kr328.clash.common.util.ticker
 import com.github.kr328.clash.design.ProfilesDesign
 import com.github.kr328.clash.design.ui.ToastDuration
 import com.github.kr328.clash.service.model.Profile
+import com.github.kr328.clash.design.ui.AppEvents
 import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.service.util.sendProfileChanged
 import com.github.kr328.clash.util.withProfile
@@ -83,6 +84,7 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
                         is ProfilesDesign.Request.SetScript -> {
                             scripts.setProfileScriptEnabled(it.profile.uuid, it.enabled)
                             design.refreshScriptBadges()
+                            AppEvents.emit(AppEvents.Event.ScriptToggled(it.profile.uuid, it.enabled))
                             val active = withProfile { queryActive() }
                             if (active?.uuid == it.profile.uuid) {
                                 sendProfileChanged(it.profile.uuid)

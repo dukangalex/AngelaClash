@@ -27,6 +27,7 @@ import com.github.kr328.clash.core.model.TunnelState
 import com.github.kr328.clash.design.R as DesignR
 import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.service.store.ChainStore
+import com.github.kr328.clash.design.ui.AppEvents
 import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.service.store.ServiceStore
 import com.github.kr328.clash.service.util.sendProfileChanged
@@ -35,10 +36,14 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class MainActivity : BaseActivity<MainDesign>() {
     override fun allowPullBack(): Boolean = false
+
+    /** fetch() 时记下当前生效配置，用来判断 ScriptToggled 是不是关于「这一份」的。 */
+    private var activeProfileUuid: UUID? = null
 
     override suspend fun main() {
         val design = MainDesign(this)
@@ -57,6 +62,17 @@ class MainActivity : BaseActivity<MainDesign>() {
         }
 
         design.fetch()
+
+        // 别的页面拨了脚本开关：只更新徽标，不整页 fetch。
+        // SharedFlow 是多订阅者的，这里用 launch 收，不和下面的 select 抢事件。
+        launch {
+            AppEvents.events.collect { event ->
+                when (event) {
+                    is AppEvents.Event.ScriptToggled ->
+                        if (event.uuid == activeProfileUuid) design.setProfileScript(event.enabled)
+                }
+            }
+        }
 
         val ticker = ticker(TimeUnit.SECONDS.toMillis(1))
 
@@ -150,6 +166,7 @@ class MainActivity : BaseActivity<MainDesign>() {
         setHasProviders(providers.isNotEmpty())
 
         val active = withProfile { queryActive() }
+        activeProfileUuid = active?.uuid
         setProfileName(active?.name)
         val summary = active?.let { ChainStore(this@MainActivity).summary(it.uuid) }
         setChainSummary(summary)

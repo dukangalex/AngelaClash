@@ -30,9 +30,12 @@ import kotlinx.coroutines.withContext
 class ProxyDesign(
     context: Context,
     overrideMode: TunnelState.Mode?,
-    private val groupNames: List<String>,
+    groupNames: List<String>,
     private val uiStore: UiStore,
 ) : Design<ProxyDesign.Request>(context) {
+    // 换配置时组集合会变，但页面不重建，所以这里是 var。
+    private var groupNames: List<String> = groupNames
+
     sealed class Request {
         object ReloadAll : Request()
         object ReLaunch : Request()
@@ -62,6 +65,7 @@ class ProxyDesign(
         get() = binding.pagesView.adapter!! as ProxyPageAdapter
 
     private var groupListAdapter: ProxyGroupListAdapter? = null
+    private var tabMediator: TabLayoutMediator? = null
 
     private var urlTesting: Boolean
         get() {
@@ -245,34 +249,18 @@ class ProxyDesign(
             binding.groupListView.visibility = View.GONE
             binding.locateCard.visibility = View.GONE
         } else {
-            binding.pagesView.apply {
-                adapter = ProxyPageAdapter(
-                    surface,
-                    config,
-                    List(groupNames.size) { index ->
-                        ProxyAdapter(config) { name ->
-                            requests.trySend(Request.Select(index, name))
-                        }
-                    }
-                ) {
-                    if (it == currentItem)
-                        updateUrlTestButtonStatus()
+            // 分页回调只注册一次：换配置时换的是 adapter，不是 ViewPager2 本身。
+            binding.pagesView.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageScrollStateChanged(state: Int) {
+                    updateUrlTestButtonStatus()
                 }
 
-                registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-                    override fun onPageScrollStateChanged(state: Int) {
-                        updateUrlTestButtonStatus()
-                    }
+                override fun onPageSelected(position: Int) {
+                    groupNames.getOrNull(position)?.let { uiStore.proxyLastGroup = it }
+                }
+            })
 
-                    override fun onPageSelected(position: Int) {
-                        uiStore.proxyLastGroup = groupNames[position]
-                    }
-                })
-            }
-
-            TabLayoutMediator(binding.tabLayoutView, binding.pagesView) { tab, index ->
-                tab.text = groupNames[index]
-            }.attach()
+            rebuildPages()
 
             binding.tabLayoutView.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) = Unit
@@ -320,6 +308,71 @@ class ProxyDesign(
 
             applyStyleMode()
         }
+    }
+
+    /** 按当前 groupNames 重建分页与 Tab；换配置时复用，避免整个 Activity 重启。 */
+    private fun rebuildPages() {
+        tabMediator?.detach()
+        tabMediator = null
+        binding.tabLayoutView.removeAllTabs()
+
+        binding.pagesView.adapter = ProxyPageAdapter(
+            surface,
+            config,
+            List(groupNames.size) { index ->
+                ProxyAdapter(config) { name ->
+                    requests.trySend(Request.Select(index, name))
+                }
+            },
+        ) {
+            if (it == binding.pagesView.currentItem)
+                updateUrlTestButtonStatus()
+        }
+
+        TabLayoutMediator(binding.tabLayoutView, binding.pagesView) { tab, index ->
+            tab.text = groupNames.getOrNull(index)
+        }.also {
+            it.attach()
+            tabMediator = it
+        }
+    }
+
+    /**
+     * 换配置后原地把组集合换掉。
+     *
+     * @return `true` 表示已经就地更新；`false` 表示结构变化太大（组集合从空变成非空，
+     *         或者反过来），这种情况只能由 Activity 重建页面。
+     */
+    fun reconcileGroups(newNames: List<String>, newMode: TunnelState.Mode?): Boolean {
+        menu.updateMode(newMode)
+
+        if (newNames == groupNames) {
+            return true
+        }
+
+        // 空 ↔ 非空要换一整套可见性和空状态，交给 Activity 重建更稳妥。
+        if (groupNames.isEmpty() || newNames.isEmpty()) {
+            return false
+        }
+
+        groupNames = newNames
+
+        if (uiStore.proxyLastGroup !in newNames) {
+            uiStore.proxyLastGroup = newNames.first()
+        }
+
+        rebuildPages()
+        groupListAdapter?.replaceGroupNames(newNames)
+
+        // 搜索框里的关键字要重新套到新的组集合上
+        val query = binding.searchInput.text?.toString().orEmpty()
+        if (query.isNotEmpty()) {
+            adapter.setSearchQuery(query)
+            groupListAdapter?.setSearchQuery(query)
+        }
+
+        applyStyleMode()
+        return true
     }
 
     fun requestUrlTesting() {

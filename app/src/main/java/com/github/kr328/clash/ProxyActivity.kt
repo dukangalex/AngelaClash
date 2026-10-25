@@ -14,10 +14,10 @@ import kotlinx.coroutines.sync.withPermit
 
 class ProxyActivity : BaseActivity<ProxyDesign>() {
     override suspend fun main() {
-        val mode = withClash { queryOverride(Clash.OverrideSlot.Session).mode }
-        val names = withClash { queryProxyGroupNames(uiStore.proxyExcludeNotSelectable) }
-        val states = List(names.size) { ProxyState("?") }
-        val unorderedStates = names.indices.map { names[it] to states[it] }.toMap()
+        var mode = withClash { queryOverride(Clash.OverrideSlot.Session).mode }
+        var names = withClash { queryProxyGroupNames(uiStore.proxyExcludeNotSelectable) }
+        var states = List(names.size) { ProxyState("?") }
+        var unorderedStates = names.indices.map { names[it] to states[it] }.toMap()
         val reloadLock = Semaphore(10)
 
         val design = ProxyDesign(
@@ -31,31 +31,41 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
 
         design.requests.send(ProxyDesign.Request.ReloadAll)
 
+        // 换配置 / 切脚本后重新读一遍组集合：能就地换就就地换，实在换不了才重建页面。
+        suspend fun refreshGroups() {
+            val newNames = withClash {
+                queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
+            }
+            val newMode = withClash { queryOverride(Clash.OverrideSlot.Session).mode }
+
+            if (design.reconcileGroups(newNames, newMode)) {
+                if (newNames != names) {
+                    names = newNames
+                    states = List(names.size) { ProxyState("?") }
+                    unorderedStates = names.indices.map { names[it] to states[it] }.toMap()
+
+                    design.requests.send(ProxyDesign.Request.ReloadAll)
+                }
+
+                mode = newMode
+            } else {
+                startActivity(ProxyActivity::class.intent)
+
+                finish()
+            }
+        }
+
         while (isActive) {
             select<Unit> {
                 events.onReceive {
                     when (it) {
-                        Event.ProfileLoaded -> {
-                            val newNames = withClash {
-                                queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
-                            }
-
-                            if (newNames != names) {
-                                startActivity(ProxyActivity::class.intent)
-
-                                finish()
-                            }
-                        }
+                        Event.ProfileLoaded -> refreshGroups()
                         else -> Unit
                     }
                 }
                 design.requests.onReceive {
                     when (it) {
-                        ProxyDesign.Request.ReLaunch -> {
-                            startActivity(ProxyActivity::class.intent)
-
-                            finish()
-                        }
+                        ProxyDesign.Request.ReLaunch -> refreshGroups()
                         ProxyDesign.Request.ReloadAll -> {
                             names.indices.forEach { idx ->
                                 design.requests.trySend(ProxyDesign.Request.Reload(idx))

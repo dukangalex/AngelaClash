@@ -1,5 +1,6 @@
 package com.github.kr328.clash
 
+import com.github.kr328.clash.design.ui.AppEvents
 import com.github.kr328.clash.design.RuleSwitchesDesign
 import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.service.util.sendProfileChanged
@@ -41,6 +42,8 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
                             }
                             store.setProfileScriptEnabled(current.uuid, request.enabled)
                             design.setScriptEnabled(request.enabled)
+                            // 首页的「脚本 ON / 无脚本」徽标靠这个事件更新：内核没跑时没有 reload 广播可等。
+                            AppEvents.emit(AppEvents.Event.ScriptToggled(current.uuid, request.enabled))
                             if (clashRunning) {
                                 sendProfileChanged(current.uuid)
                                 design.updateGroups(queryGroups())
