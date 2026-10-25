@@ -238,11 +238,19 @@ jobs:
           RELEASE_TAG: ${{ inputs.release-tag }}
         run: |
           set -euo pipefail
-          if [ -z "${TG_BOT_TOKEN:-}" ] || [ -z "${TG_CHANNEL_ID:-}" ]; then
-            echo "Telegram secrets not configured; skipping channel notification."
+          # 发布频道固定为 @AngelaClashChannel（公开信息，不必当秘密）。
+          # 想改成私密频道时，把 TG_CHANNEL_ID 设为 -100 开头的频道 id 即可覆盖。
+          CHAT_ID="@AngelaClashChannel"
+          if [[ "${TG_CHANNEL_ID:-}" == @* || "${TG_CHANNEL_ID:-}" == -100* ]]; then
+            CHAT_ID="$TG_CHANNEL_ID"
+          elif [ -n "${TG_CHANNEL_ID:-}" ]; then
+            echo "TG_CHANNEL_ID 看起来是私人会话 id（${TG_CHANNEL_ID:0:3}…），不是频道；改用 ${CHAT_ID}。"
+          fi
+          if [ -z "${TG_BOT_TOKEN:-}" ]; then
+            echo "Telegram bot token 未配置；跳过频道通知。"
             exit 0
           fi
-          TG_CHANNEL_ID="$TG_CHANNEL_ID" RELEASE_TAG="$RELEASE_TAG" python3 <<'EOF' > /tmp/tg_payload.json
+          TG_CHANNEL_ID="$CHAT_ID" RELEASE_TAG="$RELEASE_TAG" python3 <<'EOF' > /tmp/tg_payload.json
           import html, json, os
           tag = os.environ["RELEASE_TAG"]
           chat_id = os.environ["TG_CHANNEL_ID"]
@@ -258,7 +266,18 @@ jobs:
           print(json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML",
                             "disable_web_page_preview": True}))
           EOF
-          curl -sS -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
+          # 发出后核对落点：不是频道就明确失败，避免"悄悄发到作者私聊"这种静默错误。
+          RESPONSE="$(curl -sS -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
-            --data @/tmp/tg_payload.json \
-            --fail-with-body
+            --data @/tmp/tg_payload.json)"
+          echo "$RESPONSE" | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)
+          if not d.get("ok"):
+              print("Telegram 拒绝:", d.get("description")); sys.exit(1)
+          chat = d["result"]["chat"]
+          print("已发送:", chat.get("type"), chat.get("username") or chat.get("title"))
+          if chat.get("type") != "channel":
+              print("错误：消息没有发到频道，请检查 TG_CHANNEL_ID / 机器人是否为频道管理员")
+              sys.exit(1)
+          '
