@@ -368,6 +368,20 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         }
     }
 
+    /**
+     * 首页副标题上那枚「脚本 ON / 无脚本」徽标：让用户一眼看出当前配置会不会被覆写脚本改写。
+     * null = 没有选中配置，不显示。
+     */
+    suspend fun setProfileScript(scriptOn: Boolean?) {
+        withContext(Dispatchers.Main) {
+            binding.profileScriptBadge = when (scriptOn) {
+                null -> ""
+                true -> context.getString(R.string.dashboard_script_on)
+                false -> context.getString(R.string.dashboard_script_off)
+            }
+        }
+    }
+
     suspend fun setChainSummary(summary: String?) {
         withContext(Dispatchers.Main) {
             val hasChain = !summary.isNullOrBlank()

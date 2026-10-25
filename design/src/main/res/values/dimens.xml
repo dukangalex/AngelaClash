@@ -85,4 +85,17 @@
     <!-- Logcat Design -->
     <dimen name="logcat_padding_vertical">12dp</dimen>
     <dimen name="logcat_padding_horizontal">12dp</dimen>
+
+    <!-- ===== UI v2 design tokens =====
+         新代码请优先引用这里的值，别再手写 12/14/16dp 和 16/18/22dp 的圆角。 -->
+    <dimen name="ac_gutter">16dp</dimen>
+    <dimen name="ac_gap">10dp</dimen>
+    <dimen name="ac_gap_sm">6dp</dimen>
+    <dimen name="ac_card_pad">14dp</dimen>
+    <dimen name="ac_radius_xl">24dp</dimen>
+    <dimen name="ac_radius_lg">18dp</dimen>
+    <dimen name="ac_radius_md">14dp</dimen>
+    <dimen name="ac_radius_sm">10dp</dimen>
+    <dimen name="ac_badge_pad_h">8dp</dimen>
+    <dimen name="ac_badge_pad_v">2dp</dimen>
 </resources>

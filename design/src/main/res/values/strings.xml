@@ -623,4 +623,8 @@
     <string name="rule_switches_native_summary">The script is off for this profile, so these are its own policy groups. Nothing on this page rewrites them.</string>
     <string name="rule_switches_native_badge">profile</string>
     <string name="rule_switches_native_empty">Start the tunnel to list this profile\'s own policy groups</string>
+    <string name="dashboard_script_on">Script on</string>
+    <string name="dashboard_script_off">No script</string>
+    <string name="proxy_group_badge_primary">Primary</string>
+    <string name="proxy_group_badge_readonly">Read-only</string>
 </resources>

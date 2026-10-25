@@ -82,6 +82,9 @@
             name="profileStackSummary"
             type="String" />
         <variable
+            name="profileScriptBadge"
+            type="String" />
+        <variable
             name="proxyBadge"
             type="String" />
         <variable
@@ -469,6 +472,19 @@
                                     android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="13sp"
                                     android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="6dp"
+                                    android:background="@drawable/bg_badge_blue"
+                                    android:paddingHorizontal="8dp"
+                                    android:paddingVertical="2dp"
+                                    android:text="@{profileScriptBadge}"
+                                    android:textColor="?attr/colorPrimary"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:visibility="@{profileScriptBadge == null || profileScriptBadge.length() == 0 ? View.GONE : View.VISIBLE}" />
 
                                 <TextView
                                     android:layout_width="wrap_content"

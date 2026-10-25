@@ -155,6 +155,8 @@ class MainActivity : BaseActivity<MainDesign>() {
         setChainSummary(summary)
         // Chaining is a built-in capability, so keep its entry visible before the first binding exists.
         val scriptStore = ScriptDisplayStore(this@MainActivity)
+        // 首页配置卡上的「脚本 ON / 无脚本」徽标：按当前配置自己的脚本开关显示。
+        setProfileScript(active?.let { scriptStore.profileScriptEnabled(it.uuid) })
         val serviceStore = ServiceStore(this@MainActivity)
         setFeatureVisibility(scriptStore.scriptEnabled(), true)
         mountSystem(scriptStore)

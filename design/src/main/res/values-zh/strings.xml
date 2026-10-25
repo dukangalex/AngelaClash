@@ -528,4 +528,8 @@
     <string name="rule_switches_native_summary">这份配置没启用脚本，下面是它自己的策略组。这一页不会改动它们。</string>
     <string name="rule_switches_native_badge">订阅</string>
     <string name="rule_switches_native_empty">启动代理后，这里会列出这份配置自带的策略组</string>
+    <string name="dashboard_script_on">脚本 ON</string>
+    <string name="dashboard_script_off">无脚本</string>
+    <string name="proxy_group_badge_primary">主组</string>
+    <string name="proxy_group_badge_readonly">不可选</string>
 </resources>

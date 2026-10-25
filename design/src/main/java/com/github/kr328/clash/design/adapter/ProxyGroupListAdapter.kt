@@ -222,8 +222,37 @@ class ProxyGroupListAdapter(
             }
         }
 
+        // 角色徽标：第一个组是主组，不可手动切换的组标注不可选。
+        // 这两个是"这个组是什么"，和「显示哪个组」的 hidden 提示无关。
+        val roleBadge = TextView(context).apply {
+            textSize = 10f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(colorSecondary)
+            setPadding(dp(6), dp(1), dp(6), dp(1))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(999).toFloat()
+                setColor(
+                    android.graphics.Color.argb(
+                        20,
+                        android.graphics.Color.red(colorSecondary),
+                        android.graphics.Color.green(colorSecondary),
+                        android.graphics.Color.blue(colorSecondary),
+                    )
+                )
+            }
+            visibility = View.GONE
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                marginStart = dp(6)
+            }
+        }
+
         titleLine.addView(titleView)
         titleLine.addView(countBadge)
+        titleLine.addView(roleBadge)
 
         val subtitleLine = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -355,6 +384,7 @@ class ProxyGroupListAdapter(
             headerRow = headerRow,
             titleView = titleView,
             countBadge = countBadge,
+            roleBadge = roleBadge,
             subtitleView = subtitleView,
             delayBadge = delayBadge,
             locateBtn = locateBtn,
@@ -412,6 +442,14 @@ class ProxyGroupListAdapter(
         } else {
             holder.countBadge.visibility = View.GONE
         }
+
+        val roleLabel = when {
+            position == 0 -> context.getString(R.string.proxy_group_badge_primary)
+            !item.selectable -> context.getString(R.string.proxy_group_badge_readonly)
+            else -> null
+        }
+        holder.roleBadge.text = roleLabel.orEmpty()
+        holder.roleBadge.visibility = if (roleLabel == null) View.GONE else View.VISIBLE
 
         val nowLabel = item.now.ifBlank { "-" }
         holder.subtitleView.text = "${item.typeName} • $nowLabel"
@@ -474,6 +512,7 @@ class ProxyGroupListAdapter(
         val headerRow: View,
         val titleView: TextView,
         val countBadge: TextView,
+        val roleBadge: TextView,
         val subtitleView: TextView,
         val delayBadge: TextView,
         val locateBtn: View,
