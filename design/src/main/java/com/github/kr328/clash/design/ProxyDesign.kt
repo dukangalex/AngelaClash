@@ -291,7 +291,12 @@ class ProxyDesign(
             binding.groupListView.apply {
                 layoutManager = LinearLayoutManager(context)
                 adapter = listAdapter
-                bindInsets(surface, toolbarHeight + (8 * context.resources.displayMetrics.density).toInt())
+                // 底部给右下角双 FAB 留出位置，最后一行才不会被按钮压住
+                bindInsets(
+                    surface,
+                    toolbarHeight + (8 * context.resources.displayMetrics.density).toInt(),
+                    (88 * context.resources.displayMetrics.density).toInt(),
+                )
             }
 
             val initialPosition = groupNames.indexOf(uiStore.proxyLastGroup)
