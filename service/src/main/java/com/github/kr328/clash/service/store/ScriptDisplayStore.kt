@@ -101,23 +101,20 @@ class ScriptDisplayStore(private val context: Context) {
         )
     }
 
-    /** 「规则开关」页里，这份配置被关掉的规则（原文，和 config.yaml 里写的一致）。 */
-    fun disabledRules(uuid: UUID): Set<String> =
-        readPersisted().disabledRules[uuid.toString()]?.toSet() ?: emptySet()
-
     /**
-     * 打开/关闭单条规则。关掉 = 写进 disabledRules，内核重载时把它从运行配置里删掉，
-     * 但 config.yaml 本身不动 —— 订阅更新不会覆盖用户的选择。
+     * 这份配置的规则草稿。空 = 没有草稿，运行时完全按订阅执行。
+     *
+     * 草稿是一份完整的规则列表（不是「关掉了哪几条」的黑名单）：
+     * 用户可以增、删、改、排序，写进运行配置时整体替换或前插。
      */
-    fun setRuleEnabled(uuid: UUID, rule: String, enabled: Boolean) {
+    fun ruleOverride(uuid: UUID): RuleOverride =
+        readPersisted().ruleOverrides[uuid.toString()] ?: RuleOverride.EMPTY
+
+    fun setRuleOverride(uuid: UUID, override: RuleOverride) {
         val current = readPersisted()
-        val disabled = LinkedHashMap(current.disabledRules)
+        val overrides = LinkedHashMap(current.ruleOverrides)
         val key = uuid.toString()
-        val existing = LinkedHashSet(disabled[key] ?: emptyList())
-        if (enabled) existing.remove(rule) else existing.add(rule)
-
-        if (existing.isEmpty()) disabled.remove(key) else disabled[key] = existing.toList()
-
+        if (override.rules.isEmpty()) overrides.remove(key) else overrides[key] = override
         writePersisted(
             current.scriptEnabled,
             current.values,
@@ -125,16 +122,15 @@ class ScriptDisplayStore(private val context: Context) {
             current.syncedAt,
             current.profiles,
             current.syncedSha256,
-            disabled,
+            overrides,
+            current.disabledGroups,
         )
     }
 
-    /** 把这份配置关掉的规则全部恢复。 */
-    fun clearDisabledRules(uuid: UUID) {
+    fun clearRuleOverride(uuid: UUID) {
         val current = readPersisted()
-        val disabled = LinkedHashMap(current.disabledRules)
-        if (disabled.remove(uuid.toString()) == null) return
-
+        val overrides = LinkedHashMap(current.ruleOverrides)
+        if (overrides.remove(uuid.toString()) == null) return
         writePersisted(
             current.scriptEnabled,
             current.values,
@@ -142,7 +138,66 @@ class ScriptDisplayStore(private val context: Context) {
             current.syncedAt,
             current.profiles,
             current.syncedSha256,
-            disabled,
+            overrides,
+            current.disabledGroups,
+        )
+    }
+
+    /**
+     * 1.4.5 及更早的版本只记「关掉了哪几条」。升级后第一次进规则页时，
+     * 把这些关选从订阅规则里减掉，落成一份等价草稿，然后丢掉旧键 ——
+     * 用户不会因为换机制而发现自己关的规则又回来了。
+     */
+    fun migrateDisabledRules(uuid: UUID, sourceRules: List<String>): RuleOverride? {
+        val legacy = readPersisted().legacyDisabledRules[uuid.toString()].orEmpty()
+        if (legacy.isEmpty()) return null
+        if (readPersisted().ruleOverrides.containsKey(uuid.toString())) return null
+
+        val override = RuleOverride(
+            enabled = true,
+            mode = RuleOverride.MODE_OVERRIDE,
+            rules = sourceRules.filterNot { it in legacy },
+        )
+        setRuleOverride(uuid, override)
+        return override
+    }
+
+    /** 这份配置被关掉的策略组（名字和 config.yaml 里一致）。 */
+    fun disabledGroups(uuid: UUID): Set<String> =
+        readPersisted().disabledGroups[uuid.toString()]?.toSet() ?: emptySet()
+
+    fun setGroupEnabled(uuid: UUID, group: String, enabled: Boolean) {
+        val current = readPersisted()
+        val groups = LinkedHashMap(current.disabledGroups)
+        val key = uuid.toString()
+        val existing = LinkedHashSet(groups[key] ?: emptyList())
+        if (enabled) existing.remove(group) else existing.add(group)
+        if (existing.isEmpty()) groups.remove(key) else groups[key] = existing.toList()
+        writePersisted(
+            current.scriptEnabled,
+            current.values,
+            current.source,
+            current.syncedAt,
+            current.profiles,
+            current.syncedSha256,
+            current.ruleOverrides,
+            groups,
+        )
+    }
+
+    fun clearDisabledGroups(uuid: UUID) {
+        val current = readPersisted()
+        val groups = LinkedHashMap(current.disabledGroups)
+        if (groups.remove(uuid.toString()) == null) return
+        writePersisted(
+            current.scriptEnabled,
+            current.values,
+            current.source,
+            current.syncedAt,
+            current.profiles,
+            current.syncedSha256,
+            current.ruleOverrides,
+            groups,
         )
     }
 
@@ -273,8 +328,12 @@ class ScriptDisplayStore(private val context: Context) {
         val syncedAt: Long,
         val profiles: LinkedHashMap<String, Boolean>,
         val syncedSha256: String = "",
-        /** profile uuid -> 用户在「规则开关」页关掉的规则原文 */
-        val disabledRules: LinkedHashMap<String, List<String>> = linkedMapOf(),
+        /** profile uuid -> 规则草稿 */
+        val ruleOverrides: LinkedHashMap<String, RuleOverride> = linkedMapOf(),
+        /** profile uuid -> 关掉的策略组名 */
+        val disabledGroups: LinkedHashMap<String, List<String>> = linkedMapOf(),
+        /** 1.4.5 及更早写的黑名单，只用来迁移一次。 */
+        val legacyDisabledRules: LinkedHashMap<String, List<String>> = linkedMapOf(),
     )
 
     private fun readPersisted(): Persisted {
@@ -299,21 +358,25 @@ class ScriptDisplayStore(private val context: Context) {
                     if (savedProfiles.optBoolean(k, false)) profiles[k] = true
                 }
             }
-            val disabledRules = linkedMapOf<String, List<String>>()
-            val savedDisabled = root.optJSONObject("disabledRules")
-            if (savedDisabled != null) {
-                val keys = savedDisabled.keys()
+            val ruleOverrides = linkedMapOf<String, RuleOverride>()
+            val savedOverrides = root.optJSONObject("ruleOverrides")
+            if (savedOverrides != null) {
+                val keys = savedOverrides.keys()
                 while (keys.hasNext()) {
                     val k = keys.next()
-                    val array = savedDisabled.optJSONArray(k) ?: continue
-                    val rules = ArrayList<String>(array.length())
-                    for (i in 0 until array.length()) {
-                        val rule = array.optString(i, "")
-                        if (rule.isNotBlank()) rules.add(rule)
+                    val item = savedOverrides.optJSONObject(k) ?: continue
+                    val rules = readStringArray(item.optJSONArray("rules"))
+                    if (rules.isNotEmpty()) {
+                        ruleOverrides[k] = RuleOverride(
+                            enabled = item.optBoolean("enabled", false),
+                            mode = item.optString("mode", RuleOverride.MODE_ADDED),
+                            rules = rules,
+                        )
                     }
-                    if (rules.isNotEmpty()) disabledRules[k] = rules
                 }
             }
+            val disabledGroups = readStringMapOfArrays(root.optJSONObject("disabledGroups"))
+            val legacy = readStringMapOfArrays(root.optJSONObject("disabledRules"))
             Persisted(
                 root.optBoolean("scriptEnabled", true),
                 values,
@@ -321,7 +384,9 @@ class ScriptDisplayStore(private val context: Context) {
                 root.optLong("syncedAt", 0L),
                 profiles,
                 root.optString("syncedSha256", ""),
-                disabledRules,
+                ruleOverrides,
+                disabledGroups,
+                legacy,
             )
         } catch (_: Exception) {
             Persisted(true, linkedMapOf(), "", 0L, linkedMapOf(), "")
@@ -335,7 +400,8 @@ class ScriptDisplayStore(private val context: Context) {
         syncedAt: Long? = null,
         profiles: Map<String, Boolean>? = null,
         syncedSha256: String? = null,
-        disabledRules: Map<String, List<String>>? = null,
+        ruleOverrides: Map<String, RuleOverride>? = null,
+        disabledGroups: Map<String, List<String>>? = null,
     ) {
         val current = readPersisted()
         val obj = JSONObject()
@@ -350,14 +416,48 @@ class ScriptDisplayStore(private val context: Context) {
         val chosen = JSONObject()
         for ((k, v) in (profiles ?: current.profiles)) if (v) chosen.put(k, true)
         obj.put("profiles", chosen)
-        // 内核在 UnmarshalAndPatch 时读这个字段，把用户关掉的规则从运行配置里删掉
-        val disabled = JSONObject()
-        for ((k, rules) in (disabledRules ?: current.disabledRules)) {
-            if (rules.isEmpty()) continue
-            disabled.put(k, JSONArray(rules))
+        // 内核在 UnmarshalAndPatch 时读这两个字段：
+        // ruleOverrides 按草稿替换/前插规则，disabledGroups 摘掉策略组。
+        val overrides = JSONObject()
+        for ((k, ov) in (ruleOverrides ?: current.ruleOverrides)) {
+            if (ov.rules.isEmpty()) continue
+            overrides.put(
+                k,
+                JSONObject()
+                    .put("enabled", ov.enabled)
+                    .put("mode", ov.mode)
+                    .put("rules", JSONArray(ov.rules)),
+            )
         }
-        obj.put("disabledRules", disabled)
+        obj.put("ruleOverrides", overrides)
+        val groups = JSONObject()
+        for ((k, names) in (disabledGroups ?: current.disabledGroups)) {
+            if (names.isEmpty()) continue
+            groups.put(k, JSONArray(names))
+        }
+        obj.put("disabledGroups", groups)
+        // 旧键在迁移后要能被删掉：写空对象而不是保留旧值。
+        obj.put("disabledRules", JSONObject())
         writeAtomic(optionFile, obj.toString())
+    }
+
+    /**
+     * 一份规则草稿。
+     *
+     * [mode] 决定草稿怎么写进运行配置：
+     * [MODE_OVERRIDE] 整份替换订阅规则，[MODE_ADDED] 前插到订阅规则之前。
+     * 两种模式共用同一个 [rules] 列表，切换模式不会丢内容。
+     */
+    data class RuleOverride(
+        val enabled: Boolean = false,
+        val mode: String = MODE_ADDED,
+        val rules: List<String> = emptyList(),
+    ) {
+        companion object {
+            const val MODE_ADDED = "added"
+            const val MODE_OVERRIDE = "override"
+            val EMPTY = RuleOverride()
+        }
     }
 
     companion object {
@@ -579,6 +679,28 @@ class ScriptDisplayStore(private val context: Context) {
             var i = start
             while (i < source.length && source[i].isWhitespace()) i++
             return i
+        }
+
+        private fun readStringArray(array: JSONArray?): List<String> {
+            if (array == null) return emptyList()
+            val out = ArrayList<String>(array.length())
+            for (i in 0 until array.length()) {
+                val value = array.optString(i, "")
+                if (value.isNotBlank()) out.add(value)
+            }
+            return out
+        }
+
+        private fun readStringMapOfArrays(obj: JSONObject?): LinkedHashMap<String, List<String>> {
+            val out = LinkedHashMap<String, List<String>>()
+            if (obj == null) return out
+            val keys = obj.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                val values = readStringArray(obj.optJSONArray(key))
+                if (values.isNotEmpty()) out[key] = values
+            }
+            return out
         }
 
         private fun writeAtomic(file: File, text: String) {

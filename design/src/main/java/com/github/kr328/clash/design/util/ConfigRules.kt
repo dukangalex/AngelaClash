@@ -18,6 +18,47 @@ data class ConfigRuleSnapshot(
     }
 }
 
+/**
+ * 从 config.yaml 里读出策略组名字，给「编辑规则」的目标下拉和策略组开关用。
+ *
+ * 目标必须选配置里真实存在的组，否则内核解析时会直接报
+ * `proxy [...] not found`，整份配置加载失败。所以这里宁可少列，也不瞎猜：
+ * 只认 `proxy-groups:` 块里 `- name: xxx` 这种写法。
+ */
+object ConfigGroups {
+    private const val LIMIT = 200
+
+    fun read(configFile: File): List<String> {
+        if (!configFile.isFile) return emptyList()
+
+        val names = ArrayList<String>()
+        runCatching {
+            configFile.bufferedReader().useLines { lines ->
+                var inGroups = false
+                for (raw in lines) {
+                    if (!inGroups) {
+                        if (raw.isNotEmpty() && raw[0] != ' ' && raw[0] != '\t' && raw.startsWith("proxy-groups:")) {
+                            inGroups = true
+                        }
+                        continue
+                    }
+                    // 回到顶层的下一个 key：策略组块结束
+                    if (raw.isNotEmpty() && raw[0] != ' ' && raw[0] != '\t') return@useLines
+
+                    val trimmed = raw.trim()
+                    if (!trimmed.startsWith("- ")) continue
+                    val item = trimmed.removePrefix("- ").trim()
+                    if (!item.startsWith("name:")) continue
+                    val name = item.removePrefix("name:").trim().trim('"', '\'')
+                    if (name.isNotEmpty() && name != "GLOBAL" && names.size < LIMIT) names.add(name)
+                }
+            }
+        }
+
+        return names
+    }
+}
+
 object ConfigRules {
     /** 最多返回这么多条给界面，超出的只统计数量。 */
     private const val DISPLAY_LIMIT = 300

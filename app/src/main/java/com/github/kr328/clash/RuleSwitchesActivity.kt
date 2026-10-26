@@ -7,6 +7,7 @@ import com.github.kr328.clash.service.util.sendProfileChanged
 import com.github.kr328.clash.util.withProfile
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.selects.select
+import com.github.kr328.clash.design.util.ConfigGroups
 import com.github.kr328.clash.design.util.ConfigRuleSnapshot
 import com.github.kr328.clash.design.util.ConfigRules
 import com.github.kr328.clash.service.model.Profile
@@ -20,12 +21,19 @@ import kotlinx.coroutines.withContext
  * 当前配置的规则开关。
  *
  * 这一页永远讲的是"当前配置"：该配置启用了覆写脚本，就显示脚本的分流开关；
- * 没启用，就列出它自己 config.yaml 里真实生效的规则（只读）。
+ * 没启用，就是一份可以编辑的规则草稿；还没建草稿时，先把订阅自己的规则列出来。
  */
 class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
     override suspend fun main() {
         val store = ScriptDisplayStore(this)
         val active = withProfile { queryActive() }
+
+        // 1.4.5 及更早只记「关掉了哪几条」。第一次进这一页时把它们换算成
+        // 一份等价的规则草稿，用户不会因为换了机制发现关掉的规则又回来了。
+        if (active != null) {
+            store.migrateDisabledRules(active.uuid, readRules(active).items)
+        }
+
         val design = RuleSwitchesDesign(
             context = this,
             store = store,
@@ -33,6 +41,7 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
             profileName = active?.name,
             scriptOn = active?.let { store.profileScriptEnabled(it.uuid) } ?: false,
             rules = readRules(active),
+            groups = readGroups(active),
         )
         setContentDesign(design)
 
@@ -53,12 +62,12 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
                             AppEvents.emit(AppEvents.Event.ScriptToggled(current.uuid, request.enabled))
                             if (clashRunning) {
                                 sendProfileChanged(current.uuid)
-                                design.updateRules(readRules(current))
+                                design.updateSource(readRules(current), readGroups(current))
                             }
                         }
                         RuleSwitchesDesign.Request.ApplyRuleChange -> {
-                            // 规则开关只改 disabledRules：内核需要按新配置重载，
-                            // 页面本身已经在回调里更新过状态，不重画（避免滚动位置被重置）。
+                            // 规则草稿已经落盘：让内核按新配置重载。
+                            // 页面自己在回调里更新过状态，不重画（避免滚动位置被重置）。
                             val current = withProfile { queryActive() }
                             if (current != null && clashRunning) {
                                 sendProfileChanged(current.uuid)
@@ -68,7 +77,7 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
                             val current = withProfile { queryActive() }
                             if (current != null) {
                                 if (clashRunning) sendProfileChanged(current.uuid)
-                                design.updateRules(readRules(current))
+                                design.updateSource(readRules(current), readGroups(current))
                             }
                         }
                     }
@@ -90,6 +99,21 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
                 if (snapshot.total > 0) return@withContext snapshot
             }
             ConfigRuleSnapshot.EMPTY
+        }
+    }
+
+    /**
+     * 配置里真实存在的策略组。编辑规则时目标只能从这里选 ——
+     * 指向不存在的组会让内核解析直接失败（proxy [...] not found）。
+     */
+    private suspend fun readGroups(profile: Profile?): List<String> {
+        if (profile == null) return emptyList()
+        return withContext(Dispatchers.IO) {
+            for (dir in listOf(importedDir, pendingDir)) {
+                val names = ConfigGroups.read(File(dir, "${profile.uuid}/config.yaml"))
+                if (names.isNotEmpty()) return@withContext names
+            }
+            emptyList()
         }
     }
 }

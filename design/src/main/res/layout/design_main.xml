@@ -454,6 +454,18 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
                         <!-- 可隐藏：代理组与链路 -->
+                        <!-- BettBox 式分组标题：小字、次级色，和卡片左边缘对齐 -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="2dp"
+                            android:paddingTop="18dp"
+                            android:paddingBottom="8dp"
+                            android:text="@string/home_section_proxy"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -572,6 +584,18 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
+                        <!-- BettBox 式分组标题：小字、次级色，和卡片左边缘对齐 -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="2dp"
+                            android:paddingTop="18dp"
+                            android:paddingBottom="8dp"
+                            android:text="@string/home_section_status"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
                         <!-- 可隐藏：状态方砖 -->
                         <LinearLayout
                             android:layout_width="match_parent"
