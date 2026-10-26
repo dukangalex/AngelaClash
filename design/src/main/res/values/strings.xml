@@ -603,7 +603,7 @@
     <string name="backup_restore_open_failed">The selected file cannot be read</string>
     <string name="backup_restore_message">Restoring merges the backup into this device: profiles with the same id are overwritten, every other profile is kept.</string>
     <string name="rule_switches_profile_on">Script is on for this profile, so these switches rewrite its policy groups</string>
-    <string name="rule_switches_profile_off">Script is off: this page lists the rules from the profile&#39;s own config, read-only</string>
+    <string name="rule_switches_profile_off">Script is off: this page lists the rules from the profile\'s own config, read-only</string>
     <string name="rule_switches_script_off">This profile runs exactly what its subscription says. Turn the switch above on to let the override script rewrite these rules.</string>
     <string name="rule_switches_script_toggle">Enable override script for this profile</string>
     <string name="rule_switches_no_profile">No active profile</string>
@@ -634,9 +634,9 @@
     <string name="rule_switches_manage_hint">Unchecked switches move into “Other settings”.</string>
     <string name="rule_switches_other">Other settings</string>
     <string name="rule_switches_other_count">%d hidden</string>
-    <string name="rule_switches_rules_summary">%d rules come from this profile&#39;s own config. Switch one off and it is dropped from the running config; the config file itself is left alone.</string>
+    <string name="rule_switches_rules_summary">%d rules come from this profile\'s own config. Switch one off and it is dropped from the running config; the config file itself is left alone.</string>
     <string name="rule_switches_rules_more">%d more not shown</string>
-    <string name="rule_switches_rules_empty">No rules found in this profile&#39;s config. It may still be importing, or the config writes rules inline.</string>
+    <string name="rule_switches_rules_empty">No rules found in this profile\'s config. It may still be importing, or the config writes rules inline.</string>
     <string name="rule_switches_rules_off_count">%d rules are off</string>
     <string name="rule_switches_rules_restore">Turn all on</string>
     <string name="rule_switches_rules_fixed">catch-all</string>
