@@ -174,7 +174,7 @@
                                 android:letterSpacing="0.01"
                                 android:singleLine="true"
                                 android:text="@string/dashboard_title"
-                                android:textSize="26sp"
+                                android:textSize="22sp"
                                 android:textStyle="bold" />
 
                             <LinearLayout
@@ -245,7 +245,7 @@
                         android:id="@+id/mode_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
+                        android:layout_marginTop="12dp"
                         android:background="@drawable/bg_segment_track"
                         android:orientation="horizontal"
                         android:padding="4dp">
@@ -305,10 +305,9 @@
                             android:layout_marginTop="10dp"
                             android:background="@drawable/bg_card_flat"
                             android:orientation="vertical"
-                            android:paddingHorizontal="16dp"
-                            android:paddingTop="10dp"
-                            android:paddingBottom="6dp">
+                            android:padding="14dp">
 
+                            <!-- 速度是这一页的主数据：数值放到 20sp，曲线在下面当背景 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -327,25 +326,26 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:singleLine="true"
-                                    android:text="@{`↑ ` + upload}"
-                                    android:textColor="@color/color_emerald_accent"
-                                    android:textSize="11sp" />
+                                    android:text="@{`↓ ` + download}"
+                                    android:textColor="?attr/colorPrimary"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="10dp"
+                                    android:layout_marginStart="12dp"
                                     android:singleLine="true"
-                                    android:text="@{`↓ ` + download}"
-                                    android:textColor="?attr/colorPrimary"
-                                    android:textSize="11sp" />
+                                    android:text="@{`↑ ` + upload}"
+                                    android:textColor="@color/color_emerald_accent"
+                                    android:textSize="14sp" />
                             </LinearLayout>
 
                             <com.github.kr328.clash.design.ui.SpeedChartView
                                 android:id="@+id/speed_bars"
                                 android:layout_width="match_parent"
-                                android:layout_height="64dp"
-                                android:layout_marginTop="4dp" />
+                                android:layout_height="72dp"
+                                android:layout_marginTop="6dp" />
                         </LinearLayout>
 
                     </LinearLayout>
@@ -366,8 +366,7 @@
                             android:focusable="true"
                             android:onClick="@{() -> self.request(Request.OpenProfiles)}"
                             android:orientation="vertical"
-                            android:paddingHorizontal="16dp"
-                            android:paddingVertical="14dp">
+                            android:padding="14dp">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -472,7 +471,7 @@
                             android:layout_marginTop="12dp"
                             android:background="@drawable/bg_card_flat"
                             android:orientation="vertical"
-                            android:paddingHorizontal="16dp">
+                            android:paddingHorizontal="14dp">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -600,7 +599,7 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
+                            android:layout_marginTop="10dp"
                             android:orientation="horizontal">
 
                             <LinearLayout
@@ -608,6 +607,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:background="@drawable/bg_tile_flat"
+                                android:minHeight="72dp"
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:onClick="@{() -> self.onConnectionDiagClick()}"
@@ -628,7 +628,7 @@
                                     android:ellipsize="end"
                                     android:maxLines="1"
                                     android:text="@{homeConnected}"
-                                    android:textSize="15sp"
+                                    android:textSize="16sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
 
@@ -642,6 +642,7 @@
                                 android:focusable="true"
                                 android:onClick="@{() -> self.onSafetyDiagClick()}"
                                 android:orientation="vertical"
+                                android:minHeight="72dp"
                                 android:padding="14dp">
 
                                 <TextView
@@ -658,7 +659,7 @@
                                     android:ellipsize="end"
                                     android:maxLines="1"
                                     android:text="@{homeSafetyShort}"
-                                    android:textSize="15sp"
+                                    android:textSize="16sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
                         </LinearLayout>
@@ -678,6 +679,7 @@
                                 android:focusable="true"
                                 android:onClick="@{() -> self.onPolicyDiagClick()}"
                                 android:orientation="vertical"
+                                android:minHeight="72dp"
                                 android:padding="14dp">
 
                                 <TextView
@@ -694,7 +696,7 @@
                                     android:ellipsize="end"
                                     android:maxLines="1"
                                     android:text="@{homePolicy}"
-                                    android:textSize="15sp"
+                                    android:textSize="16sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
 
@@ -708,6 +710,7 @@
                                 android:focusable="true"
                                 android:onClick="@{() -> self.onNetworkDiagClick()}"
                                 android:orientation="vertical"
+                                android:minHeight="72dp"
                                 android:padding="14dp">
 
                                 <TextView
@@ -724,7 +727,7 @@
                                     android:ellipsize="end"
                                     android:maxLines="1"
                                     android:text="@{homeNetwork}"
-                                    android:textSize="15sp"
+                                    android:textSize="16sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
                         </LinearLayout>
@@ -740,7 +743,7 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
+                            android:layout_marginTop="12dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -779,7 +782,7 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
+                            android:layout_marginTop="12dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
