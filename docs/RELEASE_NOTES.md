@@ -5,7 +5,7 @@
 - 客户端 `1.4.3`（`10403`）
 - 内核仓库与稳定基线：[dukangalex/mihomo](https://github.com/dukangalex/mihomo) / [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) `v1.19.33` @ `3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8`
 - 链式出站覆盖层：已启用并加固；沿用官方 `dialer-proxy`，严格遵循 fail-closed，链路异常直接阻断启动，不静默回退到 `DIRECT`。
-- 内置地理数据随上游 `meta-rules-dat` 2026-10-25 构建，`gradle/geo-files.sha256` 逐个校验。
+- 内置地理数据随上游 `meta-rules-dat` 2026-10-26 构建（`geoip.metadb` / `geosite.dat` / `BundleMRS.7z` 已更新，ASN 库不变），`gradle/geo-files.sha256` 逐个校验。
 - 正式签名沿用既有 Angela Clash 证书：SHA-256 `82:D0:DB:00:7C:5E:AF:C3:7E:12:6B:4F:DC:16:66:0D:7C:F2:43:4C:7A:15:E6:10:F4:B4:3F:D6:42:69:43:DC`；发布流程在上传前逐个核对五种架构 APK 签名、包名、版本及 ABI。
 
 ### 这次更新

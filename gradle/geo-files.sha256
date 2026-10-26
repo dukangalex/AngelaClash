@@ -1,6 +1,6 @@
 # SHA-256 of the geo data bundled into the APK.
 # Refresh with ./gradlew app:downloadGeoFiles -PgeoRefresh=true and review the diff.
-c1e063721b30d2f21db9c8e4720b6fcdc877099650d02918c929717432e4153d  BundleMRS.7z
-35ca922ee37f1afe932b5b85d9a211378634c2d1edd9dca220ff0515fedef1db  geoip.metadb
+6a3d7a1456ede5d7f1553f2ee50f513f518af8b77594e4f06b45ca42d8da061f  BundleMRS.7z
+8c0e9d8f5b74e5c4d46e65525da98fd9e71be0fd3d728abc5628b159aca61193  geoip.metadb
 4f480469576dba3e84b1f5c17313059982b70a62b8d35fb1ed225e39109b0531  ASN.mmdb
-bd1804e37ebc09bfe793bd6822d2d49c8d5a668e34fd47112821540dd68645a3  geosite.dat
+acbf79349cd32b9b95dba8a3918ea778eb07cb9bb662c258b8d353514953b1dd  geosite.dat
