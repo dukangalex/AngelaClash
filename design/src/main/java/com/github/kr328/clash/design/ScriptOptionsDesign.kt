@@ -3,6 +3,7 @@ package com.github.kr328.clash.design
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.text.TextUtils
 import android.text.format.DateFormat
 import android.view.Gravity
@@ -14,7 +15,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
-import androidx.core.graphics.ColorUtils
 import com.github.kr328.clash.design.databinding.DesignScriptOptionsBinding
 import com.github.kr328.clash.design.util.applyFrom
 import com.github.kr328.clash.design.util.bindAppBarElevation
@@ -36,24 +36,24 @@ class ScriptOptionsDesign(
     private val store: ScriptDisplayStore,
     running: Boolean,
 ) : Design<ScriptOptionsDesign.Request>(context) {
-    enum class Request {
-        EditScript,
-        ImportLink,
-        Sync,
-        Reload,
+    sealed class Request {
+        data object EditScript : Request()
+        data object ImportLink : Request()
+        data object Sync : Request()
+        data object Reload : Request()
+        data class ToggleScript(val enabled: Boolean) : Request()
     }
 
     private val binding = DesignScriptOptionsBinding
         .inflate(context.layoutInflater, context.root, false)
     private var ruleRows: List<ScriptDisplayStore.Row> = emptyList()
     private val ruleSwitches = mutableListOf<SwitchCompat>()
-    private val ruleCards = mutableListOf<MaterialCardView>()
     private val chips = mutableListOf<Chip>()
     private val expanded = mutableMapOf<String, Boolean>()
     private var suppressSwitchCallback = false
 
     /** A compact service chip: tap toggles, a dot shows the state. */
-    private class Chip(val name: String, val card: MaterialCardView, val dot: TextView, val label: TextView)
+    private class Chip(val name: String, val card: View, val dot: TextView, val label: TextView)
 
     override val root: View
         get() = binding.root
@@ -64,11 +64,12 @@ class ScriptOptionsDesign(
         binding.activityBarLayout.applyFrom(context)
         binding.scrollRoot.bindAppBarElevation(binding.activityBarLayout)
 
-        styleOutlinedCard(binding.scriptEnableCard, 20)
-        styleOutlinedCard(binding.sourceCard, 20)
-        styleOutlinedCard(binding.editorCard, 20)
-        styleOutlinedCard(binding.runtimeNotice, 16, accent = true)
         binding.runtimeNotice.visibility = if (running) View.VISIBLE else View.GONE
+        binding.profileScriptSwitch.setOnCheckedChangeListener { _, checked ->
+            if (!suppressSwitchCallback) {
+                requests.trySend(Request.ToggleScript(checked))
+            }
+        }
         showRules(store)
         showSource(store.sourceUrl(), store.syncedAt(), false)
     }
@@ -86,20 +87,44 @@ class ScriptOptionsDesign(
             }
         }
         store.setGroupOptions(ScriptDisplayStore.GROUP_RULE, updates)
-        suppressSwitchCallback = true
-        ruleSwitches.forEach { sw ->
-            if (sw.isEnabled) sw.isChecked = enabled
-        }
-        ruleCards.forEach { card ->
-            card.setStrokeColor(if (enabled) activeStroke() else inactiveStroke())
-        }
-        chips.forEach { chip ->
-            chip.card.setStrokeColor(if (enabled) activeStroke() else inactiveStroke())
-            paintChip(chip, enabled)
-        }
-        suppressSwitchCallback = false
-        updateRuleCount()
+        // 批量改完直接重画，比逐个去改控件状态可靠（也是唯一能保证
+        // 折叠区、计数、chips 三处同时正确的方式）。
+        renderRuleSections(store)
         requests.trySend(Request.Reload)
+    }
+
+    /**
+     * 当前配置与它的脚本开关。
+     *
+     * 以前这一页只有一张「脚本按配置打开」的说明卡 —— 说了等于没说：
+     * 用户真正想知道的是「**现在**这份配置到底有没有在用脚本」。
+     */
+    fun showProfile(name: String?, scriptOn: Boolean?) {
+        binding.profileName.text = name ?: context.getString(R.string.script_state_no_profile)
+        binding.scriptStatePill.text = when (scriptOn) {
+            null -> context.getString(R.string.script_state_no_profile)
+            true -> context.getString(R.string.script_state_on)
+            false -> context.getString(R.string.script_state_off)
+        }
+        suppressSwitchCallback = true
+        binding.profileScriptSwitch.isEnabled = scriptOn != null
+        binding.profileScriptSwitch.isChecked = scriptOn == true
+        suppressSwitchCallback = false
+    }
+
+    /** 别处拨了同一份配置的脚本开关：页头徽标和开关跟着走。 */
+    fun setScriptOn(enabled: Boolean) {
+        binding.scriptStatePill.text = context.getString(
+            if (enabled) R.string.script_state_on else R.string.script_state_off,
+        )
+        suppressSwitchCallback = true
+        binding.profileScriptSwitch.isChecked = enabled
+        suppressSwitchCallback = false
+    }
+
+    /** 内核启停不再重建整页：只切换那条提醒，滚动位置和展开状态都保住。 */
+    fun setRunning(running: Boolean) {
+        binding.runtimeNotice.visibility = if (running) View.VISIBLE else View.GONE
     }
 
     fun showSource(url: String, syncedAt: Long, busy: Boolean) {
@@ -149,7 +174,6 @@ class ScriptOptionsDesign(
     private fun renderRuleSections(store: ScriptDisplayStore) {
         binding.ruleRows.removeAllViews()
         ruleSwitches.clear()
-        ruleCards.clear()
         chips.clear()
 
         for (section in categorize(ruleRows)) {
@@ -306,14 +330,15 @@ class ScriptOptionsDesign(
             addView(dot)
             addView(label)
         }
-        val card = MaterialCardView(context).apply {
-            radius = dp(12).toFloat()
-            cardElevation = 0f
-            strokeWidth = dp(1)
-            setCardBackgroundColor(surfaceColor())
-            setStrokeColor(if (row.on) activeStroke() else inactiveStroke())
+        // 扁平 tile：选中/未选中只靠底色区分，不画描边（和首页 chip 一致）
+        val card = FrameLayout(context).apply {
             isClickable = true
             isFocusable = true
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 16f * context.resources.displayMetrics.density
+                setColor(if (row.on) selectedSurfaceColor() else surfaceColor())
+            }
             addView(content)
         }
         val holder = Chip(name, card, dot, label)
@@ -333,7 +358,7 @@ class ScriptOptionsDesign(
         chip.dot.text = if (on) "●" else "○"
         chip.dot.setTextColor(if (on) primaryColor() else secondaryColor())
         chip.label.setTypeface(chip.label.typeface, if (on) Typeface.BOLD else Typeface.NORMAL)
-        chip.card.setStrokeColor(if (on) activeStroke() else inactiveStroke())
+        (chip.card.background as? GradientDrawable)?.setColor(if (on) selectedSurfaceColor() else surfaceColor())
         chip.card.tag = on
         chip.card.contentDescription = context.getString(
             if (on) R.string.script_group_chip_on else R.string.script_group_chip_off,
@@ -377,7 +402,6 @@ class ScriptOptionsDesign(
                 })
             }
         }
-        lateinit var cardView: MaterialCardView
         val toggle = SwitchCompat(context).apply {
             isChecked = row.on
             contentDescription = buildString {
@@ -391,7 +415,6 @@ class ScriptOptionsDesign(
             isEnabled = row.name.isNotBlank()
             setOnCheckedChangeListener { _, enabled ->
                 if (suppressSwitchCallback) return@setOnCheckedChangeListener
-                cardView.setStrokeColor(if (enabled) activeStroke() else inactiveStroke())
                 store.setOption(ScriptDisplayStore.GROUP_RULE, row.name, enabled)
                 updateRuleCount()
                 requests.trySend(Request.Reload)
@@ -423,43 +446,30 @@ class ScriptOptionsDesign(
             }
         }
 
-        cardView = MaterialCardView(context).apply {
-            radius = dp(14).toFloat()
-            cardElevation = 0f
-            setCardBackgroundColor(surfaceColor())
-            strokeWidth = dp(1)
-            setStrokeColor(if (row.on) activeStroke() else inactiveStroke())
-            addView(item, ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+        // 一行一个开关，不套卡片：靠间距和分隔线分区，列表才不会「一格一框」
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(item, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
             ))
+            addView(View(context).apply {
+                setBackgroundColor(context.resolveThemedColor(R.attr.clashOutline))
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(1),
+            ).apply { marginStart = dp(14) })
             layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(4) }
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            )
         }
-        ruleCards += cardView
-        return cardView
-    }
-
-    private fun styleOutlinedCard(card: MaterialCardView, radiusDp: Int, accent: Boolean = false) {
-        val surface = surfaceColor()
-        card.setCardBackgroundColor(surface)
-        card.radius = dp(radiusDp).toFloat()
-        card.cardElevation = 0f
-        card.strokeWidth = dp(1)
-        card.setStrokeColor(
-            if (accent) {
-                context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
-            } else {
-                val secondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
-                val alpha = if (ColorUtils.calculateLuminance(surface) < 0.5) 0.25f else 0.45f
-                ColorUtils.setAlphaComponent(secondary, (Color.alpha(secondary) * alpha).toInt())
-            },
-        )
+        return container
     }
 
     private fun surfaceColor(): Int = context.resolveThemedColor(R.attr.clashSurfaceVariant)
+
+    private fun selectedSurfaceColor(): Int = context.resolveThemedColor(R.attr.clashSelectedSurface)
 
     private fun primaryColor(): Int =
         context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
@@ -467,9 +477,6 @@ class ScriptOptionsDesign(
     private fun secondaryColor(): Int =
         context.resolveThemedColor(android.R.attr.textColorSecondary)
 
-    private fun activeStroke(): Int = ColorUtils.setAlphaComponent(primaryColor(), 140)
-
-    private fun inactiveStroke(): Int = context.resolveThemedColor(R.attr.clashOutline)
 
     private fun updateRuleCount() {
         val on = ruleSwitches.count { it.isChecked } + chips.count { it.card.tag == true }

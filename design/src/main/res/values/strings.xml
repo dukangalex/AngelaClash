@@ -643,4 +643,11 @@
     <string name="rule_switches_manage_hint">Unchecked switches move into “Other settings”.</string>
     <string name="rule_switches_other">Other settings</string>
     <string name="rule_switches_other_count">%d hidden</string>
+    <string name="script_binding_label">Script applies to</string>
+    <string name="script_binding_hint">Only the active profile uses this script.</string>
+    <string name="script_state_on">ON</string>
+    <string name="script_state_off">OFF</string>
+    <string name="script_state_no_profile">No profile</string>
+    <string name="script_rule_all_on">All on</string>
+    <string name="script_rule_all_off">All off</string>
 </resources>

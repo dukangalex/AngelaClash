@@ -20,6 +20,7 @@ import com.github.kr328.clash.core.model.TunnelState
 import com.github.kr328.clash.core.util.trafficDownload
 import com.github.kr328.clash.core.util.trafficTotal
 import com.github.kr328.clash.core.util.trafficUpload
+import com.github.kr328.clash.design.ui.AppEvents
 import com.github.kr328.clash.design.model.HomeBlock
 import com.github.kr328.clash.design.databinding.DesignAboutBinding
 import com.github.kr328.clash.design.databinding.DesignMainBinding
@@ -577,6 +578,8 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                 }
                 mountSystem(store)
                 request(Request.ReloadConfig)
+                // 脚本页里有一模一样的开关，这里改完要让那边跟着变
+                AppEvents.emit(AppEvents.Event.OptionsChanged(spec.group))
             }
 
             container.addView(chip)

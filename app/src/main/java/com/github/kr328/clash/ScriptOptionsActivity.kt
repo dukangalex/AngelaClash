@@ -5,6 +5,7 @@ import android.widget.EditText
 import com.github.kr328.clash.common.util.intent
 import com.github.kr328.clash.design.R
 import com.github.kr328.clash.design.ScriptOptionsDesign
+import com.github.kr328.clash.design.ui.AppEvents
 import com.github.kr328.clash.design.ui.ToastDuration
 import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.service.util.sendProfileChanged
@@ -12,6 +13,7 @@ import com.github.kr328.clash.util.withProfile
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -22,17 +24,51 @@ import java.security.MessageDigest
 import kotlin.coroutines.resume
 
 class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
+    /** 当前生效配置的 uuid：用来判断 ScriptToggled 是不是关于「这一份」的。 */
+    private var activeUuid: java.util.UUID? = null
+
+    private suspend fun refreshProfile(design: ScriptOptionsDesign, store: ScriptDisplayStore) {
+        val active = withProfile { queryActive() }
+        activeUuid = active?.uuid
+        design.showProfile(
+            name = active?.name,
+            scriptOn = active?.let { store.profileScriptEnabled(it.uuid) },
+        )
+    }
+
     override suspend fun main() {
         val store = ScriptDisplayStore(this)
         val design = ScriptOptionsDesign(this, store, clashRunning)
         setContentDesign(design)
 
+        refreshProfile(design, store)
+
+        // 别的页面（首页 chip / 规则开关页）改了同一批开关：这边跟着重画，
+        // 不用等用户退出去再进来。
+        // 注意用 launch 而不是塞进下面的 select —— SharedFlow 是多订阅者，
+        // 塞进 select 会被其中一个分支「吃掉」。
+        launch {
+            AppEvents.events.collect { event ->
+                when (event) {
+                    is AppEvents.Event.OptionsChanged -> design.reload(store)
+                    AppEvents.Event.ScriptContentChanged -> design.reload(store)
+                    is AppEvents.Event.ScriptToggled -> {
+                        if (event.uuid == activeUuid) {
+                            design.setScriptOn(event.enabled)
+                        }
+                    }
+                }
+            }
+        }
+
         while (isActive) {
             select<Unit> {
                 events.onReceive {
                     when (it) {
+                        // 以前这里是 recreate()：整页重建，滚动位置和展开的分组全丢。
+                        // 现在只切换「运行中」那条提醒。
                         Event.ClashStart, Event.ClashStop, Event.ServiceRecreated ->
-                            recreate()
+                            design.setRunning(clashRunning)
                         else -> Unit
                     }
                 }
@@ -44,8 +80,20 @@ class ScriptOptionsActivity : BaseActivity<ScriptOptionsDesign>() {
                             importLink(store, design)
                         ScriptOptionsDesign.Request.Sync ->
                             sync(store, design)
-                        ScriptOptionsDesign.Request.Reload ->
+                        ScriptOptionsDesign.Request.Reload -> {
                             reloadRunning()
+                            AppEvents.emit(AppEvents.Event.OptionsChanged(ScriptDisplayStore.GROUP_RULE))
+                        }
+                        is ScriptOptionsDesign.Request.ToggleScript -> {
+                            val current = withProfile { queryActive() }
+                            if (current != null) {
+                                activeUuid = current.uuid
+                                store.setProfileScriptEnabled(current.uuid, it.enabled)
+                                design.setScriptOn(it.enabled)
+                                AppEvents.emit(AppEvents.Event.ScriptToggled(current.uuid, it.enabled))
+                                if (clashRunning) sendProfileChanged(current.uuid)
+                            }
+                        }
                     }
                 }
             }

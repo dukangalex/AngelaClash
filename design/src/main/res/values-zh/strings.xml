@@ -548,4 +548,11 @@
     <string name="rule_switches_manage_hint">取消勾选的开关会收进「其他设置」。</string>
     <string name="rule_switches_other">其他设置</string>
     <string name="rule_switches_other_count">已收起 %d 个</string>
+    <string name="script_binding_label">脚本作用于</string>
+    <string name="script_binding_hint">只有当前生效的配置会使用这份脚本。</string>
+    <string name="script_state_on">已启用</string>
+    <string name="script_state_off">未启用</string>
+    <string name="script_state_no_profile">无配置</string>
+    <string name="script_rule_all_on">全开</string>
+    <string name="script_rule_all_off">全关</string>
 </resources>

@@ -31,248 +31,151 @@
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
+                android:paddingHorizontal="@dimen/ac_gutter"
                 android:paddingTop="@{(float) surface.insets.top + @dimen/toolbar_height}"
                 android:paddingBottom="@{surface.insets.bottom}">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="2dp"
-                    android:letterSpacing="0.08"
-                    android:text="@string/script_engine_label"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="main(config)"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-                    android:textStyle="bold" />
-
-                <TextView
+                <!-- 页头：和首页同一套结构，无卡片 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/script_page_intro"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                    android:textColor="?android:attr/textColorSecondary" />
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/script_enable_card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="6dp">
 
                     <LinearLayout
-                        android:id="@+id/script_enable_row"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:minHeight="80dp"
-                        android:orientation="vertical"
-                        android:paddingStart="16dp"
-                        android:paddingTop="14dp"
-                        android:paddingEnd="16dp"
-                        android:paddingBottom="14dp">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/script_enable"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
+                            android:letterSpacing="0.08"
+                            android:text="@string/script_engine_label"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
 
                         <TextView
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/script_enable_summary"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                            android:textColor="?android:attr/textColorSecondary" />
+                            android:layout_marginTop="2dp"
+                            android:singleLine="true"
+                            android:text="main(config)"
+                            android:textSize="26sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.card.MaterialCardView
+                    <TextView
+                        android:id="@+id/script_state_pill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_profile_badge"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/script_page_intro"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp" />
+
+                <!-- 当前配置：这一页最容易搞混的就是「谁在用这份脚本」 -->
+                <LinearLayout
+                    android:id="@+id/profile_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_card_flat"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/script_binding_label"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/profile_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/script_binding_hint"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/profile_script_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:minHeight="44dp" />
+                </LinearLayout>
+
+                <!-- 运行中提醒：只在内核真的在跑的时候出现 -->
+                <LinearLayout
                     android:id="@+id/runtime_notice"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:visibility="gone"
-                    app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="?attr/colorPrimary"
-                    app:strokeWidth="1dp">
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_card_flat"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp"
+                    android:visibility="gone">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="10dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_baseline_info"
+                        android:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:minHeight="56dp"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
+                        android:layout_weight="1"
+                        android:text="@string/script_display_running"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="12sp" />
+                </LinearLayout>
 
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_marginEnd="10dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_baseline_info"
-                            android:tint="?attr/colorPrimary" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/script_display_running"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                            android:textColor="?attr/colorPrimary" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/source_card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingHorizontal="16dp"
-                        android:paddingTop="14dp"
-                        android:paddingBottom="8dp">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/script_source_title"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
-                        <TextView
-                            android:id="@+id/source_url"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:ellipsize="middle"
-                            android:maxLines="2"
-                            android:text="@string/script_source_empty"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                            android:textColor="?android:attr/textColorSecondary" />
-
-                        <TextView
-                            android:id="@+id/source_status"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:visibility="gone" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="end"
-                            android:orientation="horizontal">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/import_link"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:minHeight="48dp"
-                                android:onClick="@{() -> self.request(Request.ImportLink)}"
-                                android:text="@string/script_import_link" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/sync_script"
-                                style="@style/Widget.MaterialComponents.Button.TextButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:minHeight="48dp"
-                                android:onClick="@{() -> self.request(Request.Sync)}"
-                                android:text="@string/script_sync" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/editor_card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:clickable="true"
-                    android:contentDescription="@string/script_display_edit"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:onClick="@{() -> self.request(Request.EditScript)}"
-                    app:cardBackgroundColor="?attr/clashSurfaceVariant"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:minHeight="80dp"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp"
-                        android:paddingVertical="12dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_baseline_edit"
-                            android:tint="?android:attr/textColorSecondary" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/script_display_edit"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/script_editor_hint"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                                android:textColor="?android:attr/textColorSecondary" />
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_marginStart="8dp"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_baseline_chevron_right"
-                            android:tint="?android:attr/textColorSecondary" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
+                <!-- 开关分组：这一页的主体 -->
                 <LinearLayout
                     android:id="@+id/rule_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="18dp"
                     android:orientation="vertical"
                     android:visibility="gone">
 
@@ -281,35 +184,21 @@
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingHorizontal="4dp">
+                        android:paddingHorizontal="2dp">
 
-                        <LinearLayout
+                        <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/script_display_rule"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="3dp"
-                                android:text="@string/rule_switches_summary"
-                                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                                android:textColor="?android:attr/textColorSecondary" />
-                        </LinearLayout>
+                            android:text="@string/script_display_rule"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/rule_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
                             android:textColor="?attr/colorPrimary"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -318,14 +207,13 @@
                             android:id="@+id/rule_enable_all"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
                             android:background="@drawable/bg_profile_badge"
                             android:clickable="true"
                             android:focusable="true"
                             android:onClick="@{() -> self.setAllRules(true)}"
                             android:paddingHorizontal="10dp"
                             android:paddingVertical="4dp"
-                            android:text="全开"
+                            android:text="@string/script_rule_all_on"
                             android:textColor="?attr/colorPrimary"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -335,13 +223,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_b"
+                            android:background="@drawable/bg_tile_flat"
                             android:clickable="true"
                             android:focusable="true"
                             android:onClick="@{() -> self.setAllRules(false)}"
                             android:paddingHorizontal="10dp"
                             android:paddingVertical="4dp"
-                            android:text="全关"
+                            android:text="@string/script_rule_all_off"
                             android:textColor="?android:attr/textColorSecondary"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -351,7 +239,7 @@
                         android:id="@+id/rule_rows"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="6dp"
                         android:orientation="vertical" />
 
                     <TextView
@@ -360,21 +248,125 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:text="@string/script_rule_empty"
-                        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                         android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="12sp"
                         android:visibility="gone" />
+                </LinearLayout>
+
+                <!-- 来源与编辑：和开关放一张卡里，别再来两张带边框的 -->
+                <LinearLayout
+                    android:id="@+id/source_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/bg_card_flat"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="6dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/script_source_title"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/source_url"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="middle"
+                        android:maxLines="2"
+                        android:text="@string/script_source_empty"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/source_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="11sp"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/import_link"
+                            style="@style/Widget.AngelaClash.InlineAction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:onClick="@{() -> self.request(Request.ImportLink)}"
+                            android:text="@string/script_import_link" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/sync_script"
+                            style="@style/Widget.AngelaClash.InlineAction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:onClick="@{() -> self.request(Request.Sync)}"
+                            android:text="@string/script_sync" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/clashOutline" />
+
+                    <LinearLayout
+                        android:id="@+id/editor_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:contentDescription="@string/script_display_edit"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:onClick="@{() -> self.request(Request.EditScript)}"
+                        android:orientation="horizontal"
+                        android:paddingVertical="14dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/script_display_edit"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:text="@string/script_editor_hint"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_baseline_chevron_right"
+                            android:tint="?android:attr/textColorSecondary" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="24dp"
-                    android:paddingHorizontal="4dp"
-                    android:paddingBottom="8dp"
+                    android:layout_marginTop="14dp"
+                    android:paddingHorizontal="2dp"
+                    android:paddingBottom="24dp"
                     android:text="@string/script_page_hint"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
-                    android:textColor="?android:attr/textColorSecondary" />
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="11sp" />
             </LinearLayout>
         </com.github.kr328.clash.design.view.ObservableScrollView>
 

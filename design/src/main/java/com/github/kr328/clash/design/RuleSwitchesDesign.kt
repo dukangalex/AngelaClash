@@ -20,6 +20,7 @@ import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.root
 import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.design.store.UiStore
+import com.github.kr328.clash.design.ui.AppEvents
 import com.google.android.material.card.MaterialCardView
 import java.util.UUID
 
@@ -301,10 +302,6 @@ class RuleSwitchesDesign(
     private fun switchCard(name: String, on: Boolean, flat: Boolean = false): View {
         val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
-        val colorPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
-        val activeStroke = ColorUtils.setAlphaComponent(colorPrimary, 140)
-        val inactiveStroke = context.resolveThemedColor(R.attr.clashOutline)
-
         val enabled = scriptEnabled && name.isNotBlank()
 
         val title = TextView(context).apply {
@@ -332,7 +329,6 @@ class RuleSwitchesDesign(
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
 
-        lateinit var cardView: MaterialCardView
         val toggle = SwitchCompat(context).apply {
             isChecked = on
             isEnabled = enabled
@@ -341,9 +337,10 @@ class RuleSwitchesDesign(
             minHeight = dp(48)
             setOnCheckedChangeListener { _: CompoundButton, checked: Boolean ->
                 if (!enabled) return@setOnCheckedChangeListener
-                cardView.setStrokeColor(if (checked) activeStroke else inactiveStroke)
                 store.setOption(ScriptDisplayStore.GROUP_RULE, name, checked)
                 requests.trySend(Request.Reload)
+                // 脚本页里是同一批开关，这里改完也要让它跟着变
+                AppEvents.emit(AppEvents.Event.OptionsChanged(ScriptDisplayStore.GROUP_RULE))
             }
         }
 
@@ -368,11 +365,17 @@ class RuleSwitchesDesign(
             }
         }
 
-        cardView = card(
-            row,
-            stroke = if (on && enabled) activeStroke else inactiveStroke,
-        )
-        return cardView
+        // 扁平行 + 底部一条分隔线：列表里不再一格一框
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(row)
+            addView(View(context).apply {
+                setBackgroundColor(context.resolveThemedColor(R.attr.clashOutline))
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1)).apply {
+                marginStart = dp(16)
+                marginEnd = dp(16)
+            })
+        }
     }
 
     private fun card(content: View, stroke: Int?): MaterialCardView =
