@@ -98,6 +98,16 @@ class HomeGridView @JvmOverloads constructor(
     private var dragKey: String? = null
     private var downX = 0f
     private var downY = 0f
+    private var lastX = 0f
+    private var lastY = 0f
+
+    /** 手动缩放的进行态：按住右下角手柄拖动时才有值。 */
+    private var resizeKey: String? = null
+    private var resizeStartW = 1
+    private var resizeStartH = 1
+    private var resizeDownX = 0f
+    private var resizeDownY = 0f
+    private var unitWidth = 0f
     private var dragged = false
     private var swallowUp = false
     private val reportedSize = HashMap<String, Int>()
@@ -141,7 +151,7 @@ class HomeGridView @JvmOverloads constructor(
         entries.forEach { (key, w, h) ->
             if (key in tiles) {
                 order.add(key)
-                sizeOf[key] = intArrayOf(w.coerceIn(1, 2), h.coerceIn(1, 2))
+                sizeOf[key] = intArrayOf(w.coerceIn(1, 2), h.coerceIn(1, MAX_SPAN_H))
             }
         }
         tiles.keys.forEach { key ->
@@ -233,9 +243,9 @@ class HomeGridView @JvmOverloads constructor(
             val a = c.obtainStyledAttributes(attrs, R.styleable.HomeGridTile)
             tileKey = a.getString(R.styleable.HomeGridTile_tileKey)
             spanW = a.getInt(R.styleable.HomeGridTile_tileSpanW, 1).coerceIn(1, 2)
-            spanH = a.getInt(R.styleable.HomeGridTile_tileSpanH, 1).coerceIn(1, 2)
+            spanH = a.getInt(R.styleable.HomeGridTile_tileSpanH, 1).coerceIn(1, MAX_SPAN_H)
             minSpanW = a.getInt(R.styleable.HomeGridTile_tileMinSpanW, 1).coerceIn(1, 2)
-            minSpanH = a.getInt(R.styleable.HomeGridTile_tileMinSpanH, 1).coerceIn(1, 2)
+            minSpanH = a.getInt(R.styleable.HomeGridTile_tileMinSpanH, 1).coerceIn(1, MAX_SPAN_H)
             if (spanW < minSpanW) spanW = minSpanW
             if (spanH < minSpanH) spanH = minSpanH
             a.recycle()
@@ -263,6 +273,7 @@ class HomeGridView @JvmOverloads constructor(
         }
         val columns = bandFor(width).columns
         val colWidth = (width - gap * (columns - 1)).toFloat() / columns
+        unitWidth = TILE_CELL * colWidth + (TILE_CELL - 1) * gap
 
         val rows = ArrayList<BooleanArray>()
         fun free(row: Int, col: Int, w: Int, h: Int): Boolean {
@@ -289,7 +300,7 @@ class HomeGridView @JvmOverloads constructor(
             if (view.visibility == View.GONE) return@forEach
             val size = sizeOf.getOrPut(key) { minSizeOf[key]?.copyOf() ?: intArrayOf(1, 1) }
             val spanW = size[0].coerceIn(1, 2)
-            val spanH = size[1].coerceIn(1, 2)
+            val spanH = size[1].coerceIn(1, MAX_SPAN_H)
             val cells = spanW * TILE_CELL
 
             var placedRow = 0
@@ -392,6 +403,15 @@ class HomeGridView @JvmOverloads constructor(
         slots.forEach { slot ->
             overlays += overlayButton(sizeLabel(slot.spanW, slot.spanH)) { cycleSize(slot.key) }
             overlays += overlayButton("×") { hideTile(slot.key) }
+            overlays += overlayButton("↘") { }.apply {
+                // 手柄自己不吃点击，交给 dispatchTouchEvent 做连续缩放
+                isClickable = false
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    shape = android.graphics.drawable.GradientDrawable.OVAL
+                    setColor(0xCC5B8CFF.toInt())
+                    setStroke((1.5f * density).toInt(), 0xFFFFFFFF.toInt())
+                }
+            }
         }
         overlays.forEach { addViewInLayout(it, -1, LayoutParams(OVERLAY_DP.dp(), OVERLAY_DP.dp()), true) }
         requestLayout()
@@ -412,12 +432,7 @@ class HomeGridView @JvmOverloads constructor(
             setOnClickListener { onClick() }
         }
 
-    private fun sizeLabel(w: Int, h: Int): String = when {
-        w == 1 && h == 1 -> "1×1"
-        w == 2 && h == 1 -> "2×1"
-        w == 1 && h == 2 -> "1×2"
-        else -> "2×2"
-    }
+    private fun sizeLabel(w: Int, h: Int): String = "${if (w == 1) 1 else 2}×$h"
 
     private fun clearOverlays() {
         overlays.toList().forEach { removeViewInLayout(it) }
@@ -429,10 +444,11 @@ class HomeGridView @JvmOverloads constructor(
         val side = OVERLAY_DP.dp()
         val margin = 6.dp()
         slots.forEachIndexed { index, slot ->
-            val resize = overlays.getOrNull(index * 2) ?: return@forEachIndexed
-            val hide = overlays.getOrNull(index * 2 + 1) ?: return@forEachIndexed
+            val size = overlays.getOrNull(index * 3) ?: return@forEachIndexed
+            val hide = overlays.getOrNull(index * 3 + 1) ?: return@forEachIndexed
+            val handle = overlays.getOrNull(index * 3 + 2) ?: return@forEachIndexed
             val bounds = slot.bounds
-            resize.layout(
+            size.layout(
                 bounds.left + margin,
                 bounds.top + offset + margin,
                 bounds.left + margin + side,
@@ -443,6 +459,12 @@ class HomeGridView @JvmOverloads constructor(
                 bounds.top + offset + margin,
                 bounds.right - margin,
                 bounds.top + offset + margin + side,
+            )
+            handle.layout(
+                bounds.right - margin - side,
+                bounds.bottom + offset - margin - side,
+                bounds.right - margin,
+                bounds.bottom + offset - margin,
             )
         }
     }
@@ -475,12 +497,33 @@ class HomeGridView @JvmOverloads constructor(
     // ---------------------------------------------------------------- 拖动
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        // 手动缩放优先：按住右下角手柄，尺寸按格子吸附着走
+        if (resizeKey != null) {
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_MOVE -> {
+                    applyResize(ev.x, ev.y)
+                    return true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    finishResize()
+                    return true
+                }
+                MotionEvent.ACTION_DOWN -> return true
+            }
+        }
         when (ev.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 downX = ev.x
                 downY = ev.y
+                lastX = ev.x
+                lastY = ev.y
                 dragged = false
                 swallowUp = false
+                val handle = resizeHandleAt(ev.x, ev.y)
+                if (handle != null) {
+                    beginResize(handle, ev.x, ev.y)
+                    return true
+                }
                 if (!onOverlay(ev.x, ev.y)) {
                     val slot = slotAt(ev.x, ev.y)
                     if (slot != null) {
@@ -519,6 +562,8 @@ class HomeGridView @JvmOverloads constructor(
         when (ev.actionMasked) {
             MotionEvent.ACTION_MOVE -> {
                 dragged = true
+                lastX = ev.x
+                lastY = ev.y
                 view.translationX = ev.x - downX
                 view.translationY = ev.y - downY
             }
@@ -548,6 +593,13 @@ class HomeGridView @JvmOverloads constructor(
         val key = dragKey
         val view = dragView
         val moved = dragged
+        val fingerX = lastX
+        val fingerY = lastY
+
+        // 落点要在复位之前算：之前先清了 dragKey、又把 translation 归零，
+        // 算出来的「最近的一张卡」就是它自己，于是永远不换位、看起来像跳回去。
+        val target = if (moved && key != null) dropIndexAt(fingerX, fingerY, key) else -1
+
         dragView = null
         dragKey = null
         dragged = false
@@ -556,10 +608,10 @@ class HomeGridView @JvmOverloads constructor(
             it.translationY = 0f
             it.elevation = 0f
         }
-        if (moved && key != null && view != null) {
-            val target = indexAt(view) ?: order.indexOf(key)
+
+        if (target >= 0 && key != null) {
             val from = order.indexOf(key)
-            if (from >= 0 && target >= 0 && target != from) {
+            if (from >= 0 && target != from) {
                 order.removeAt(from)
                 order.add(target.coerceIn(0, order.size), key)
                 listener?.onLayoutChanged()
@@ -570,22 +622,79 @@ class HomeGridView @JvmOverloads constructor(
         post { if (editMode) buildOverlays() }
     }
 
-    private fun indexAt(view: View): Int? {
-        val centerX = view.left + view.width / 2f + view.translationX
-        val centerY = view.top + view.height / 2f + view.translationY
-        var best: String? = null
-        var bestDistance = Float.MAX_VALUE
-        slots.forEach { slot ->
-            if (slot.key == dragKey) return@forEach
-            val dx = slot.bounds.centerX() - centerX
-            val dy = slot.bounds.centerY() + paddingTop - centerY
-            val distance = dx * dx + dy * dy
-            if (distance < bestDistance) {
-                bestDistance = distance
-                best = slot.key
+    /**
+     * 手指落在哪张卡上，就把被拖的那张插到它所在的序号。
+     *
+     * 只认「手指确实在另一张卡的矩形里」：之前按最近的一张算，手抖几个像素就会
+     * 和邻居换位，也容易和没动过混淆。落在缝里就当没动。
+     */
+    private fun dropIndexAt(x: Float, y: Float, draggedKey: String): Int {
+        val row = (y - paddingTop).toInt()
+        val hit = slots.firstOrNull { slot ->
+            slot.key != draggedKey && slot.bounds.contains(x.toInt(), row)
+        } ?: return -1
+        return order.indexOf(hit.key)
+    }
+
+    // ---------------------------------------------------------------- 手动缩放
+
+    private fun beginResize(key: String, x: Float, y: Float) {
+        val size = sizeOf.getOrPut(key) { minSizeOf[key]?.copyOf() ?: intArrayOf(1, 1) }
+        resizeKey = key
+        resizeStartW = size[0]
+        resizeStartH = size[1]
+        resizeDownX = x
+        resizeDownY = y
+    }
+
+    /**
+     * 拖动右下角手柄时实时改尺寸。
+     *
+     * 网格是整数格子的，不存在「像素级自由大小」，所以按格子吸附：
+     * 横向过一档的一半就跨 1→2 档，纵向每拉过一行高度就多占一行（最多三行）。
+     * 吸附是立刻到位的，没有回弹动效。
+     */
+    private fun applyResize(x: Float, y: Float) {
+        val key = resizeKey ?: return
+        val current = sizeOf.getOrPut(key) { intArrayOf(1, 1) }
+        val minW = minSizeOf[key]?.get(0) ?: 1
+        val minH = minSizeOf[key]?.get(1) ?: 1
+        val dx = x - resizeDownX
+        val dy = y - resizeDownY
+        val threshold = unitWidth * 0.55f
+
+        val targetW = when {
+            resizeStartW == 1 && dx > threshold -> 2
+            resizeStartW == 2 && dx < -threshold -> 1
+            else -> resizeStartW
+        }.coerceAtLeast(minW)
+
+        val rowsDelta = (dy / unitHeight).roundToInt()
+        val targetH = (resizeStartH + rowsDelta).coerceIn(minH, MAX_SPAN_H)
+
+        if (current[0] != targetW || current[1] != targetH) {
+            sizeOf[key] = intArrayOf(targetW, targetH)
+            requestLayout()
+        }
+    }
+
+    private fun finishResize() {
+        val changed = resizeKey != null
+        resizeKey = null
+        if (changed) listener?.onLayoutChanged()
+        clearOverlays()
+        requestLayout()
+        post { if (editMode) buildOverlays() }
+    }
+
+    private fun resizeHandleAt(x: Float, y: Float): String? {
+        slots.forEachIndexed { index, slot ->
+            val handle = overlays.getOrNull(index * 3 + 2) ?: return@forEachIndexed
+            if (x >= handle.left && x <= handle.right && y >= handle.top && y <= handle.bottom) {
+                return slot.key
             }
         }
-        return best?.let { order.indexOf(it) }
+        return null
     }
 
     private fun slotAt(x: Float, y: Float): Slot? =
@@ -602,6 +711,7 @@ class HomeGridView @JvmOverloads constructor(
         const val UNIT_DP = 84
         const val GAP_DP = 10
         const val TILE_CELL = 4
+        const val MAX_SPAN_H = 3
         private const val OVERLAY_DP = 26
     }
 }

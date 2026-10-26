@@ -176,7 +176,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
                 // 速度卡窄档只留数字，曲线这种「看趋势」的东西在 84dp 里挤不下。
                 if (key == HomeBlock.SPEED.key) {
                     binding.speedBars.visibility =
-                        if (spanW * spanH >= 4) View.VISIBLE else View.GONE
+                        if (spanW > 1 || spanH > 1) View.VISIBLE else View.GONE
                 }
             }
         }

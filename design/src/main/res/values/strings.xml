@@ -631,7 +631,7 @@
     <string name="home_block_diag_safety">Protection</string>
     <string name="home_block_diag_policy">Policy</string>
     <string name="home_block_diag_network">Network</string>
-    <string name="home_edit_hint">Drag to reorder · corner tag resizes · × hides</string>
+    <string name="home_edit_hint">Drag to reorder · drag ↘ to resize · tag cycles · × hides</string>
     <string name="home_edit_reset">Reset</string>
     <string name="home_edit_done">Done</string>
     <string name="home_block_meta">Core and TUN</string>
