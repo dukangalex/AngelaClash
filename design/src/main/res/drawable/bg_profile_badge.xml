@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- UI v2：强调色药丸。BettBox 的分段/徽标一律不描边，只用淡色实底 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@android:color/transparent" />
-    <stroke
-        android:width="1dp"
-        android:color="?attr/colorPrimary" />
-    <corners android:radius="12dp" />
+    <solid android:color="#265B8CFF" />
+    <corners android:radius="999dp" />
 </shape>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI v2：未选中的配置卡不画描边，只靠底色分层 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/clashSurfaceVariant" />
+    <corners android:radius="18dp" />
+</shape>

@@ -1,6 +1,7 @@
 package com.github.kr328.clash.design.component
 
 import android.graphics.Color
+import com.github.kr328.clash.design.ui.DelayPalette
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
@@ -22,7 +23,7 @@ class ProxyViewState(
     var title: String = ""
     var subtitle: String = ""
     var delayText: String = ""
-    var delayColor: Int = Color.parseColor("#10B981")
+    var delayColor: Int = DelayPalette.OK
     var background: Int = config.unselectedBackground
     var controls: Int = config.unselectedControl
     var isSelected: Boolean = false
@@ -62,11 +63,7 @@ class ProxyViewState(
             delay = proxy.delay
             if (proxy.delay in 1..Short.MAX_VALUE) {
                 delayText = "${proxy.delay} ms"
-                delayColor = when {
-                    proxy.delay < 200 -> Color.parseColor("#10B981")
-                    proxy.delay < 500 -> Color.parseColor("#F59E0B")
-                    else -> Color.parseColor("#EF4444")
-                }
+                delayColor = DelayPalette.color(proxy.delay)
             } else {
                 delayText = ""
             }

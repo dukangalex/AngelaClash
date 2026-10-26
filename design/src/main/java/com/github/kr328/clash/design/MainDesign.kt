@@ -656,7 +656,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
             })
         }
         return MaterialCardView(context).apply {
-            radius = 20 * density
+            radius = 22 * density
             cardElevation = 0f
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

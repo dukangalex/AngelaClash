@@ -161,7 +161,7 @@ class ProfilesDesign(
             }
         })
 
-        binding.mainList.recyclerList.also {
+        binding.recyclerView.also {
             it.bindAppBarElevation(binding.activityBarLayout)
             it.applyLinearAdapter(context, adapter)
             itemTouchHelper.attachToRecyclerView(it)

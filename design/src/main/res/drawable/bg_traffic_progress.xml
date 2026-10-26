@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- UI v2：流量进度条，蓝紫渐变（和首页 hero、FAB 同一套色） -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
-            <solid android:color="?attr/colorSurface" />
+            <solid android:color="?attr/clashSurface" />
             <corners android:radius="999dp" />
         </shape>
     </item>
     <item android:id="@android:id/progress">
         <scale android:scaleWidth="100%">
             <shape android:shape="rectangle">
-                <solid android:color="#FF3B82F6" />
+                <gradient
+                    android:angle="0"
+                    android:endColor="#7C5BFF"
+                    android:startColor="#5B8CFF"
+                    android:type="linear" />
                 <corners android:radius="999dp" />
             </shape>
         </scale>

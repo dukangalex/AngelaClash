@@ -21,6 +21,7 @@ import com.github.kr328.clash.design.R
 import com.github.kr328.clash.design.component.ProxyViewConfig
 import com.github.kr328.clash.design.component.ProxyViewState
 import com.github.kr328.clash.design.model.ProxyState
+import com.github.kr328.clash.design.ui.DelayPalette
 import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.resolveThemedResourceId
 import com.google.android.material.card.MaterialCardView
@@ -435,24 +436,12 @@ class ProxyGroupListAdapter(
         val delay = activeState?.proxy?.delay ?: 0
         if (delay in 1..Short.MAX_VALUE) {
             val d = context.resources.displayMetrics.density
-            val delayColor = when {
-                delay < 200 -> android.graphics.Color.parseColor("#10B981")
-                delay < 500 -> android.graphics.Color.parseColor("#F59E0B")
-                else -> android.graphics.Color.parseColor("#EF4444")
-            }
             badge.text = "$delay ms"
-            badge.setTextColor(delayColor)
+            badge.setTextColor(DelayPalette.color(delay))
             badge.background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 999f * d
-                setColor(
-                    android.graphics.Color.argb(
-                        32,
-                        android.graphics.Color.red(delayColor),
-                        android.graphics.Color.green(delayColor),
-                        android.graphics.Color.blue(delayColor),
-                    )
-                )
+                setColor(DelayPalette.softColor(delay))
             }
             badge.visibility = View.VISIBLE
         } else {

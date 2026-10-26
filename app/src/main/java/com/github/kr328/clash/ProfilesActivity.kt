@@ -30,6 +30,18 @@ class ProfilesActivity : BaseActivity<ProfilesDesign>() {
 
         setContentDesign(design)
 
+        // 脚本页 / 首页也可能改脚本开关或脚本内容：卡片上的「脚本」徽标要跟着变，
+        // 不能等用户退出重进。SharedFlow 多订阅者，所以单独 launch，不塞进 select。
+        launch {
+            AppEvents.events.collect { event ->
+                when (event) {
+                    is AppEvents.Event.ScriptToggled -> design.refreshScriptBadges()
+                    AppEvents.Event.ScriptContentChanged -> design.refreshScriptBadges()
+                    else -> Unit
+                }
+            }
+        }
+
         val ticker = ticker(TimeUnit.MINUTES.toMillis(1))
 
         while (isActive) {

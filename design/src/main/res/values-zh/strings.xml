@@ -324,7 +324,6 @@
     <string name="script_page_hint">这些开关只作用于开启了覆写脚本的配置。未开启的配置保持订阅自带的策略组；与系统显式选项冲突时仍以系统选项为准。</string>
     <string name="script_credit"></string>
     <string name="system_options">系统显式</string>
-    <string name="system_options_summary">这些开关优先于脚本和订阅。</string>
     <string name="log_filter_all">全部</string>
     <string name="script_display_enable">启用脚本显示选项</string>
     <string name="script_display_enable_summary">打开后，下面的开关在下次启动时写入运行配置</string>
@@ -377,6 +376,7 @@
     <string name="script_display_privacy">防隐私</string>
     <string name="nav_dashboard">首页</string>
     <string name="nav_tools">更多</string>
+    <string name="tools_console_label">工具台</string>
     <string name="home_console_label">MIHOMO · 网络控制台</string>
     <string name="script_engine_label">MIHOMO / SCRIPT ENGINE</string>
     <string name="service_status">服务状态</string>
@@ -384,7 +384,6 @@
     <string name="rule_switches_summary">关闭后移除此策略组，规则回到主组。系统显式选项仍然优先。</string>
     <string name="section_view">查看</string>
     <string name="section_other">其他</string>
-    <string name="logs_summary">在应用里查看</string>
     <string name="profile_script">覆写脚本</string>
     <string name="profile_script_summary">只作用于这份配置</string>
     <string name="dashboard_speed">网络速度</string>
@@ -420,16 +419,13 @@
     <string name="check_update_downloading">正在下载更新</string>
     <string name="script_applied">脚本已保存，正在重载</string>
     <string name="kernel_config">内核配置</string>
-    <string name="kernel_config_summary">常规、网络、DNS、Hosts 和高级特性</string>
     <string name="kernel_general_summary">端口、模式、日志和外部控制</string>
     <string name="kernel_network_summary">VPN、绕过和协议栈</string>
     <string name="kernel_dns_summary">域名解析相关设置</string>
     <string name="kernel_hosts_summary">追加当前配置的 Hosts</string>
     <string name="kernel_meta_summary">嗅探、延迟和外部资源</string>
     <string name="enhance_tools">增强工具</string>
-    <string name="enhance_tools_summary">商店修复、通知和电池</string>
     <string name="application_page">应用程序</string>
-    <string name="application_page_summary">启动、反馈和界面</string>
     <string name="boot_start">开机启动</string>
     <string name="boot_start_summary">每次开机都启动服务，不要求上次正在运行</string>
     <string name="auto_connect">自动连接</string>
@@ -444,8 +440,6 @@
     <string name="high_priority_notification_summary">提高状态通知的优先级</string>
     <string name="battery_optimization">电池优化</string>
     <string name="battery_optimization_summary">请求系统忽略电池优化</string>
-    <string name="script_entry_summary">维护脚本。每份配置单独开关</string>
-    <string name="providers_summary">查看和同步外部资源</string>
     <string name="access_summary">配置应用访问名单</string>
     <string name="files_empty">此目录暂无文件</string>
     <string name="logs_empty">暂无历史日志</string>
@@ -555,4 +549,7 @@
     <string name="script_state_no_profile">无配置</string>
     <string name="script_rule_all_on">全开</string>
     <string name="script_rule_all_off">全关</string>
+    <string name="proxy_empty_hint">先启动服务并载入一份配置，策略组会出现在这里。</string>
+    <string name="proxy_locate_current">滚动到当前节点</string>
+    <string name="proxy_test_all">测速全部节点</string>
 </resources>

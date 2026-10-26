@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_marginVertical="8dp"
         android:layout_marginHorizontal="@dimen/ac_gutter"
-        android:background="@{profile.active ? @drawable/bg_profile_active : @drawable/bg_b}"
+        android:background="@{profile.active ? @drawable/bg_profile_active : @drawable/bg_profile_flat}"
         android:foreground="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
@@ -38,11 +38,11 @@
 
         <FrameLayout
             android:id="@+id/drag_handle"
-            android:layout_width="36dp"
+            android:layout_width="30dp"
             android:layout_height="48dp"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:layout_marginStart="6dp"
+            android:layout_marginStart="2dp"
             android:clickable="true"
             android:focusable="false">
 
@@ -77,7 +77,8 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="@{profile.name}"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -97,7 +98,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_profile_badge"
+                    android:background="@drawable/bg_pill_neutral"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="2dp"
                     android:text="@{scriptBadge}"
@@ -114,8 +115,8 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="@{profile.pending ? @string/format_type_unsaved(I18nKt.toString(profile.type, context)) : I18nKt.toString(profile.type, context)}"
-                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="13sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"

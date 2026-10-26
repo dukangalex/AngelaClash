@@ -13,10 +13,14 @@
         android:paddingStart="@{self.surface.insets.start}"
         android:paddingEnd="@{self.surface.insets.end}">
 
-        <include
-            android:id="@+id/main_list"
-            layout="@layout/common_recycler_list"
-            app:insets="@{self.surface.insets}" />
+        <!-- 列表底部多留 96dp：右下角新建 FAB 会盖住最后一行的菜单入口 -->
+        <com.github.kr328.clash.design.view.AppRecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="@{(float) self.surface.insets.top + @dimen/toolbar_height}"
+            android:paddingBottom="@{(float) self.surface.insets.bottom + 96}" />
 
         <com.github.kr328.clash.design.view.ActivityBarLayout
             android:id="@+id/activity_bar_layout"
@@ -42,8 +46,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_toStartOf="@id/add_view">
+                    android:layout_centerVertical="true">
 
                     <ImageView
                         android:id="@+id/update_view"
@@ -61,23 +64,24 @@
                         android:visibility="gone" />
                 </FrameLayout>
 
-                <ImageView
-                    android:id="@+id/add_view"
-                    android:layout_width="@dimen/item_tailing_component_size"
-                    android:layout_height="@dimen/item_tailing_component_size"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_gravity="end|center_vertical"
-                    android:layout_marginStart="@dimen/item_tailing_margin"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:contentDescription="@string/_new"
-                    android:focusable="true"
-                    android:onClick="@{() -> self.requestCreate()}"
-                    android:padding="@dimen/toolbar_image_action_padding"
-                    android:src="@drawable/ic_baseline_add" />
-
             </RelativeLayout>
         </com.github.kr328.clash.design.view.ActivityBarLayout>
+
+        <!-- 新建配置：主操作放右下角，和代理页测速 FAB 同一个位置与语言 -->
+        <ImageView
+            android:id="@+id/add_view"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="18dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_power_on"
+            android:clickable="true"
+            android:contentDescription="@string/_new"
+            android:focusable="true"
+            android:onClick="@{() -> self.requestCreate()}"
+            android:padding="16dp"
+            android:src="@drawable/ic_baseline_add"
+            android:tint="@color/color_power_on_fg" />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>
