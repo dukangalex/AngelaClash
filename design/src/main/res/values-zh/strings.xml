@@ -533,4 +533,5 @@
     <string name="proxy_group_badge_primary">主组</string>
     <string name="proxy_group_badge_readonly">不可选</string>
     <string name="profile_script_on">脚本 ON</string>
+    <string name="home_detail_hint">详情</string>
 </resources>

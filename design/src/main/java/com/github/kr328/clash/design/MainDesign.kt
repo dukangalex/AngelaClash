@@ -462,98 +462,73 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
         val selectedBg = context.resolveThemedColor(R.attr.clashSelectedSurface)
         val surfaceVariantBg = context.resolveThemedColor(R.attr.clashSurfaceVariant)
-        val isDarkSurface = (Color.red(surfaceVariantBg) + Color.green(surfaceVariantBg) + Color.blue(surfaceVariantBg)) < 384
-        val offCardBg = if (isDarkSurface) Color.parseColor("#FF1B263B") else Color.parseColor("#FFF1F5F9")
+        val isDarkSurface =
+            (Color.red(surfaceVariantBg) + Color.green(surfaceVariantBg) + Color.blue(surfaceVariantBg)) < 384
+        val offChipBg = if (isDarkSurface) Color.parseColor("#FF1B263B") else Color.parseColor("#FFF1F5F9")
         val primaryColor = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
-        val royalStroke = ContextCompat.getColor(context, R.color.color_clash_royal)
-        val outlineStroke = if (isDarkSurface) Color.parseColor("#3894A3B8") else context.resolveThemedColor(R.attr.clashOutline)
         val textPrimary = if (isDarkSurface) Color.WHITE else Color.parseColor("#FF0F172A")
         val textSecondary = if (isDarkSurface) Color.parseColor("#FF94A3B8") else Color.parseColor("#FF64748B")
-        val textOffTitle = if (isDarkSurface) Color.parseColor("#FFE2E8F0") else Color.parseColor("#FF334155")
 
-        for (rowIndex in specs.indices step 2) {
-            val rowLayout = LinearLayout(context).apply {
+        // 6 个开关做成一行横滑 chip：只保留「名字 + 一个点」，
+        // 名字本身就是状态，不再重复写「● 开启 / ○ 已关闭」。
+        for (spec in specs) {
+            val isOn = store.optionOn(spec.group, spec.keyName, spec.defaultOn)
+
+            val chip = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
-                isBaselineAligned = false
+                gravity = Gravity.CENTER_VERTICAL
+                isClickable = true
+                isFocusable = true
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 16f * density
+                    setColor(if (isOn) selectedBg else offChipBg)
+                }
+                setPadding(dp(12), dp(9), dp(12), dp(9))
                 val lp = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                 )
-                if (rowIndex > 0) lp.topMargin = dp(8)
+                lp.marginEnd = dp(8)
                 layoutParams = lp
             }
 
-            for (colOffset in 0..1) {
-                val idx = rowIndex + colOffset
-                if (idx >= specs.size) break
-                val spec = specs[idx]
-                val isOn = store.optionOn(spec.group, spec.keyName, spec.defaultOn)
-
-                // BettBox 风格：不画描边，只用底色区分开/关；也不再塞副标题。
-                val card = LinearLayout(context).apply {
-                    orientation = LinearLayout.VERTICAL
-                    isClickable = true
-                    isFocusable = true
-                    background = GradientDrawable().apply {
-                        shape = GradientDrawable.RECTANGLE
-                        cornerRadius = 18f * density
-                        setColor(if (isOn) selectedBg else offCardBg)
-                    }
-                    val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                    if (colOffset == 0) lp.marginEnd = dp(5) else lp.marginStart = dp(5)
-                    layoutParams = lp
+            val dot = View(context).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(if (isOn) primaryColor else textSecondary)
                 }
-
-                val inner = LinearLayout(context).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(13), dp(12), dp(13), dp(12))
-                }
-
-                val topRow = LinearLayout(context).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    gravity = Gravity.CENTER_VERTICAL
-                }
-
-                val titleTv = TextView(context).apply {
-                    text = spec.displayTitle
-                    textSize = 13f
-                    setTypeface(typeface, Typeface.BOLD)
-                    setTextColor(if (isOn) textPrimary else textOffTitle)
-                    maxLines = 1
-                    ellipsize = TextUtils.TruncateAt.END
-                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                }
-
-                val statusBadge = TextView(context).apply {
-                    text = if (isOn) "● 开启" else "○ 已关闭"
-                    textSize = 10.5f
-                    setTypeface(typeface, Typeface.BOLD)
-                    setTextColor(if (isOn) primaryColor else textSecondary)
-                }
-
-                topRow.addView(titleTv)
-                topRow.addView(statusBadge)
-
-                inner.addView(topRow)
-                card.addView(inner)
-
-                card.setOnClickListener {
-                    if (UiStore(context).hapticFeedback) {
-                        card.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                    }
-                    val nextState = !store.optionOn(spec.group, spec.keyName, spec.defaultOn)
-                    store.setOption(spec.group, spec.keyName, nextState)
-                    spec.companionKey?.let { companion ->
-                        store.setOption(spec.group, companion, nextState)
-                    }
-                    mountSystem(store)
-                    request(Request.ReloadConfig)
-                }
-
-                rowLayout.addView(card)
+                val lp = LinearLayout.LayoutParams(dp(6), dp(6))
+                lp.marginEnd = dp(7)
+                layoutParams = lp
+                alpha = if (isOn) 1f else 0.5f
             }
 
-            container.addView(rowLayout)
+            val label = TextView(context).apply {
+                text = spec.displayTitle
+                textSize = 12.5f
+                setTypeface(typeface, Typeface.BOLD)
+                setTextColor(if (isOn) textPrimary else textSecondary)
+                maxLines = 1
+            }
+
+            chip.addView(dot)
+            chip.addView(label)
+
+            chip.setOnClickListener {
+                if (UiStore(context).hapticFeedback) {
+                    chip.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                }
+                val nextState = !store.optionOn(spec.group, spec.keyName, spec.defaultOn)
+                store.setOption(spec.group, spec.keyName, nextState)
+                spec.companionKey?.let { companion ->
+                    store.setOption(spec.group, companion, nextState)
+                }
+                mountSystem(store)
+                request(Request.ReloadConfig)
+            }
+
+            container.addView(chip)
         }
     }
 
