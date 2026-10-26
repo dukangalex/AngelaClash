@@ -8,68 +8,131 @@ import (
 	"github.com/metacubex/mihomo/log"
 )
 
-// patchRuleOverrides drops the rules the user switched off on the 规则开关 page.
+// RuleOverride is one profile's rule draft.
 //
-// The set lives in script-options.json keyed by profile uuid, so:
-//   - refreshing a subscription cannot resurrect a rule the user disabled, and
-//   - flipping the override script on/off does not lose the choices.
+//   - ModeAdded:    the draft is prepended to the rules the profile ships with.
+//   - ModeOverride: the draft replaces them outright.
 //
-// It runs after patchScriptDisplay (those switches may rename or reorder rules)
-// and before patchChain, which keeps its own routing invariants last-word: if
-// chain has to rewrite or append a rule, that still happens on top of the
-// filtered list.
-func patchRuleOverrides(cfg *config.RawConfig, profileDir string) error {
-	disabled := disabledRulesFor(profileDir)
-	if len(disabled) == 0 || len(cfg.Rule) == 0 {
+// The draft is a plain rule list, never a diff against the profile: matching a
+// rule by its exact text breaks the moment a subscription gains a trailing
+// comment or quotes a value, and it cannot express "add a rule" or "reorder".
+type RuleOverride struct {
+	Enabled bool     `json:"enabled"`
+	Mode    string   `json:"mode"`
+	Rules   []string `json:"rules"`
+}
+
+const (
+	ModeAdded    = "added"
+	ModeOverride = "override"
+)
+
+func (o RuleOverride) enabled() bool {
+	for _, rule := range o.Rules {
+		if strings.TrimSpace(rule) != "" {
+			return o.Enabled
+		}
+	}
+
+	return false
+}
+
+// patchRuleOverride applies the profile's rule draft to the running config.
+//
+// It runs after patchScriptDisplay (system switches may reorder rules) and
+// before patchChain, which keeps its own routing invariants last-word: if chain
+// has to append a hop rule, that still lands on top of the draft.
+func patchRuleOverride(cfg *config.RawConfig, profileDir string) error {
+	ov, ok := ruleOverrideFor(profileDir)
+	if !ok || !ov.enabled() {
 		return nil
 	}
 
-	kept := dropMatching(cfg.Rule, func(rule string) bool {
-		return disabled[strings.TrimSpace(rule)]
-	})
+	draft := make([]string, 0, len(ov.Rules))
+	for _, rule := range ov.Rules {
+		if trimmed := strings.TrimSpace(rule); trimmed != "" {
+			draft = append(draft, trimmed)
+		}
+	}
+	if len(draft) == 0 {
+		return nil
+	}
 
-	// A config with zero rules is not a valid runtime configuration. Refuse to
-	// honour a selection that would remove everything instead of silently
-	// starting a tunnel that rejects all traffic.
-	if len(kept) == 0 {
-		log.Warnln("rule overrides: all %d rules are disabled, keeping the original list", len(cfg.Rule))
+	var merged []string
+	if ov.Mode == ModeOverride {
+		merged = draft
+	} else {
+		merged = make([]string, 0, len(draft)+len(cfg.Rule))
+		merged = append(merged, draft...)
+		merged = append(merged, cfg.Rule...)
+	}
+
+	// A rule list without a catch-all silently drops everything that does not
+	// match, so the tunnel would reject traffic the user never asked about.
+	// Keep the profile's own MATCH in override mode instead of trusting the draft.
+	if ov.Mode == ModeOverride && !hasCatchAll(merged) {
+		if fallback := catchAllOf(cfg.Rule); fallback != "" {
+			merged = append(merged, fallback)
+			log.Warnln("rule override: draft has no MATCH, keeping the profile's own %q", fallback)
+		}
+	}
+
+	if len(merged) == 0 {
+		log.Warnln("rule override: empty result, keeping the original rules")
 
 		return nil
 	}
 
-	if removed := len(cfg.Rule) - len(kept); removed > 0 {
-		log.Infoln("rule overrides: dropped %d disabled rule(s)", removed)
-		cfg.Rule = kept
-	}
+	log.Infoln("rule override (%s): %d profile rule(s) -> %d", ov.Mode, len(cfg.Rule), len(merged))
+	cfg.Rule = merged
 
 	return nil
 }
 
-// disabledRulesFor returns the exact rule strings this profile has switched off.
-// The profile directory is named after the profile uuid, which is also the key
-// used by the app when it writes the file.
-func disabledRulesFor(profileDir string) map[string]bool {
+// profileKey maps a profile directory to the key the app writes. The directory
+// is named after the profile uuid, with or without a trailing separator.
+func profileKey(profileDir string) string {
+	return P.Base(strings.TrimSuffix(profileDir, "/"))
+}
+
+// ruleOverrideFor returns the draft that belongs to this profile directory. The
+// directory is named after the profile uuid, which is also the key the app uses.
+func ruleOverrideFor(profileDir string) (RuleOverride, bool) {
 	if profileDir == "" {
-		return nil
+		return RuleOverride{}, false
 	}
 
 	opts, ok := readScriptOptions()
-	if !ok || len(opts.DisabledRules) == 0 {
-		return nil
+	if !ok || len(opts.RuleOverrides) == 0 {
+		return RuleOverride{}, false
 	}
 
-	key := P.Base(strings.TrimSuffix(profileDir, "/"))
-	rules, exists := opts.DisabledRules[key]
-	if !exists {
-		return nil
-	}
+	ov, exists := opts.RuleOverrides[profileKey(profileDir)]
 
-	out := make(map[string]bool, len(rules))
+	return ov, exists
+}
+
+func hasCatchAll(rules []string) bool {
+	return catchAllOf(rules) != ""
+}
+
+// catchAllOf returns the first MATCH/FINAL rule in the list, or "".
+func catchAllOf(rules []string) string {
 	for _, rule := range rules {
-		if trimmed := strings.TrimSpace(rule); trimmed != "" {
-			out[trimmed] = true
+		if isCatchAll(rule) {
+			return rule
 		}
 	}
 
-	return out
+	return ""
+}
+
+func isCatchAll(rule string) bool {
+	head, _, _ := strings.Cut(rule, ",")
+	switch strings.ToUpper(strings.TrimSpace(head)) {
+	case "MATCH", "FINAL":
+		return true
+	}
+
+	return false
 }

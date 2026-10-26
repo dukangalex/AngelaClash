@@ -80,9 +80,12 @@ type scriptOptionFile struct {
 	Enabled       bool            `json:"enabled"`
 	ScriptEnabled *bool           `json:"scriptEnabled"`
 	Values        map[string]bool `json:"values"`
-	// DisabledRules is keyed by profile uuid; each entry lists the exact rule
-	// strings the user switched off for that profile. See rule_override.go.
-	DisabledRules map[string][]string `json:"disabledRules"`
+	// RuleOverrides is keyed by profile uuid and holds that profile's rule
+	// draft. See rule_override.go.
+	RuleOverrides map[string]RuleOverride `json:"ruleOverrides"`
+	// DisabledGroups is keyed by profile uuid and lists the policy group names
+	// the user switched off for that profile. See group_override.go.
+	DisabledGroups map[string][]string `json:"disabledGroups"`
 }
 
 type scriptGroups struct {

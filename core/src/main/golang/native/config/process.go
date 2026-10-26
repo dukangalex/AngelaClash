@@ -26,9 +26,10 @@ var processors = []processor{
 	patchTun,
 	patchListeners,
 	patchProviders,
-	patchScriptDisplay, // system options apply routing/DNS/leak rules before chain rewrites
-	patchRuleOverrides, // per-profile rule switches drop disabled rules
-	patchChain,         // chain proxy rewrites final rules and dialer-proxy hops
+	patchScriptDisplay,  // system options apply routing/DNS/leak rules before chain rewrites
+	patchDisabledGroups, // policy groups switched off, their rules fall back to PASS
+	patchRuleOverride,   // per-profile rule draft replaces or prepends rules
+	patchChain,          // chain proxy rewrites final rules and dialer-proxy hops
 	validConfig,
 }
 
