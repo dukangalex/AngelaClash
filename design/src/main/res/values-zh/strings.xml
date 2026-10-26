@@ -534,4 +534,18 @@
     <string name="proxy_group_badge_readonly">不可选</string>
     <string name="profile_script_on">脚本 ON</string>
     <string name="home_detail_hint">详情</string>
+    <string name="home_customize_title">自定义首页</string>
+    <string name="home_customize_hint">勾选想留在首页的区块。</string>
+    <string name="home_customize_entry">自定义首页</string>
+    <string name="home_block_speed">网速图表</string>
+    <string name="home_block_profile">当前配置</string>
+    <string name="home_block_proxy">代理组与链路</string>
+    <string name="home_block_diag">状态方砖</string>
+    <string name="home_block_meta">内核与 TUN</string>
+    <string name="home_block_quick">快捷开关</string>
+    <string name="home_block_restore">全部显示</string>
+    <string name="rule_switches_manage">管理显示的开关</string>
+    <string name="rule_switches_manage_hint">取消勾选的开关会收进「其他设置」。</string>
+    <string name="rule_switches_other">其他设置</string>
+    <string name="rule_switches_other_count">已收起 %d 个</string>
 </resources>

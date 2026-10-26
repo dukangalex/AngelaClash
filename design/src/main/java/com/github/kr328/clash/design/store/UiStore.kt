@@ -115,6 +115,23 @@ class UiStore(context: Context) {
         defaultValue = false,
     )
 
+    /**
+     * 首页上被用户隐藏的区块（存 key，不存下标，方便以后加新块）。
+     *
+     * 存「隐藏了哪些」而不是「显示哪些」：以后新增区块默认可见，
+     * 老用户不会因为升级而看不到新东西。
+     */
+    var homeHiddenBlocks: Set<String> by store.stringSet(
+        key = "home_hidden_blocks",
+        defaultValue = emptySet(),
+    )
+
+    /** 规则开关页里被收进「其他设置」的开关名。 */
+    var hiddenRuleSwitches: Set<String> by store.stringSet(
+        key = "hidden_rule_switches",
+        defaultValue = emptySet(),
+    )
+
     companion object {
         private const val PREFERENCE_NAME = "ui"
 

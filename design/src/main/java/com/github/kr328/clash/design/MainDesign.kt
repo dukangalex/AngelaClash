@@ -20,6 +20,7 @@ import com.github.kr328.clash.core.model.TunnelState
 import com.github.kr328.clash.core.util.trafficDownload
 import com.github.kr328.clash.core.util.trafficTotal
 import com.github.kr328.clash.core.util.trafficUpload
+import com.github.kr328.clash.design.model.HomeBlock
 import com.github.kr328.clash.design.databinding.DesignAboutBinding
 import com.github.kr328.clash.design.databinding.DesignMainBinding
 import com.github.kr328.clash.design.store.UiStore
@@ -77,6 +78,56 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
     private var peakUpRaw: Long = 0L
 
     // 面积图的数据在 SpeedChartView 内部维护，这里不再存柱子高度。
+
+    /**
+     * 首页区块显隐。用户勾掉的区块记在 UiStore.homeHiddenBlocks，
+     * 存 key 而不是下标，以后新增区块对老用户默认可见。
+     */
+    private fun applyHomeBlocks() {
+        val store = UiStore(context)
+        val hidden = store.homeHiddenBlocks
+        val hosts = mapOf(
+            HomeBlock.SPEED to binding.blockSpeed,
+            HomeBlock.PROFILE to binding.blockProfile,
+            HomeBlock.PROXY to binding.blockProxy,
+            HomeBlock.DIAG to binding.blockDiag,
+            HomeBlock.META to binding.blockMeta,
+            HomeBlock.QUICK to binding.blockQuick,
+        )
+        hosts.forEach { (block, view) ->
+            view.visibility = if (block.key in hidden) View.GONE else View.VISIBLE
+        }
+    }
+
+    /** 顶部那个滑动条图标：勾选想留在首页的区块。 */
+    fun onCustomizeHome() {
+        val store = UiStore(context)
+        val hidden = store.homeHiddenBlocks
+        val blocks = HomeBlock.values()
+        val labels = blocks.map { context.getString(it.titleRes) }.toTypedArray()
+        // 勾选表示「显示」，所以初始值 = 没被隐藏
+        val checked = blocks.map { it.key !in hidden }.toBooleanArray()
+
+        AlertDialog.Builder(context)
+            .setTitle(R.string.home_customize_title)
+            .setMessage(R.string.home_customize_hint)
+            .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                store.homeHiddenBlocks = blocks
+                    .filterIndexed { index, _ -> !checked[index] }
+                    .map { it.key }
+                    .toSet()
+                applyHomeBlocks()
+            }
+            .setNeutralButton(R.string.home_block_restore) { _, _ ->
+                store.homeHiddenBlocks = emptySet()
+                applyHomeBlocks()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
 
     fun onAttention() {
         attentionAction?.let(::request)
@@ -761,6 +812,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
 
         initSpeedBars()
         paintMode(R.id.mode_rule)
+        applyHomeBlocks()
 
         binding.modeRule.setOnClickListener {
             paintMode(R.id.mode_rule)

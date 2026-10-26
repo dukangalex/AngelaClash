@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.CompoundButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.graphics.ColorUtils
 import com.github.kr328.clash.design.databinding.DesignSettingsCommonBinding
@@ -18,6 +19,7 @@ import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.root
 import com.github.kr328.clash.service.store.ScriptDisplayStore
+import com.github.kr328.clash.design.store.UiStore
 import com.google.android.material.card.MaterialCardView
 import java.util.UUID
 
@@ -34,6 +36,7 @@ class RuleSwitchesDesign(
     private val profileName: String?,
     scriptOn: Boolean,
     groups: List<String>,
+    private val uiStore: UiStore = UiStore(context),
 ) : Design<RuleSwitchesDesign.Request>(context) {
     sealed class Request {
         object Reload : Request()
@@ -93,9 +96,98 @@ class RuleSwitchesDesign(
             return
         }
         host.addView(noteCard(getString(R.string.rule_switches_summary), accent = false))
-        for (row in rows) {
+
+        // 用户可以把不常用的开关收进「其他设置」，但不会真的消失 ——
+        // 这里只决定「放在主列表还是折叠区」，开关本身一个都不少。
+        val hidden = uiStore.hiddenRuleSwitches
+        val visibleRows = rows.filter { it.name !in hidden }
+        val foldedRows = rows.filter { it.name in hidden }
+
+        for (row in visibleRows) {
             host.addView(switchCard(row.name, row.on))
         }
+
+        if (visibleRows.size != rows.size) {
+            host.addView(foldedSection(foldedRows))
+        }
+
+        host.addView(manageRow(rows.map { it.name }))
+    }
+
+    /** 被收起的开关：默认折叠，点开才展开，标题上标出数量。 */
+    private fun foldedSection(rows: List<ScriptDisplayStore.Row>): View {
+        val secondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
+
+        val title = TextView(context).apply {
+            text = getString(R.string.rule_switches_other)
+            textSize = 14f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(secondary)
+        }
+        val count = TextView(context).apply {
+            text = context.getString(R.string.rule_switches_other_count, rows.size)
+            textSize = 12f
+            setTextColor(secondary)
+            setPadding(dp(10), 0, 0, 0)
+        }
+        val header = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16), dp(12), dp(16), dp(12))
+            addView(title)
+            addView(count)
+        }
+        val body = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+            for (row in rows) addView(switchCard(row.name, row.on, flat = true))
+        }
+        header.setOnClickListener {
+            body.visibility = if (body.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+
+        return card(
+            LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(header)
+                addView(body)
+            },
+            stroke = null,
+        )
+    }
+
+    /** 底部一行入口：勾选哪些开关留在主列表。 */
+    private fun manageRow(names: List<String>): View {
+        val accent = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
+        val text = TextView(context).apply {
+            this.text = getString(R.string.rule_switches_manage)
+            textSize = 13f
+            setTextColor(accent)
+            setPadding(dp(8), dp(14), dp(8), dp(10))
+        }
+        text.setOnClickListener { showManageDialog(names) }
+        return text
+    }
+
+    private fun showManageDialog(names: List<String>) {
+        if (names.isEmpty()) return
+        val hidden = uiStore.hiddenRuleSwitches
+        val checked = names.map { it !in hidden }.toBooleanArray()
+
+        AlertDialog.Builder(context)
+            .setTitle(R.string.rule_switches_manage)
+            .setMessage(R.string.rule_switches_manage_hint)
+            .setMultiChoiceItems(names.toTypedArray(), checked) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                uiStore.hiddenRuleSwitches = names
+                    .filterIndexed { index, _ -> !checked[index] }
+                    .toSet()
+                render()
+            }
+            .setNeutralButton(android.R.string.cancel, null)
+            .show()
     }
 
     /**
@@ -206,7 +298,7 @@ class RuleSwitchesDesign(
         return card(view, stroke = null)
     }
 
-    private fun switchCard(name: String, on: Boolean): View {
+    private fun switchCard(name: String, on: Boolean, flat: Boolean = false): View {
         val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
         val colorPrimary = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
@@ -267,6 +359,13 @@ class RuleSwitchesDesign(
                 setOnClickListener { toggle.isChecked = !toggle.isChecked }
             }
             alpha = if (enabled) 1f else 0.55f
+        }
+
+        if (flat) {
+            // 折叠区里已经有一层卡片了，这里只画一行内容，避免卡片套卡片。
+            return row.apply {
+                setPadding(0, dp(4), dp(8), dp(4))
+            }
         }
 
         cardView = card(

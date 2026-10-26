@@ -629,4 +629,18 @@
     <string name="proxy_group_badge_readonly">Read-only</string>
     <string name="profile_script_on">Script on</string>
     <string name="home_detail_hint">Details</string>
+    <string name="home_customize_title">Customize home</string>
+    <string name="home_customize_hint">Choose what shows on the dashboard.</string>
+    <string name="home_customize_entry">Customize home</string>
+    <string name="home_block_speed">Network chart</string>
+    <string name="home_block_profile">Active profile</string>
+    <string name="home_block_proxy">Proxy group and chain</string>
+    <string name="home_block_diag">Status tiles</string>
+    <string name="home_block_meta">Core and TUN</string>
+    <string name="home_block_quick">Quick options</string>
+    <string name="home_block_restore">Show all</string>
+    <string name="rule_switches_manage">Manage switches</string>
+    <string name="rule_switches_manage_hint">Unchecked switches move into “Other settings”.</string>
+    <string name="rule_switches_other">Other settings</string>
+    <string name="rule_switches_other_count">%d hidden</string>
 </resources>
