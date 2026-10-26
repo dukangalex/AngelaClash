@@ -747,6 +747,11 @@ class RuleSwitchesDesign(
         }
     }
 
+    private fun getString(id: Int): String = context.getString(id)
+
+    /** 带参数的串：%d / %s 这类格式化文案。 */
+    private fun getString(id: Int, vararg args: Any): String = context.getString(id, *args)
+
     private fun dp(value: Int): Int = Ac.dp(context, value)
 
     companion object {
