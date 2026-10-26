@@ -70,6 +70,11 @@ class MainActivity : BaseActivity<MainDesign>() {
                 when (event) {
                     is AppEvents.Event.ScriptToggled ->
                         if (event.uuid == activeProfileUuid) design.setProfileScript(event.enabled)
+                    // 脚本页 / 规则开关页改了同一份开关：只重画「系统显式」卡片，
+                    // 首页自己的 chip 行不动（否则横向滑动位置会被重置）。
+                    is AppEvents.Event.OptionsChanged,
+                    AppEvents.Event.ScriptContentChanged ->
+                        design.mountSystemCards(ScriptDisplayStore(this@MainActivity))
                 }
             }
         }

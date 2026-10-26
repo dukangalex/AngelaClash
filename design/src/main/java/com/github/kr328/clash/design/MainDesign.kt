@@ -447,6 +447,16 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         scriptStoreRef = store
         store.ensureScript()
         mountHomeQuickGrid(store)
+        mountSystemCards(store)
+    }
+
+    /**
+     * 只重画「系统显式」那几张卡。
+     * 别处（脚本页 / 规则开关页）改了同一份开关时调这个：
+     * 首页自己的 chip 行不动，横向滑动位置不会被重置。
+     */
+    fun mountSystemCards(store: ScriptDisplayStore) {
+        scriptStoreRef = store
         val host = binding.explicitHost
         host.removeAllViews()
         val titles = mapOf(
