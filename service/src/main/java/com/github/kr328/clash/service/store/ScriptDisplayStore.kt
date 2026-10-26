@@ -1,6 +1,7 @@
 package com.github.kr328.clash.service.store
 
 import android.content.Context
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
@@ -97,6 +98,51 @@ class ScriptDisplayStore(private val context: Context) {
             current.syncedAt,
             profiles,
             current.syncedSha256,
+        )
+    }
+
+    /** 「规则开关」页里，这份配置被关掉的规则（原文，和 config.yaml 里写的一致）。 */
+    fun disabledRules(uuid: UUID): Set<String> =
+        readPersisted().disabledRules[uuid.toString()]?.toSet() ?: emptySet()
+
+    /**
+     * 打开/关闭单条规则。关掉 = 写进 disabledRules，内核重载时把它从运行配置里删掉，
+     * 但 config.yaml 本身不动 —— 订阅更新不会覆盖用户的选择。
+     */
+    fun setRuleEnabled(uuid: UUID, rule: String, enabled: Boolean) {
+        val current = readPersisted()
+        val disabled = LinkedHashMap(current.disabledRules)
+        val key = uuid.toString()
+        val existing = LinkedHashSet(disabled[key] ?: emptyList())
+        if (enabled) existing.remove(rule) else existing.add(rule)
+
+        if (existing.isEmpty()) disabled.remove(key) else disabled[key] = existing.toList()
+
+        writePersisted(
+            current.scriptEnabled,
+            current.values,
+            current.source,
+            current.syncedAt,
+            current.profiles,
+            current.syncedSha256,
+            disabled,
+        )
+    }
+
+    /** 把这份配置关掉的规则全部恢复。 */
+    fun clearDisabledRules(uuid: UUID) {
+        val current = readPersisted()
+        val disabled = LinkedHashMap(current.disabledRules)
+        if (disabled.remove(uuid.toString()) == null) return
+
+        writePersisted(
+            current.scriptEnabled,
+            current.values,
+            current.source,
+            current.syncedAt,
+            current.profiles,
+            current.syncedSha256,
+            disabled,
         )
     }
 
@@ -227,6 +273,8 @@ class ScriptDisplayStore(private val context: Context) {
         val syncedAt: Long,
         val profiles: LinkedHashMap<String, Boolean>,
         val syncedSha256: String = "",
+        /** profile uuid -> 用户在「规则开关」页关掉的规则原文 */
+        val disabledRules: LinkedHashMap<String, List<String>> = linkedMapOf(),
     )
 
     private fun readPersisted(): Persisted {
@@ -251,6 +299,21 @@ class ScriptDisplayStore(private val context: Context) {
                     if (savedProfiles.optBoolean(k, false)) profiles[k] = true
                 }
             }
+            val disabledRules = linkedMapOf<String, List<String>>()
+            val savedDisabled = root.optJSONObject("disabledRules")
+            if (savedDisabled != null) {
+                val keys = savedDisabled.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    val array = savedDisabled.optJSONArray(k) ?: continue
+                    val rules = ArrayList<String>(array.length())
+                    for (i in 0 until array.length()) {
+                        val rule = array.optString(i, "")
+                        if (rule.isNotBlank()) rules.add(rule)
+                    }
+                    if (rules.isNotEmpty()) disabledRules[k] = rules
+                }
+            }
             Persisted(
                 root.optBoolean("scriptEnabled", true),
                 values,
@@ -258,6 +321,7 @@ class ScriptDisplayStore(private val context: Context) {
                 root.optLong("syncedAt", 0L),
                 profiles,
                 root.optString("syncedSha256", ""),
+                disabledRules,
             )
         } catch (_: Exception) {
             Persisted(true, linkedMapOf(), "", 0L, linkedMapOf(), "")
@@ -271,6 +335,7 @@ class ScriptDisplayStore(private val context: Context) {
         syncedAt: Long? = null,
         profiles: Map<String, Boolean>? = null,
         syncedSha256: String? = null,
+        disabledRules: Map<String, List<String>>? = null,
     ) {
         val current = readPersisted()
         val obj = JSONObject()
@@ -285,6 +350,13 @@ class ScriptDisplayStore(private val context: Context) {
         val chosen = JSONObject()
         for ((k, v) in (profiles ?: current.profiles)) if (v) chosen.put(k, true)
         obj.put("profiles", chosen)
+        // 内核在 UnmarshalAndPatch 时读这个字段，把用户关掉的规则从运行配置里删掉
+        val disabled = JSONObject()
+        for ((k, rules) in (disabledRules ?: current.disabledRules)) {
+            if (rules.isEmpty()) continue
+            disabled.put(k, JSONArray(rules))
+        }
+        obj.put("disabledRules", disabled)
         writeAtomic(optionFile, obj.toString())
     }
 

@@ -634,9 +634,12 @@
     <string name="rule_switches_manage_hint">Unchecked switches move into “Other settings”.</string>
     <string name="rule_switches_other">Other settings</string>
     <string name="rule_switches_other_count">%d hidden</string>
-    <string name="rule_switches_rules_summary">%d rules come from this profile&#39;s own config. They are read-only here.</string>
+    <string name="rule_switches_rules_summary">%d rules come from this profile&#39;s own config. Switch one off and it is dropped from the running config; the config file itself is left alone.</string>
     <string name="rule_switches_rules_more">%d more not shown</string>
     <string name="rule_switches_rules_empty">No rules found in this profile&#39;s config. It may still be importing, or the config writes rules inline.</string>
+    <string name="rule_switches_rules_off_count">%d rules are off</string>
+    <string name="rule_switches_rules_restore">Turn all on</string>
+    <string name="rule_switches_rules_fixed">catch-all</string>
     <string name="script_binding_label">Script applies to</string>
     <string name="script_binding_hint">Only the active profile uses this script.</string>
     <string name="script_state_on">ON</string>

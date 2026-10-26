@@ -539,9 +539,12 @@
     <string name="rule_switches_manage_hint">取消勾选的开关会收进「其他设置」。</string>
     <string name="rule_switches_other">其他设置</string>
     <string name="rule_switches_other_count">已收起 %d 个</string>
-    <string name="rule_switches_rules_summary">下面这 %d 条是这份配置自己 config.yaml 里的规则，只读。</string>
+    <string name="rule_switches_rules_summary">下面这 %d 条来自这份配置自己的 config.yaml。关掉的规则不会进运行配置，配置文件本身不动。</string>
     <string name="rule_switches_rules_more">还有 %d 条未显示</string>
     <string name="rule_switches_rules_empty">没读到这份配置的规则：可能还在导入，或配置把规则写成了内联格式。</string>
+    <string name="rule_switches_rules_off_count">已关闭 %d 条</string>
+    <string name="rule_switches_rules_restore">全部打开</string>
+    <string name="rule_switches_rules_fixed">兜底</string>
     <string name="script_binding_label">脚本作用于</string>
     <string name="script_binding_hint">只有当前生效的配置会使用这份脚本。</string>
     <string name="script_state_on">已启用</string>

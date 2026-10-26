@@ -43,6 +43,9 @@ class RuleSwitchesDesign(
 ) : Design<RuleSwitchesDesign.Request>(context) {
     sealed class Request {
         object Reload : Request()
+
+        /** 用户拨了某条规则：只需要让内核按新的 disabledRules 重载，页面不用重画。 */
+        object ApplyRuleChange : Request()
         data class ToggleScript(val enabled: Boolean) : Request()
     }
 
@@ -219,7 +222,11 @@ class RuleSwitchesDesign(
 
     /**
      * 这份配置没开脚本时，这一页显示的是**它自己配置里的规则**（config.yaml 的 rules:），
-     * 不是策略组名字——策略组在代理页看。规则是订阅写死的，所以整段只读。
+     * 不是策略组名字——策略组在代理页看。
+     *
+     * 每条规则都能拨：关掉的规则不会进运行配置（内核跑 UnmarshalAndPatch 时按
+     * script-options.json 里的 disabledRules 删掉），但 config.yaml 本身不动，
+     * 所以订阅刷新不会把用户的选择冲掉。
      */
     private fun renderNativeRules() {
         host.addView(noteCard(getString(R.string.rule_switches_script_off), accent = true))
@@ -229,6 +236,8 @@ class RuleSwitchesDesign(
             return
         }
 
+        val disabled = profileUuid?.let { store.disabledRules(it) } ?: emptySet()
+
         host.addView(
             noteCard(
                 context.getString(R.string.rule_switches_rules_summary, nativeRules.total),
@@ -236,11 +245,15 @@ class RuleSwitchesDesign(
             ),
         )
 
+        if (disabled.isNotEmpty()) {
+            host.addView(disabledSummary(disabled.size))
+        }
+
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
         }
         nativeRules.items.forEachIndexed { index, rule ->
-            container.addView(ruleRow(rule))
+            container.addView(ruleRow(rule, enabled = rule !in disabled))
             if (index != nativeRules.items.lastIndex) {
                 container.addView(divider())
             }
@@ -262,8 +275,45 @@ class RuleSwitchesDesign(
         host.addView(card(container, stroke = null))
     }
 
-    /** 一条规则：内容 + 类型，右侧是它落到哪个策略。 */
-    private fun ruleRow(rule: String): View {
+    /** 「已关闭 N 条」+ 一键恢复。 */
+    private fun disabledSummary(count: Int): View {
+        val secondary = context.resolveThemedColor(android.R.attr.textColorSecondary)
+        val accent = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
+
+        val text = TextView(context).apply {
+            this.text = context.getString(R.string.rule_switches_rules_off_count, count)
+            textSize = 13f
+            setTextColor(secondary)
+            setPadding(dp(16), dp(12), dp(16), dp(12))
+        }
+        val restore = TextView(context).apply {
+            this.text = getString(R.string.rule_switches_rules_restore)
+            textSize = 13f
+            setTextColor(accent)
+            setPadding(dp(12), dp(12), dp(16), dp(12))
+        }
+        restore.setOnClickListener {
+            profileUuid?.let { store.clearDisabledRules(it) }
+            requests.trySend(Request.ApplyRuleChange)
+            render()
+        }
+
+        return card(
+            LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(text, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                addView(restore)
+            },
+            stroke = null,
+        )
+    }
+
+    /**
+     * 一条规则：内容 + 类型，右侧是它落到哪个策略；脚本关着时右边还有一个开关。
+     * 末尾的 MATCH / FINAL 是兜底规则，删掉就没有"其余全部"的去向了，所以不给开关。
+     */
+    private fun ruleRow(rule: String, enabled: Boolean): View {
         val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
         val accent = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
@@ -297,6 +347,8 @@ class RuleSwitchesDesign(
             addView(titleView)
             addView(typeView)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            // 关掉的规则整行淡一点，一眼能看出运行时不会用它
+            alpha = if (enabled) 1f else 0.55f
         }
 
         val targetView = TextView(context).apply {
@@ -309,12 +361,40 @@ class RuleSwitchesDesign(
             maxWidth = dp(140)
         }
 
+        val terminal = type.equals("MATCH", ignoreCase = true) || type.equals("FINAL", ignoreCase = true)
+
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(16), dp(10), dp(16), dp(10))
+            setPadding(dp(16), dp(10), dp(12), dp(10))
             addView(labels)
             addView(targetView)
+
+            if (terminal) {
+                addView(
+                    TextView(context).apply {
+                        text = getString(R.string.rule_switches_rules_fixed)
+                        textSize = 11f
+                        setTextColor(secondaryText)
+                        setPadding(dp(10), 0, dp(4), 0)
+                    },
+                )
+                alpha = 0.75f
+            } else {
+                val toggle = SwitchCompat(context).apply {
+                    isChecked = enabled
+                    contentDescription = rule
+                    minHeight = dp(44)
+                    setOnCheckedChangeListener { _: CompoundButton, checked: Boolean ->
+                        val uuid = profileUuid ?: return@setOnCheckedChangeListener
+                        store.setRuleEnabled(uuid, rule, checked)
+                        // 页面上直接反映状态；内核那边异步重载，不用整页重画
+                        labels.alpha = if (checked) 1f else 0.55f
+                        requests.trySend(Request.ApplyRuleChange)
+                    }
+                }
+                addView(toggle)
+            }
         }
     }
 

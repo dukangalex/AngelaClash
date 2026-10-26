@@ -56,6 +56,14 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
                                 design.updateRules(readRules(current))
                             }
                         }
+                        RuleSwitchesDesign.Request.ApplyRuleChange -> {
+                            // 规则开关只改 disabledRules：内核需要按新配置重载，
+                            // 页面本身已经在回调里更新过状态，不重画（避免滚动位置被重置）。
+                            val current = withProfile { queryActive() }
+                            if (current != null && clashRunning) {
+                                sendProfileChanged(current.uuid)
+                            }
+                        }
                         RuleSwitchesDesign.Request.Reload -> {
                             val current = withProfile { queryActive() }
                             if (current != null) {
