@@ -603,8 +603,8 @@
     <string name="backup_restore_open_failed">The selected file cannot be read</string>
     <string name="backup_restore_message">Restoring merges the backup into this device: profiles with the same id are overwritten, every other profile is kept.</string>
     <string name="rule_switches_profile_on">Script is on for this profile, so these switches rewrite its policy groups</string>
-    <string name="rule_switches_profile_off">Script is off: this profile keeps the policy groups from its subscription</string>
-    <string name="rule_switches_script_off">Enable the override script for this profile to change its policy groups. Until then the switches stay inactive and the subscription is used as-is.</string>
+    <string name="rule_switches_profile_off">Script is off: this page lists the rules from the profile&#39;s own config, read-only</string>
+    <string name="rule_switches_script_off">This profile runs exactly what its subscription says. Turn the switch above on to let the override script rewrite these rules.</string>
     <string name="rule_switches_script_toggle">Enable override script for this profile</string>
     <string name="rule_switches_no_profile">No active profile</string>
     <string name="script_group_service">Per-service routing</string>
@@ -614,9 +614,6 @@
     <string name="script_group_count">%1$d/%2$d</string>
     <string name="script_group_chip_on">%1$s, on. Tap to turn off</string>
     <string name="script_group_chip_off">%1$s, off. Tap to turn on</string>
-    <string name="rule_switches_native_summary">The script is off for this profile, so these are its own policy groups. Nothing on this page rewrites them.</string>
-    <string name="rule_switches_native_badge">profile</string>
-    <string name="rule_switches_native_empty">Start the tunnel to list this profile\'s own policy groups</string>
     <string name="dashboard_script_on">Script on</string>
     <string name="dashboard_script_off">No script</string>
     <string name="proxy_group_badge_primary">Primary</string>
@@ -637,6 +634,9 @@
     <string name="rule_switches_manage_hint">Unchecked switches move into “Other settings”.</string>
     <string name="rule_switches_other">Other settings</string>
     <string name="rule_switches_other_count">%d hidden</string>
+    <string name="rule_switches_rules_summary">%d rules come from this profile&#39;s own config. They are read-only here.</string>
+    <string name="rule_switches_rules_more">%d more not shown</string>
+    <string name="rule_switches_rules_empty">No rules found in this profile&#39;s config. It may still be importing, or the config writes rules inline.</string>
     <string name="script_binding_label">Script applies to</string>
     <string name="script_binding_hint">Only the active profile uses this script.</string>
     <string name="script_state_on">ON</string>

@@ -508,8 +508,8 @@
     <string name="backup_restore_open_failed">无法读取所选文件</string>
     <string name="backup_restore_message">恢复会将备份合并到本机：同 ID 的订阅被覆盖，其余订阅保持不变。</string>
     <string name="rule_switches_profile_on">本配置已启用脚本，下列开关会改写它的策略组</string>
-    <string name="rule_switches_profile_off">本配置未启用脚本，策略组保持订阅原样</string>
-    <string name="rule_switches_script_off">为当前配置启用覆写脚本后，这些开关才会生效。在此之前开关不可用，运行配置完全按订阅执行。</string>
+    <string name="rule_switches_profile_off">本配置未启用脚本，下面列出它自己配置里的规则（只读）</string>
+    <string name="rule_switches_script_off">这份配置完全按订阅执行。把上面的开关打开，覆写脚本才会改写这些规则。</string>
     <string name="rule_switches_script_toggle">为当前配置启用覆写脚本</string>
     <string name="rule_switches_no_profile">当前没有启用的配置</string>
     <string name="script_group_service">服务分流</string>
@@ -519,9 +519,6 @@
     <string name="script_group_count">%1$d/%2$d</string>
     <string name="script_group_chip_on">%1$s 已开启，点击关闭</string>
     <string name="script_group_chip_off">%1$s 已关闭，点击开启</string>
-    <string name="rule_switches_native_summary">这份配置没启用脚本，下面是它自己的策略组。这一页不会改动它们。</string>
-    <string name="rule_switches_native_badge">订阅</string>
-    <string name="rule_switches_native_empty">启动代理后，这里会列出这份配置自带的策略组</string>
     <string name="dashboard_script_on">脚本 ON</string>
     <string name="dashboard_script_off">无脚本</string>
     <string name="proxy_group_badge_primary">主组</string>
@@ -542,6 +539,9 @@
     <string name="rule_switches_manage_hint">取消勾选的开关会收进「其他设置」。</string>
     <string name="rule_switches_other">其他设置</string>
     <string name="rule_switches_other_count">已收起 %d 个</string>
+    <string name="rule_switches_rules_summary">下面这 %d 条是这份配置自己 config.yaml 里的规则，只读。</string>
+    <string name="rule_switches_rules_more">还有 %d 条未显示</string>
+    <string name="rule_switches_rules_empty">没读到这份配置的规则：可能还在导入，或配置把规则写成了内联格式。</string>
     <string name="script_binding_label">脚本作用于</string>
     <string name="script_binding_hint">只有当前生效的配置会使用这份脚本。</string>
     <string name="script_state_on">已启用</string>

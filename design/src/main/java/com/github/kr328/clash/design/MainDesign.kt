@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -100,24 +101,50 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         }
     }
 
-    /** 顶部那个滑动条图标：勾选想留在首页的区块。 */
+    /**
+     * 顶部那个滑动条图标：勾选想留在首页的区块。
+     *
+     * 注意 AlertDialog 的 setMessage 和 setMultiChoiceItems 是互斥的：设了 message
+     * 就不画列表，之前这个对话框只剩一句提示、一个勾选框都没有。这里改用自定义视图，
+     * 提示文字和勾选框各占各的位置。
+     */
     fun onCustomizeHome() {
         val store = UiStore(context)
         val hidden = store.homeHiddenBlocks
         val blocks = HomeBlock.values()
-        val labels = blocks.map { context.getString(it.titleRes) }.toTypedArray()
+        val density = context.resources.displayMetrics.density
+        fun dp(n: Int) = (n * density).toInt()
+
+        val content = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(4), dp(20), 0)
+        }
+        content.addView(TextView(context).apply {
+            text = context.getString(R.string.home_customize_hint)
+            textSize = 13f
+            setTextColor(context.resolveThemedColor(android.R.attr.textColorSecondary))
+            setPadding(0, 0, 0, dp(4))
+        })
+
         // 勾选表示「显示」，所以初始值 = 没被隐藏
-        val checked = blocks.map { it.key !in hidden }.toBooleanArray()
+        val boxes = blocks.map { block ->
+            CheckBox(context).apply {
+                text = context.getString(block.titleRes)
+                textSize = 15f
+                isChecked = block.key !in hidden
+                minHeight = dp(44)
+                setTextColor(context.resolveThemedColor(android.R.attr.textColorPrimary))
+                setPadding(0, 0, 0, 0)
+            }
+        }
+        boxes.forEach { content.addView(it) }
 
         AlertDialog.Builder(context)
             .setTitle(R.string.home_customize_title)
-            .setMessage(R.string.home_customize_hint)
-            .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
+            .setView(content)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 store.homeHiddenBlocks = blocks
-                    .filterIndexed { index, _ -> !checked[index] }
+                    .filterIndexed { index, _ -> !boxes[index].isChecked }
                     .map { it.key }
                     .toSet()
                 applyHomeBlocks()

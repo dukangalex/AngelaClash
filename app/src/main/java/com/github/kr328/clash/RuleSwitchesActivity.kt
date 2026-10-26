@@ -4,16 +4,21 @@ import com.github.kr328.clash.design.ui.AppEvents
 import com.github.kr328.clash.design.RuleSwitchesDesign
 import com.github.kr328.clash.service.store.ScriptDisplayStore
 import com.github.kr328.clash.service.util.sendProfileChanged
-import com.github.kr328.clash.util.withClash
 import com.github.kr328.clash.util.withProfile
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.selects.select
+import com.github.kr328.clash.design.util.ConfigRuleSnapshot
+import com.github.kr328.clash.design.util.ConfigRules
+import com.github.kr328.clash.service.model.Profile
+import com.github.kr328.clash.service.util.importedDir
+import com.github.kr328.clash.service.util.pendingDir
+import java.io.File
 
 /**
  * 当前配置的规则开关。
  *
  * 这一页永远讲的是"当前配置"：该配置启用了覆写脚本，就显示脚本的分流开关；
- * 没启用，就只列出它自己的策略组（订阅原规则），不提供任何会改动配置的开关。
+ * 没启用，就列出它自己 config.yaml 里真实生效的规则（只读）。
  */
 class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
     override suspend fun main() {
@@ -25,7 +30,7 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
             profileUuid = active?.uuid,
             profileName = active?.name,
             scriptOn = active?.let { store.profileScriptEnabled(it.uuid) } ?: false,
-            groups = queryGroups(),
+            rules = readRules(active),
         )
         setContentDesign(design)
 
@@ -46,14 +51,14 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
                             AppEvents.emit(AppEvents.Event.ScriptToggled(current.uuid, request.enabled))
                             if (clashRunning) {
                                 sendProfileChanged(current.uuid)
-                                design.updateGroups(queryGroups())
+                                design.updateRules(readRules(current))
                             }
                         }
                         RuleSwitchesDesign.Request.Reload -> {
                             val current = withProfile { queryActive() }
-                            if (current != null && clashRunning) {
-                                sendProfileChanged(current.uuid)
-                                design.updateGroups(queryGroups())
+                            if (current != null) {
+                                if (clashRunning) sendProfileChanged(current.uuid)
+                                design.updateRules(readRules(current))
                             }
                         }
                     }
@@ -62,9 +67,17 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
         }
     }
 
-    /** Groups the running config has for the active profile; empty while stopped. */
-    private suspend fun queryGroups(): List<String> {
-        if (!clashRunning) return emptyList()
-        return runCatching { withClash { queryProxyGroupNames(false) } }.getOrDefault(emptyList())
+    /**
+     * 原配置里真实生效的规则：直接读 service 那边落盘的 config.yaml（订阅 + 已应用的改动）。
+     * 没导入完的配置还在 pending 目录里，这里一起兜住。
+     */
+    private fun readRules(profile: Profile?): ConfigRuleSnapshot {
+        if (profile == null) return ConfigRuleSnapshot.EMPTY
+        val dirs = listOf(importedDir, pendingDir)
+        for (dir in dirs) {
+            val snapshot = ConfigRules.read(File(dir, "${profile.uuid}/config.yaml"))
+            if (snapshot.total > 0) return snapshot
+        }
+        return ConfigRuleSnapshot.EMPTY
     }
 }

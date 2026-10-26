@@ -6,6 +6,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.CompoundButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.graphics.ColorUtils
 import com.github.kr328.clash.design.databinding.DesignSettingsCommonBinding
+import com.github.kr328.clash.design.util.ConfigRuleSnapshot
 import com.github.kr328.clash.design.util.applyFrom
 import com.github.kr328.clash.design.util.bindAppBarElevation
 import com.github.kr328.clash.design.util.layoutInflater
@@ -36,7 +38,7 @@ class RuleSwitchesDesign(
     private val profileUuid: UUID?,
     private val profileName: String?,
     scriptOn: Boolean,
-    groups: List<String>,
+    rules: ConfigRuleSnapshot,
     private val uiStore: UiStore = UiStore(context),
 ) : Design<RuleSwitchesDesign.Request>(context) {
     sealed class Request {
@@ -51,7 +53,7 @@ class RuleSwitchesDesign(
         setPadding(dp(12), dp(8), dp(12), dp(24))
     }
     private var scriptEnabled = scriptOn
-    private var profileGroups: List<String> = groups
+    private var nativeRules: ConfigRuleSnapshot = rules
 
     override val root: View
         get() = binding.root
@@ -69,9 +71,9 @@ class RuleSwitchesDesign(
         render()
     }
 
-    /** Groups the running config exposes for the active profile. */
-    fun updateGroups(groups: List<String>) {
-        profileGroups = groups
+    /** 原配置（订阅）自带的规则，脚本关掉时这一页显示的就是它们。 */
+    fun updateRules(rules: ConfigRuleSnapshot) {
+        nativeRules = rules
         if (!scriptEnabled) {
             render()
         }
@@ -87,7 +89,7 @@ class RuleSwitchesDesign(
         }
 
         if (!scriptEnabled) {
-            renderProfileGroups()
+            renderNativeRules()
             return
         }
 
@@ -170,20 +172,44 @@ class RuleSwitchesDesign(
         return text
     }
 
+    /**
+     * 和首页的「自定义」一样：AlertDialog 设了 message 就不再画列表，
+     * 所以提示文字和勾选框要放进同一个自定义视图里。
+     */
     private fun showManageDialog(names: List<String>) {
         if (names.isEmpty()) return
         val hidden = uiStore.hiddenRuleSwitches
-        val checked = names.map { it !in hidden }.toBooleanArray()
+
+        val content = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(4), dp(20), 0)
+        }
+        content.addView(
+            TextView(context).apply {
+                text = getString(R.string.rule_switches_manage_hint)
+                textSize = 13f
+                setTextColor(context.resolveThemedColor(android.R.attr.textColorSecondary))
+                setPadding(0, 0, 0, dp(4))
+            },
+        )
+        val boxes = names.map { name ->
+            CheckBox(context).apply {
+                text = name
+                textSize = 15f
+                isChecked = name !in hidden
+                minHeight = dp(44)
+                setTextColor(context.resolveThemedColor(android.R.attr.textColorPrimary))
+                setPadding(0, 0, 0, 0)
+            }
+        }
+        boxes.forEach { content.addView(it) }
 
         AlertDialog.Builder(context)
             .setTitle(R.string.rule_switches_manage)
-            .setMessage(R.string.rule_switches_manage_hint)
-            .setMultiChoiceItems(names.toTypedArray(), checked) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
+            .setView(content)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 uiStore.hiddenRuleSwitches = names
-                    .filterIndexed { index, _ -> !checked[index] }
+                    .filterIndexed { index, _ -> !boxes[index].isChecked }
                     .toSet()
                 render()
             }
@@ -192,48 +218,118 @@ class RuleSwitchesDesign(
     }
 
     /**
-     * 这份配置没开脚本时，这一页显示的是**它自己的**规则结果：运行配置里真实存在的
-     * 策略组。没有脚本就没有可拨的开关，只有订阅原本的结构，读一眼就知道"原规则"是什么。
+     * 这份配置没开脚本时，这一页显示的是**它自己配置里的规则**（config.yaml 的 rules:），
+     * 不是策略组名字——策略组在代理页看。规则是订阅写死的，所以整段只读。
      */
-    private fun renderProfileGroups() {
+    private fun renderNativeRules() {
         host.addView(noteCard(getString(R.string.rule_switches_script_off), accent = true))
 
-        if (profileGroups.isEmpty()) {
-            host.addView(noteCard(getString(R.string.rule_switches_native_empty), accent = false))
+        if (nativeRules.total == 0) {
+            host.addView(noteCard(getString(R.string.rule_switches_rules_empty), accent = false))
             return
         }
 
-        host.addView(noteCard(getString(R.string.rule_switches_native_summary), accent = false))
-        profileGroups.forEach { host.addView(groupCard(it)) }
+        host.addView(
+            noteCard(
+                context.getString(R.string.rule_switches_rules_summary, nativeRules.total),
+                accent = false,
+            ),
+        )
+
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        nativeRules.items.forEachIndexed { index, rule ->
+            container.addView(ruleRow(rule))
+            if (index != nativeRules.items.lastIndex) {
+                container.addView(divider())
+            }
+        }
+
+        val more = nativeRules.total - nativeRules.items.size
+        if (more > 0) {
+            container.addView(divider())
+            container.addView(
+                TextView(context).apply {
+                    text = context.getString(R.string.rule_switches_rules_more, more)
+                    textSize = 12f
+                    setTextColor(context.resolveThemedColor(android.R.attr.textColorSecondary))
+                    setPadding(dp(16), dp(10), dp(16), dp(12))
+                },
+            )
+        }
+
+        host.addView(card(container, stroke = null))
     }
 
-    /** Read-only card: the group exists in this profile's config, nothing to toggle. */
-    private fun groupCard(name: String): View {
+    /** 一条规则：内容 + 类型，右侧是它落到哪个策略。 */
+    private fun ruleRow(rule: String): View {
         val primaryText = context.resolveThemedColor(com.google.android.material.R.attr.colorOnSurface)
         val secondaryText = context.resolveThemedColor(android.R.attr.textColorSecondary)
+        val accent = context.resolveThemedColor(com.google.android.material.R.attr.colorPrimary)
 
-        val title = TextView(context).apply {
-            text = name
-            textSize = 15f
+        val parts = rule.split(',')
+        val type = parts.firstOrNull()?.trim().orEmpty()
+        val target = if (parts.size >= 2) parts.last().trim() else ""
+        val payload = if (parts.size >= 3) {
+            parts.subList(1, parts.size - 1).joinToString(",").trim()
+        } else {
+            ""
+        }
+        // MATCH / FINAL 这类没有匹配内容，标题就用策略名
+        val title = payload.ifBlank { target.ifBlank { type } }
+
+        val titleView = TextView(context).apply {
+            text = title
+            textSize = 14f
             setTextColor(primaryText)
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
         }
-        val badge = TextView(context).apply {
-            text = getString(R.string.rule_switches_native_badge)
+        val typeView = TextView(context).apply {
+            text = type
             textSize = 11f
             setTextColor(secondaryText)
-            setPadding(dp(10), 0, 0, 0)
+            setPadding(0, dp(2), 0, 0)
         }
-        val row = LinearLayout(context).apply {
+        val labels = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(titleView)
+            addView(typeView)
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+
+        val targetView = TextView(context).apply {
+            text = if (payload.isBlank()) "" else target
+            textSize = 12f
+            setTextColor(accent)
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            setPadding(dp(10), 0, 0, 0)
+            maxWidth = dp(140)
+        }
+
+        return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(16), dp(14), dp(16), dp(14))
-            addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            addView(badge)
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            addView(labels)
+            addView(targetView)
         }
-        return card(row, stroke = null)
     }
+
+    private fun divider(): View =
+        View(context).apply {
+            setBackgroundColor(context.resolveThemedColor(R.attr.clashOutline))
+        }.also {
+            it.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(1),
+            ).apply {
+                marginStart = dp(16)
+                marginEnd = dp(16)
+            }
+        }
 
     /** Current profile + the switch that decides whether these toggles apply to it. */
     private fun headerCard(): View {

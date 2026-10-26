@@ -298,16 +298,16 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
                         <!-- 可隐藏：网速图表 -->
-                        <!-- 4. 网速大图（BettBox 的视觉主体） -->
+                        <!-- 4. 网速图：够看趋势就行，别占掉半屏 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_marginTop="10dp"
                             android:background="@drawable/bg_card_flat"
                             android:orientation="vertical"
                             android:paddingHorizontal="16dp"
-                            android:paddingTop="14dp"
-                            android:paddingBottom="10dp">
+                            android:paddingTop="10dp"
+                            android:paddingBottom="6dp">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -321,7 +321,7 @@
                                     android:layout_weight="1"
                                     android:text="@string/dashboard_speed"
                                     android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="13sp" />
+                                    android:textSize="12sp" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
@@ -329,7 +329,7 @@
                                     android:singleLine="true"
                                     android:text="@{`↑ ` + upload}"
                                     android:textColor="@color/color_emerald_accent"
-                                    android:textSize="12sp" />
+                                    android:textSize="11sp" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
@@ -338,14 +338,14 @@
                                     android:singleLine="true"
                                     android:text="@{`↓ ` + download}"
                                     android:textColor="?attr/colorPrimary"
-                                    android:textSize="12sp" />
+                                    android:textSize="11sp" />
                             </LinearLayout>
 
                             <com.github.kr328.clash.design.ui.SpeedChartView
                                 android:id="@+id/speed_bars"
                                 android:layout_width="match_parent"
-                                android:layout_height="120dp"
-                                android:layout_marginTop="6dp" />
+                                android:layout_height="64dp"
+                                android:layout_marginTop="4dp" />
                         </LinearLayout>
 
                     </LinearLayout>
