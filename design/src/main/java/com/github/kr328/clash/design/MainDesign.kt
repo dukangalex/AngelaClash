@@ -238,9 +238,12 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         }
         boxes.forEach { content.addView(it) }
 
+        // 卡片从 6 个变成 9 个，小屏上会顶出屏幕，套一层滚动。
+        val scroller = android.widget.ScrollView(context).apply { addView(content) }
+
         AlertDialog.Builder(context)
             .setTitle(R.string.home_customize_title)
-            .setView(content)
+            .setView(scroller)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 store.homeHiddenBlocks = blocks
                     .filterIndexed { index, _ -> !boxes[index].isChecked }
