@@ -303,7 +303,7 @@
                             style="@style/Widget.AngelaClash.InlineAction"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:onClick="@{() -> self.request(Request.ImportLink)}"
+                            android:onClick="@{() -> self.requestImportLink()}"
                             android:text="@string/script_import_link" />
 
                         <com.google.android.material.button.MaterialButton
@@ -311,7 +311,7 @@
                             style="@style/Widget.AngelaClash.InlineAction"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:onClick="@{() -> self.request(Request.Sync)}"
+                            android:onClick="@{() -> self.requestSync()}"
                             android:text="@string/script_sync" />
                     </LinearLayout>
 
@@ -329,7 +329,7 @@
                         android:contentDescription="@string/script_display_edit"
                         android:focusable="true"
                         android:gravity="center_vertical"
-                        android:onClick="@{() -> self.request(Request.EditScript)}"
+                        android:onClick="@{() -> self.requestEditScript()}"
                         android:orientation="horizontal"
                         android:paddingVertical="14dp">
 

@@ -78,6 +78,12 @@ class ScriptOptionsDesign(
         requests.trySend(request)
     }
 
+    // 绑定表达式跑在生成出来的 Java 里，取不到 Kotlin 的 data object（那是 Xxx.INSTANCE
+    // 而不是静态字段），所以这三个无参动作各包一层普通方法给 XML 用。
+    fun requestImportLink() = request(Request.ImportLink)
+    fun requestSync() = request(Request.Sync)
+    fun requestEditScript() = request(Request.EditScript)
+
     fun setAllRules(enabled: Boolean) {
         if (ruleRows.isEmpty()) return
         val updates = LinkedHashMap<String, Boolean>()
