@@ -71,11 +71,10 @@ jobs:
             exit 1
           fi
           umask 077
-          cat > signing.properties << EOF
-          keystore.password=$SIGNING_STORE_PASSWORD
-          key.alias=$SIGNING_KEY_ALIAS
-          key.password=$SIGNING_KEY_PASSWORD
-          EOF
+          # 用 printf 而不是缩进 heredoc：heredoc 会把每行前面的空格写进去，
+          # 密码尾部带空白，gradle 读 keystore 就会报 "keystore password was incorrect"。
+          printf 'keystore.password=%s\nkey.alias=%s\nkey.password=%s\n' \
+            "$SIGNING_STORE_PASSWORD" "$SIGNING_KEY_ALIAS" "$SIGNING_KEY_PASSWORD" > signing.properties
 
       - name: Pre-release Build
         if: success()
