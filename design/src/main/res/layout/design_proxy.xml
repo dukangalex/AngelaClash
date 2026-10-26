@@ -227,7 +227,7 @@
             android:gravity="end"
             android:orientation="vertical"
             android:paddingEnd="18dp"
-            android:paddingBottom="@{self.surface.insets.bottom + @dimen/ac_gutter}">
+            android:paddingBottom="@{(float) self.surface.insets.bottom + @dimen/ac_gutter}">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/locate_card"
