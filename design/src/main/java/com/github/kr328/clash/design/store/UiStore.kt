@@ -126,6 +126,16 @@ class UiStore(context: Context) {
         defaultValue = emptySet(),
     )
 
+    /**
+     * 首页网格的排布，按断点各存一份（手机 8 列 / 平板 12 列 / 大屏 16 列）。
+     *
+     * 格式：`key:w,h|key:w,h|...`，顺序就是显示顺序。存字符串而不是 JSON，
+     * 是因为这一层只有 Store.string，多引一个序列化器不值当。
+     */
+    var homeGridCompact: String by store.string(key = "home_grid_compact", defaultValue = "")
+    var homeGridMedium: String by store.string(key = "home_grid_medium", defaultValue = "")
+    var homeGridWide: String by store.string(key = "home_grid_wide", defaultValue = "")
+
     /** 规则开关页里被收进「其他设置」的开关名。 */
     var hiddenRuleSwitches: Set<String> by store.stringSet(
         key = "hidden_rule_switches",

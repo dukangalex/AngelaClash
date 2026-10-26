@@ -50,4 +50,13 @@
         <attr name="android:background" />
         <attr name="android:foreground" />
     </declare-styleable>
+
+    <!-- 首页网格里一张卡片的落位：占几列几行（以「档」计，1 档 = 4 列）。 -->
+    <declare-styleable name="HomeGridTile">
+        <attr name="tileKey" format="string" />
+        <attr name="tileSpanW" format="integer" />
+        <attr name="tileSpanH" format="integer" />
+        <attr name="tileMinSpanW" format="integer" />
+        <attr name="tileMinSpanH" format="integer" />
+    </declare-styleable>
 </resources>

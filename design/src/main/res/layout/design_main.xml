@@ -67,6 +67,9 @@
             name="showAttention"
             type="boolean" />
         <variable
+            name="homeEditMode"
+            type="boolean" />
+        <variable
             name="coreVersion"
             type="String" />
         <variable
@@ -292,17 +295,75 @@
                         android:textSize="12sp"
                         android:visibility="@{showAttention ? View.VISIBLE : View.GONE}" />
 
+                    <!-- 编辑栏：长按任意卡片出现，零动效，就是一条提示 + 两个按钮 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_tile_flat"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="6dp"
+                        android:visibility="@{homeEditMode ? View.VISIBLE : View.GONE}">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/home_edit_hint"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onHomeEditReset()}"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:text="@string/home_edit_reset"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:onClick="@{() -> self.onHomeEditDone()}"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp"
+                            android:text="@string/home_edit_done"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- 首页网格：8 列（手机）/ 12 / 16，卡片跨 4 或 8 列，行高 84dp -->
+                    <com.github.kr328.clash.design.view.HomeGridView
+                        android:id="@+id/home_grid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp">
                     <LinearLayout
                         android:id="@+id/block_speed"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        app:tileKey="speed"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="1"
+                        app:tileSpanH="2"
+                        app:tileSpanW="2">
                         <!-- 可隐藏：网速图表 -->
                         <!-- 4. 网速图：够看趋势就行，别占掉半屏 -->
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
+                            android:layout_height="match_parent"
                             android:background="@drawable/bg_card_flat"
                             android:orientation="vertical"
                             android:padding="14dp">
@@ -354,13 +415,17 @@
                     <LinearLayout
                         android:id="@+id/block_profile"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        app:tileKey="profile"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="2"
+                        app:tileSpanH="1"
+                        app:tileSpanW="2">
                         <!-- 可隐藏：当前配置 -->
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_height="match_parent"
                             android:background="@drawable/bg_card_flat"
                             android:clickable="true"
                             android:focusable="true"
@@ -450,25 +515,17 @@
                     <LinearLayout
                         android:id="@+id/block_proxy"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        app:tileKey="proxy"
+                        app:tileMinSpanH="2"
+                        app:tileMinSpanW="2"
+                        app:tileSpanH="2"
+                        app:tileSpanW="2">
                         <!-- 可隐藏：代理组与链路 -->
-                        <!-- BettBox 式分组标题：小字、次级色，和卡片左边缘对齐 -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingStart="2dp"
-                            android:paddingTop="18dp"
-                            android:paddingBottom="8dp"
-                            android:text="@string/home_section_proxy"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_height="match_parent"
                             android:background="@drawable/bg_card_flat"
                             android:orientation="vertical"
                             android:paddingHorizontal="14dp">
@@ -578,172 +635,161 @@
                     </LinearLayout>
 
                     <!-- 7. 四个小方砖：只有「标签 + 值」，没有副标题 -->
+                    <!-- 7. 四个状态方砖：网格里各占 1×1，两两一行 -->
                     <LinearLayout
-                        android:id="@+id/block_diag"
+                        android:id="@+id/block_diag_conn"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-                        <!-- BettBox 式分组标题：小字、次级色，和卡片左边缘对齐 -->
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_tile_flat"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.onConnectionDiagClick()}"
+                        android:orientation="vertical"
+                        android:padding="14dp"
+                        app:tileKey="diag_conn"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="1"
+                        app:tileSpanH="1"
+                        app:tileSpanW="1">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:paddingStart="2dp"
-                            android:paddingTop="18dp"
-                            android:paddingBottom="8dp"
-                            android:text="@string/home_section_status"
+                            android:text="@string/home_connected_card_label"
                             android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="13sp"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@{homeConnected}"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
+                    </LinearLayout>
 
-                        <!-- 可隐藏：状态方砖 -->
-                        <LinearLayout
+                    <LinearLayout
+                        android:id="@+id/block_diag_safety"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_tile_flat"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.onSafetyDiagClick()}"
+                        android:orientation="vertical"
+                        android:padding="14dp"
+                        app:tileKey="diag_safety"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="1"
+                        app:tileSpanH="1"
+                        app:tileSpanW="1">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_safety_card_label"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
+
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:orientation="horizontal">
+                            android:layout_marginTop="3dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@{homeSafetyShort}"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_tile_flat"
-                                android:minHeight="72dp"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:onClick="@{() -> self.onConnectionDiagClick()}"
-                                android:orientation="vertical"
-                                android:padding="14dp">
+                    <LinearLayout
+                        android:id="@+id/block_diag_policy"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_tile_flat"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.onPolicyDiagClick()}"
+                        android:orientation="vertical"
+                        android:padding="14dp"
+                        app:tileKey="diag_policy"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="1"
+                        app:tileSpanH="1"
+                        app:tileSpanW="1">
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/home_connected_card_label"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="11sp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_policy_card_label"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
 
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{homeConnected}"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_tile_flat"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:onClick="@{() -> self.onSafetyDiagClick()}"
-                                android:orientation="vertical"
-                                android:minHeight="72dp"
-                                android:padding="14dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/home_safety_card_label"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="11sp" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{homeSafetyShort}"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </LinearLayout>
-
-                        <LinearLayout
+                        <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:orientation="horizontal">
+                            android:layout_marginTop="3dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@{homePolicy}"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_tile_flat"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:onClick="@{() -> self.onPolicyDiagClick()}"
-                                android:orientation="vertical"
-                                android:minHeight="72dp"
-                                android:padding="14dp">
+                    <LinearLayout
+                        android:id="@+id/block_diag_network"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_tile_flat"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:onClick="@{() -> self.onNetworkDiagClick()}"
+                        android:orientation="vertical"
+                        android:padding="14dp"
+                        app:tileKey="diag_network"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="1"
+                        app:tileSpanH="1"
+                        app:tileSpanW="1">
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/home_policy_card_label"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="11sp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_network_card_label"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="11sp" />
 
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{homePolicy}"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_tile_flat"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:onClick="@{() -> self.onNetworkDiagClick()}"
-                                android:orientation="vertical"
-                                android:minHeight="72dp"
-                                android:padding="14dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/home_network_card_label"
-                                    android:textColor="?android:attr/textColorSecondary"
-                                    android:textSize="11sp" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:ellipsize="end"
-                                    android:maxLines="1"
-                                    android:text="@{homeNetwork}"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </LinearLayout>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@{homeNetwork}"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- 8. 内核 / TUN：压成一行小字，细节去「更多」看 -->
                     <LinearLayout
                         android:id="@+id/block_meta"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_card_flat"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:padding="14dp"
+                        app:tileKey="meta"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="2"
+                        app:tileSpanH="1"
+                        app:tileSpanW="2">
                         <!-- 可隐藏：内核与 TUN 概要 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -776,13 +822,19 @@
                     <LinearLayout
                         android:id="@+id/block_quick"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_card_flat"
+                        android:orientation="vertical"
+                        android:padding="14dp"
+                        app:tileKey="quick"
+                        app:tileMinSpanH="1"
+                        app:tileMinSpanW="2"
+                        app:tileSpanH="1"
+                        app:tileSpanW="2">
                         <!-- 可隐藏：快捷开关 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -807,7 +859,6 @@
                                 android:textColor="?attr/colorPrimary"
                                 android:textSize="11sp" />
                         </LinearLayout>
-
                         <!-- 快捷开关压成一行横滑 chip：功能都在，但不占三行高度 -->
                         <HorizontalScrollView
                             android:layout_width="match_parent"
@@ -824,7 +875,10 @@
                         </HorizontalScrollView>
                     </LinearLayout>
 
+                    </com.github.kr328.clash.design.view.HomeGridView>
+
                 </LinearLayout>
+
             </ScrollView>
 
             <!-- MORE / TOOLS PAGE -->

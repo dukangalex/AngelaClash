@@ -26,6 +26,7 @@ import com.github.kr328.clash.design.model.HomeBlock
 import com.github.kr328.clash.design.databinding.DesignAboutBinding
 import com.github.kr328.clash.design.databinding.DesignMainBinding
 import com.github.kr328.clash.design.store.UiStore
+import com.github.kr328.clash.design.view.HomeGridView
 import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.root
@@ -85,20 +86,118 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
      * 首页区块显隐。用户勾掉的区块记在 UiStore.homeHiddenBlocks，
      * 存 key 而不是下标，以后新增区块对老用户默认可见。
      */
+    private fun homeBlockViews(): Map<String, View> = mapOf(
+        HomeBlock.SPEED.key to binding.blockSpeed,
+        HomeBlock.PROFILE.key to binding.blockProfile,
+        HomeBlock.PROXY.key to binding.blockProxy,
+        HomeBlock.DIAG_CONN.key to binding.blockDiagConn,
+        HomeBlock.DIAG_SAFETY.key to binding.blockDiagSafety,
+        HomeBlock.DIAG_POLICY.key to binding.blockDiagPolicy,
+        HomeBlock.DIAG_NETWORK.key to binding.blockDiagNetwork,
+        HomeBlock.META.key to binding.blockMeta,
+        HomeBlock.QUICK.key to binding.blockQuick,
+    )
+
+    /** 1.4.6 的 "diag" 一块，现在摊成四张卡。 */
+    private fun expandHidden(hidden: Set<String>): Set<String> =
+        if (HomeBlock.LEGACY_DIAG in hidden) {
+            hidden - HomeBlock.LEGACY_DIAG + HomeBlock.values()
+                .filter { it.key.startsWith("diag_") }
+                .map { it.key }
+        } else {
+            hidden
+        }
+
     private fun applyHomeBlocks() {
         val store = UiStore(context)
-        val hidden = store.homeHiddenBlocks
-        val hosts = mapOf(
-            HomeBlock.SPEED to binding.blockSpeed,
-            HomeBlock.PROFILE to binding.blockProfile,
-            HomeBlock.PROXY to binding.blockProxy,
-            HomeBlock.DIAG to binding.blockDiag,
-            HomeBlock.META to binding.blockMeta,
-            HomeBlock.QUICK to binding.blockQuick,
-        )
-        hosts.forEach { (block, view) ->
-            view.visibility = if (block.key in hidden) View.GONE else View.VISIBLE
+        val hidden = expandHidden(store.homeHiddenBlocks)
+        homeBlockViews().forEach { (key, view) ->
+            view.visibility = if (key in hidden) View.GONE else View.VISIBLE
         }
+    }
+
+    // ------------------------------------------------------------------ 首页网格
+
+    private fun bandKey(): String {
+        val dp = binding.root.resources.displayMetrics.widthPixels /
+                binding.root.resources.displayMetrics.density
+        return when {
+            dp < 520f -> "compact"
+            dp < 880f -> "medium"
+            else -> "wide"
+        }
+    }
+
+    private fun parseLayout(raw: String): List<Triple<String, Int, Int>> =
+        raw.split('|').mapNotNull { part ->
+            val pieces = part.split(':')
+            if (pieces.size != 2) return@mapNotNull null
+            val size = pieces[1].split(',')
+            if (size.size != 2) return@mapNotNull null
+            val w = size[0].toIntOrNull() ?: return@mapNotNull null
+            val h = size[1].toIntOrNull() ?: return@mapNotNull null
+            Triple(pieces[0], w, h)
+        }
+
+    private fun encodeLayout(entries: List<Triple<String, Int, Int>>): String =
+        entries.joinToString("|") { "${it.first}:${it.second},${it.third}" }
+
+    private fun readGridLayout(store: UiStore): String = when (bandKey()) {
+        "compact" -> store.homeGridCompact
+        "medium" -> store.homeGridMedium
+        else -> store.homeGridWide
+    }
+
+    private fun writeGridLayout(store: UiStore, value: String) {
+        when (bandKey()) {
+            "compact" -> store.homeGridCompact = value
+            "medium" -> store.homeGridMedium = value
+            else -> store.homeGridWide = value
+        }
+    }
+
+    private fun setupHomeGrid() {
+        val grid = binding.homeGrid
+        grid.listener = object : HomeGridView.Listener {
+            override fun onEditModeChanged(editing: Boolean) {
+                binding.homeEditMode = editing
+            }
+
+            override fun onLayoutChanged() {
+                writeGridLayout(UiStore(context), encodeLayout(grid.captureLayout()))
+            }
+
+            override fun onTileHidden(key: String) {
+                val store = UiStore(context)
+                store.homeHiddenBlocks = expandHidden(store.homeHiddenBlocks) + key
+            }
+
+            override fun onTileSizeChanged(key: String, spanW: Int, spanH: Int) {
+                // 速度卡窄档只留数字，曲线这种「看趋势」的东西在 84dp 里挤不下。
+                if (key == HomeBlock.SPEED.key) {
+                    binding.speedBars.visibility =
+                        if (spanW * spanH >= 4) View.VISIBLE else View.GONE
+                }
+            }
+        }
+        val saved = readGridLayout(UiStore(context))
+        if (saved.isNotBlank()) {
+            grid.applyLayout(parseLayout(saved))
+        }
+        binding.homeEditMode = false
+    }
+
+    fun onHomeEditDone() {
+        binding.homeGrid.setEditMode(false)
+    }
+
+    fun onHomeEditReset() {
+        val store = UiStore(context)
+        writeGridLayout(store, "")
+        store.homeHiddenBlocks = emptySet()
+        applyHomeBlocks()
+        binding.homeGrid.resetLayout()
+        writeGridLayout(UiStore(context), encodeLayout(binding.homeGrid.captureLayout()))
     }
 
     /**
@@ -853,6 +952,7 @@ class MainDesign(context: Context) : Design<MainDesign.Request>(context) {
         initSpeedBars()
         paintMode(R.id.mode_rule)
         applyHomeBlocks()
+        setupHomeGrid()
 
         binding.modeRule.setOnClickListener {
             paintMode(R.id.mode_rule)

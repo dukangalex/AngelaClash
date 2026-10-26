@@ -532,6 +532,13 @@
     <string name="home_block_profile">当前配置</string>
     <string name="home_block_proxy">代理组与链路</string>
     <string name="home_block_diag">状态方砖</string>
+    <string name="home_block_diag_conn">连接状态</string>
+    <string name="home_block_diag_safety">安全防护</string>
+    <string name="home_block_diag_policy">当前策略</string>
+    <string name="home_block_diag_network">网络状态</string>
+    <string name="home_edit_hint">拖动换位置 · 左上角改尺寸 · 右上角收起</string>
+    <string name="home_edit_reset">恢复默认</string>
+    <string name="home_edit_done">完成</string>
     <string name="home_block_meta">内核与 TUN</string>
     <string name="home_block_quick">快捷开关</string>
     <string name="home_block_restore">全部显示</string>
