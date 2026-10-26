@@ -245,8 +245,10 @@ class RuleSwitchesDesign(
             ),
         )
 
-        if (disabled.isNotEmpty()) {
-            host.addView(disabledSummary(disabled.size))
+        // 订阅刷新后旧规则可能已不在列表里：只统计还看得见的，条数才对得上。
+        val disabledHere = disabled.count { rule -> nativeRules.items.contains(rule) }
+        if (disabledHere > 0) {
+            host.addView(disabledSummary(disabledHere))
         }
 
         val container = LinearLayout(context).apply {

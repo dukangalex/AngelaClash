@@ -49,7 +49,7 @@ object ConfigRules {
 
                     when {
                         trimmed.startsWith("- ") || trimmed == "-" -> {
-                            val value = unquote(trimmed.removePrefix("-").trim())
+                            val value = normalize(trimmed.removePrefix("-").trim())
                             if (value.isNotEmpty()) {
                                 total++
                                 if (items.size < DISPLAY_LIMIT) items.add(value)
@@ -65,6 +65,47 @@ object ConfigRules {
         }
 
         return if (total == 0) ConfigRuleSnapshot.EMPTY else ConfigRuleSnapshot(total, items)
+    }
+
+    /**
+     * 把 YAML 列表项还原成内核看到的规则原文。
+     *
+     * 「规则开关」页用这条文本当键写进 script-options.json，内核在
+     * UnmarshalAndPatch 时按同一个键去匹配 cfg.Rule，而 cfg.Rule 里的值是
+     * YAML 解析后的结果：外层引号没了，行尾 `# 注释` 也没了。这页是按行扫的，
+     * 所以得自己把这两步补上，否则键对不上，开关按下去像没反应。
+     */
+    private fun normalize(value: String): String = unquote(stripComment(value).trim()).trim()
+
+    /**
+     * 去掉行尾注释。只有「空白 + #」才算注释，规则本身可以带 #，
+     * 例如 `DOMAIN-KEYWORD,foo#bar,DIRECT`；引号里的 # 也不算。
+     */
+    private fun stripComment(value: String): String {
+        var quote = '\u0000'
+        var i = 0
+        while (i < value.length) {
+            val c = value[i]
+            if (quote != '\u0000') {
+                if (c == '\\' && quote == '"' && i + 1 < value.length) {
+                    i += 2
+                    continue
+                }
+                if (c == quote) quote = '\u0000'
+                i++
+                continue
+            }
+            if (c == '"' || c == '\'') {
+                quote = c
+                i++
+                continue
+            }
+            if (c == '#' && (i == 0 || value[i - 1].isWhitespace())) {
+                return value.substring(0, i)
+            }
+            i++
+        }
+        return value
     }
 
     private fun unquote(value: String): String {
