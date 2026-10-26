@@ -13,6 +13,8 @@ import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.service.util.importedDir
 import com.github.kr328.clash.service.util.pendingDir
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 当前配置的规则开关。
@@ -69,15 +71,17 @@ class RuleSwitchesActivity : BaseActivity<RuleSwitchesDesign>() {
 
     /**
      * 原配置里真实生效的规则：直接读 service 那边落盘的 config.yaml（订阅 + 已应用的改动）。
-     * 没导入完的配置还在 pending 目录里，这里一起兜住。
+     * 没导入完的配置还在 pending 目录里，这里一起兜住。订阅文件可能不小，放 IO 线程读。
      */
-    private fun readRules(profile: Profile?): ConfigRuleSnapshot {
+    private suspend fun readRules(profile: Profile?): ConfigRuleSnapshot {
         if (profile == null) return ConfigRuleSnapshot.EMPTY
-        val dirs = listOf(importedDir, pendingDir)
-        for (dir in dirs) {
-            val snapshot = ConfigRules.read(File(dir, "${profile.uuid}/config.yaml"))
-            if (snapshot.total > 0) return snapshot
+        return withContext(Dispatchers.IO) {
+            val dirs = listOf(importedDir, pendingDir)
+            for (dir in dirs) {
+                val snapshot = ConfigRules.read(File(dir, "${profile.uuid}/config.yaml"))
+                if (snapshot.total > 0) return@withContext snapshot
+            }
+            ConfigRuleSnapshot.EMPTY
         }
-        return ConfigRuleSnapshot.EMPTY
     }
 }
