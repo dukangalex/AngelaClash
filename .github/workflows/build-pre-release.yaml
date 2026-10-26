@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+# 下面要删/建 Prerelease-alpha 这个 tag 和 release，GITHUB_TOKEN 默认没有写权限。
+permissions:
+  contents: write
+
 jobs:
   BuildPreRelease:
     runs-on: ubuntu-latest
